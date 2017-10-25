@@ -47,6 +47,11 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
+  node_handle_.param("~moving_flow_length", moving_flow_length_, 1.0);
+  node_handle_.param("~flow_size_diff", flow_size_diff_, 1.0);
+  node_handle_.param("~flow_start_diff", flow_start_diff_, 1.0);
+  node_handle_.param("~flow_radian_diff", flow_radian_diff_, 1.0);
+  
   point_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("clustered_point_cloud", 10);
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub;
@@ -94,7 +99,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
       
       Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
-      if (flow3d.length() < moving_flow_size_)
+      if (flow3d.length() < moving_flow_length_)
         continue;
       
       // まだクラスターが一つも存在していなければ
