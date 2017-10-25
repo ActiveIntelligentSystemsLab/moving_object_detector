@@ -24,6 +24,7 @@ private:
   
   image_geometry::PinholeCameraModel camera_model_;
   sensor_msgs::Image depth_image_previous_;
+  ros::Time time_stamp_previous_;
   
   bool first_run_;
   

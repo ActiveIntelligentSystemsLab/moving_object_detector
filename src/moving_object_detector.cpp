@@ -99,7 +99,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
       
       Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
-      if (flow3d.length() < moving_flow_length_)
+      ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
+      if (flow3d.length() < moving_flow_length_ * time_between_frames.toSec())
         continue;
       
       // まだクラスターが一つも存在していなければ
@@ -152,6 +153,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     point_cloud_pub_.publish(msg_point_cloud);
   }
   depth_image_previous_ = *depth_image_now;
+  time_stamp_previous_ = camera_transform->header.stamp;
 }
 
 template<typename T>
