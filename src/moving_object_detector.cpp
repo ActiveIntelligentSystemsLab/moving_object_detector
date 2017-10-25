@@ -141,6 +141,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     }
     sensor_msgs::PointCloud2 msg_point_cloud;
     pcl::toROSMsg(pcl_point_cloud, msg_point_cloud);
+    msg_point_cloud.header.frame_id = depth_image_info->header.frame_id;
+    msg_point_cloud.header.stamp = depth_image_info->header.stamp;
     
     point_cloud_pub_.publish(msg_point_cloud);
   }
