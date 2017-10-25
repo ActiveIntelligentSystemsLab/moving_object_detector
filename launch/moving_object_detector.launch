@@ -4,27 +4,27 @@
   <include file="$(find zed_wrapper)/launch/zed.launch"/>
   
   <node name="depth_image_rectifier" pkg="nodelet" type="nodelet" args="standalone image_proc/rectify">
-    <remap from="image_mono" to="/camera/depth/depth_registered"/>
+    <remap from="image_mono" to="/zed/depth/depth_registered"/>
     <remap from="camera_info" to="/zed/depth/camera_info"/>
     <remap from="image_rect" to="/zed/depth/depth_registered_rect"/>
     <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
-    <remap from="stereo" to="/camera"/>
+    <remap from="stereo" to="/zed"/>
     <remap from="image" to="image_rect_color"/>
     <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="optical_flow" pkg="opencv_apps" type="fback_flow">
-    <remap from="image" to="/camera/left/image_rect_color"/>
-    <remap from="flows" to="/camera/left/flows"/>
+    <remap from="image" to="/zed/left/image_rect_color"/>
     <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
     <remap from="depth_image_rectified" to="/zed/depth/depth_registered_rect"/>
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
-    <remap from="optical_flow" to="/camera/left/flows"/>
+    <remap from="optical_flow" to="/optical_flow/flows"/>
+    <param name="image_transport" value="compressed"/>
   </node>
 </launch>
