@@ -9,13 +9,26 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <tf2/LinearMath/Vector3.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <image_transport/subscriber_filter.h>
+#include <image_transport/camera_common.h>
 
 class MovingObjectDetector {
 public:
   MovingObjectDetector();
 private:
   ros::NodeHandle node_handle_;
+  
   ros::Publisher point_cloud_pub_;
+  
+  message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
+  message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub_;
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
+  image_transport::SubscriberFilter depth_image_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub_;
+  
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>> time_sync_;
   
   double moving_flow_length_;
   double flow_length_diff_;

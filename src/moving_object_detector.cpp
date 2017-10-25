@@ -1,13 +1,10 @@
 #include "moving_object_detector.h"
 #include "flow_3d.h"
 
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
+
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
-#include <image_transport/subscriber_filter.h>
-#include <image_transport/camera_common.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -54,21 +51,16 @@ MovingObjectDetector::MovingObjectDetector() {
   
   point_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("clustered_point_cloud", 10);
   
-  message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub;
-  message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub;
-  image_transport::ImageTransport image_transport(node_handle_);
-  image_transport::SubscriberFilter depth_image_sub;
-  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub;
-  
+  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle_);
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
   
-  camera_transform_sub.subscribe(node_handle_, "camera_transform", 10);
-  optical_flow_sub.subscribe(node_handle_, "optical_flow", 10); // optical flowはrectified imageで計算すること
-  depth_image_sub.subscribe(image_transport, depth_image_topic, 10);
-  depth_image_info_sub.subscribe(node_handle_, depth_image_info_topic, 10);
-  message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo> sync(camera_transform_sub, optical_flow_sub, depth_image_sub, depth_image_info_sub, 10);
-  sync.registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
+  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 10);
+  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 10); // optical flowはrectified imageで計算すること
+  depth_image_sub_.subscribe(*image_transport_, depth_image_topic, 10);
+  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 10);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 10);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
 }
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
