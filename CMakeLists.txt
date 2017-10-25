@@ -11,12 +11,16 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   viso2_ros
   image_geometry
-  pcl_ros
   pcl_conversions
+  geometry_msgs
+  opencv_apps
+  image_transport
+  tf2
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV)
 
 
@@ -108,8 +112,8 @@ find_package(OpenCV)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_ros pcl_conversions
-  DEPENDS OpenCV Boost
+  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs
+  DEPENDS OpenCV
 )
 
 ###########
@@ -140,6 +144,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node 
   src/moving_object_detector_node.cpp
   src/moving_object_detector.cpp
+  src/flow_3d.cpp
 )
 
 ## Rename C++ executable without prefix
