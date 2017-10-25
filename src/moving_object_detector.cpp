@@ -163,6 +163,8 @@ bool MovingObjectDetector::getPoint3D_internal(int u, int v, const sensor_msgs::
   float constant_y = unit_scaling / camera_model_.fy();
   
   const T* depth_row = reinterpret_cast<const T*>(&(depth_image.data[0]));
+  int row_step = depth_image.step / sizeof(T);
+  depth_row += v * row_step;
   T depth = depth_row[u];
   
   // Missing points denoted by NaNs
