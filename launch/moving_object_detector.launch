@@ -7,7 +7,6 @@
     <remap from="image_mono" to="/zed/depth/depth_registered"/>
     <remap from="camera_info" to="/zed/depth/camera_info"/>
     <remap from="image_rect" to="/zed/depth/depth_registered_rect"/>
-    <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
@@ -25,6 +24,5 @@
     <remap from="depth_image_rectified" to="/zed/depth/depth_registered_rect"/>
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow" to="/optical_flow/flows"/>
-    <param name="image_transport" value="compressed"/>
   </node>
 </launch>
