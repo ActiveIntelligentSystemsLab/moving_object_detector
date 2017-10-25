@@ -47,10 +47,10 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
-  node_handle_.param("~moving_flow_length", moving_flow_length_, 1.0);
-  node_handle_.param("~flow_size_diff", flow_size_diff_, 1.0);
-  node_handle_.param("~flow_start_diff", flow_start_diff_, 1.0);
-  node_handle_.param("~flow_radian_diff", flow_radian_diff_, 1.0);
+  node_handle_.param("~moving_flow_length", moving_flow_length_, 0.05);
+  node_handle_.param("~flow_length_diff", flow_length_diff_, 0.05);
+  node_handle_.param("~flow_start_diff", flow_start_diff_, 0.10);
+  node_handle_.param("~flow_radian_diff", flow_radian_diff_, 0.17);
   
   point_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("clustered_point_cloud", 10);
   
@@ -113,7 +113,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           for (auto& clustered_flow : *cluster_it) {
             if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
               continue;
-            if (flow_size_diff_ < abs(flow3d.length() - clustered_flow.length()))
+            if (flow_length_diff_ < abs(flow3d.length() - clustered_flow.length()))
               continue;
             if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
               continue;

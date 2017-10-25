@@ -17,8 +17,8 @@ private:
   ros::NodeHandle node_handle_;
   ros::Publisher point_cloud_pub_;
   
-  double moving_flow_size_;
-  double flow_size_diff_;
+  double moving_flow_length_;
+  double flow_length_diff_;
   double flow_start_diff_;
   double flow_radian_diff_;
   
