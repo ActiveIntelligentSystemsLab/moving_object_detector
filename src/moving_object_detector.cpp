@@ -47,10 +47,10 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
-  node_handle_.param("~moving_flow_length", moving_flow_length_, 0.05);
-  node_handle_.param("~flow_length_diff", flow_length_diff_, 0.05);
-  node_handle_.param("~flow_start_diff", flow_start_diff_, 0.10);
-  node_handle_.param("~flow_radian_diff", flow_radian_diff_, 0.17);
+  ros::param::param("~moving_flow_length", moving_flow_length_, 0.05);
+  ros::param::param("~flow_length_diff", flow_length_diff_, 0.05);
+  ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
+  ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   
   point_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("clustered_point_cloud", 10);
   
