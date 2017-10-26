@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" value="true"/>
+  
+  <node name="bag_play" pkg="rosbag" type="play" args="-r 0.1 -l --clock /home/aisl/research/research_storage/2017-10-26/zed_603_camera_fixed_person_walk_2017-10-26-14-01-49.bag"/>
+  <node name="depth_image_rectifier" pkg="nodelet" type="nodelet" args="standalone image_proc/rectify">
+    <remap from="image_mono" to="/depth/depth_registered"/>
+    <remap from="camera_info" to="/depth/camera_info"/>
+    <remap from="image_rect" to="/depth/depth_registered_rect"/>
+  </node>
+  
+  <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
+    <remap from="stereo" to="/"/>
+    <remap from="image" to="image_rect_color"/>
+    <param name="image_transport" value="compressed"/>
+  </node>
+  
+  <node name="optical_flow" pkg="opencv_apps" type="fback_flow">
+    <remap from="image" to="/left/image_rect_color"/>
+    <param name="image_transport" value="compressed"/>
+  </node>
+  
+  <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
+    <remap from="depth_image_rectified" to="/depth/depth_registered_rect"/>
+    <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
+    <remap from="optical_flow" to="/optical_flow/flows"/>
+  </node>
+</launch>
