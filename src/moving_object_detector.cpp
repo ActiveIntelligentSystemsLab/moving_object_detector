@@ -66,6 +66,7 @@ MovingObjectDetector::MovingObjectDetector() {
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
 {
   camera_model_.fromCameraInfo(depth_image_info);
+  pcl::PointCloud<pcl::PointXYZI> pcl_point_cloud;
   
   if (first_run_) {
     first_run_ = false;
@@ -92,6 +93,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       
       Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
       ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
+      
+      pcl::PointXYZI pcl_point;
+      pcl_point.x = flow3d.end.getX();
+      pcl_point.y = flow3d.end.getY();
+      pcl_point.z = flow3d.end.getZ();
+      pcl_point.intensity = flow3d.length() * time_between_frames.toSec();
+      pcl_point_cloud.push_back(pcl_point);
+      
+      /*
       if (flow3d.length() < moving_flow_length_ * time_between_frames.toSec())
         continue;
       
@@ -124,8 +134,12 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           }
         }
       }
+      */
+      
+      
     }
     
+    /*
     pcl::PointCloud<pcl::PointXYZI> pcl_point_cloud;
     for (int i = 0; i < clusters.size(); i++) {
       for (auto& clustered_flow : clusters[i]) {
@@ -139,6 +153,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         pcl_point_cloud.push_back(point_clustered);
       }
     }
+    */
+    
+    
     sensor_msgs::PointCloud2 msg_point_cloud;
     pcl::toROSMsg(pcl_point_cloud, msg_point_cloud);
     msg_point_cloud.header.frame_id = depth_image_info->header.frame_id;
