@@ -3,7 +3,11 @@
 <launch>
   <param name="use_sim_time" value="true"/>
   
-  <node name="bag_play" pkg="rosbag" type="play" args="-r 0.1 -l --clock /home/aisl/research/research_storage/2017-10-26/zed_603_camera_fixed_person_walk_2017-10-26-14-01-49.bag"/>
+  <arg name="camera_fixed" default="true"/>
+  <arg if="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_603_camera_fixed_person_walk_2017-10-26-14-01-49.bag"/>
+  <arg unless="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_603_camera_move_person_walk_2017-10-26-14-17-06.bag"/>
+  
+  <node name="bag_play" pkg="rosbag" type="play" args="-r 0.1 -l --clock $(arg bag_file)"/>
   <node name="depth_image_rectifier" pkg="nodelet" type="nodelet" args="standalone image_proc/rectify">
     <remap from="image_mono" to="/depth/depth_registered"/>
     <remap from="camera_info" to="/depth/camera_info"/>
@@ -26,4 +30,7 @@
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow" to="/optical_flow/flows"/>
   </node>
+  
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz"/>
+  <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find moving_object_detector)/rqt/debug_view.perspective"/>
 </launch>
