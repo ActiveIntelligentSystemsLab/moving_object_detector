@@ -8,27 +8,37 @@
   <arg unless="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_603_camera_move_person_walk_2017-10-26-14-17-06.bag"/>
   
   <node name="bag_play" pkg="rosbag" type="play" args="-r 0.1 -l --clock $(arg bag_file)"/>
+  
   <node name="depth_image_rectifier" pkg="nodelet" type="nodelet" args="standalone image_proc/rectify">
-    <remap from="image_mono" to="/depth/depth_registered"/>
-    <remap from="camera_info" to="/depth/camera_info"/>
-    <remap from="image_rect" to="/depth/depth_registered_rect"/>
+    <remap from="image_mono" to="/synchronized/depth/image_registered"/>
+    <remap from="camera_info" to="/synchronized/depth/camera_info"/>
+    <remap from="image_rect" to="/depth_image_rectifier/depth/depth_registered_rect"/>
   </node>
   
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
-    <remap from="stereo" to="/"/>
+    <remap from="stereo" to="/synchronized"/>
     <remap from="image" to="image_rect_color"/>
     <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="optical_flow" pkg="opencv_apps" type="fback_flow">
-    <remap from="image" to="/left/image_rect_color"/>
+    <remap from="image" to="/synchronized/left/image_rect_color"/>
     <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
-    <remap from="depth_image_rectified" to="/depth/depth_registered_rect"/>
+    <remap from="synchronizer_input_depth_image" to="/depth/depth_registered"/>
+    <remap from="synchronizer_input_left_rect_image" to="/left/image_rect_color"/>
+    <remap from="synchronizer_input_right_rect_image" to="/right/image_rect_color"/>
+    
+    <remap from="synchronizer_output_depth_image" to="/synchronized/depth/image_registered"/>
+    <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
+    <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
+    
+    <remap from="depth_image_rectified" to="/depth_image_rectifier/depth/depth_registered_rect"/>
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow" to="/optical_flow/flows"/>
+    <param name="image_transport" value="compressed"/>
   </node>
   
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz"/>
