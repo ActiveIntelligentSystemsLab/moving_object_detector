@@ -24,8 +24,8 @@ private:
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub_;
-  std::shared_ptr<image_transport::ImageTransport> image_transport_;
-  image_transport::SubscriberFilter depth_image_sub_;
+  
+  message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub_;
   
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>> time_sync_;
@@ -50,6 +50,8 @@ private:
   // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
   class InputSynchronizer {
   private:
+    std::shared_ptr<image_transport::ImageTransport> image_transport_;
+    
     image_transport::CameraPublisher depth_image_pub_;
     image_transport::CameraPublisher left_rect_image_pub_;
     image_transport::CameraPublisher right_rect_image_pub_;
@@ -74,7 +76,7 @@ private:
     void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
     
   public:
-    InputSynchronizer(ros::NodeHandle& node_handle, image_transport::ImageTransport& image_transport);
+    InputSynchronizer(ros::NodeHandle& node_handle);
     void publish();
   };
   
