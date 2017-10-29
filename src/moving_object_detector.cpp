@@ -55,12 +55,22 @@ MovingObjectDetector::MovingObjectDetector() {
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
   
-  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 10);
-  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 10); // optical flowはrectified imageで計算すること
-  depth_image_sub_.subscribe(*image_transport_, depth_image_topic, 10);
-  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 10);
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 10);
+  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 2);
+  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 2); // optical flowはrectified imageで計算すること
+  depth_image_sub_.subscribe(*image_transport_, depth_image_topic, 2);
+  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 2);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 2);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
+  
+  input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_, *image_transport_);
+  
+  // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期起動時に2フレーム分のデータを送信する
+  ros::Duration(0.5).sleep();
+  ros::spinOnce();
+  input_synchronizer_->publish();
+  ros::Duration(0.5).sleep();
+  ros::spinOnce();
+  input_synchronizer_->publish();
 }
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
@@ -165,6 +175,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   }
   depth_image_previous_ = *depth_image_now;
   time_stamp_previous_ = camera_transform->header.stamp;
+  
+  input_synchronizer_->publish();
 }
 
 template<typename T>
@@ -210,4 +222,37 @@ bool MovingObjectDetector::getPoint3D(int u, int v, const sensor_msgs::Image& de
     ROS_ERROR("unsupported encoding [%s]", depth_image.encoding.c_str());
     return false;
   }
+}
+
+MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node_handle, image_transport::ImageTransport& image_transport)
+{
+  depth_image_pub_ = image_transport.advertiseCamera("synchronizer_output_depth_image", 1);
+  left_rect_image_pub_ = image_transport.advertiseCamera("synchronizer_output_left_rect_image", 1);
+  right_rect_image_pub_ = image_transport.advertiseCamera("synchronizer_output_right_rect_image", 1);
+  
+  depth_image_sub_.subscribe(node_handle, "synchronizer_input_depth_image", 1);
+  depth_info_sub_.subscribe(node_handle, "synchronizer_input_depth_image_info", 1);
+  left_rect_image_sub_.subscribe(image_transport, "synchronizer_input_left_rect_image", 1);
+  left_rect_info_sub_.subscribe(node_handle, "synchronizer_input_left_rect_info", 1);
+  right_rect_image_sub_.subscribe(image_transport, "synchronizer_input_right_rect_image", 1);
+  right_rect_info_sub_.subscribe(node_handle, "synchronizer_input_right_rect_info", 1);
+  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 1);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6));
+}
+
+void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
+{
+  depth_image_ = *depth_image;
+  depth_image_info_ = *depth_image_info;
+  left_rect_image_ = *left_rect_image;
+  left_rect_info_ = *left_rect_info;
+  right_rect_image_ = *right_rect_image;
+  right_rect_info_ = *right_rect_info;
+}
+
+void MovingObjectDetector::InputSynchronizer::publish()
+{
+  depth_image_pub_.publish(depth_image_, depth_image_info_);
+  left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
+  right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
 }

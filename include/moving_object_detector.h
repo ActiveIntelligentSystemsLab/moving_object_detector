@@ -46,6 +46,39 @@ private:
   template<typename T>
   bool getPoint3D_internal(int, int, const sensor_msgs::Image&, tf2::Vector3&);
   bool getPoint3D(int, int, const sensor_msgs::Image&, tf2::Vector3&);
+  
+  // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
+  class InputSynchronizer {
+  private:
+    image_transport::CameraPublisher depth_image_pub_;
+    image_transport::CameraPublisher left_rect_image_pub_;
+    image_transport::CameraPublisher right_rect_image_pub_;
+    
+    message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_; // depth imageのフォーマットはcompress transportに対応していないため，image_transportは使用しない
+    message_filters::Subscriber<sensor_msgs::CameraInfo> depth_info_sub_;
+    image_transport::SubscriberFilter left_rect_image_sub_;
+    message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
+    image_transport::SubscriberFilter right_rect_image_sub_;
+    message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
+    
+    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> DataTimeSynchronizer;
+    std::shared_ptr<DataTimeSynchronizer> time_sync_;
+    
+    sensor_msgs::Image depth_image_;
+    sensor_msgs::CameraInfo depth_image_info_;
+    sensor_msgs::Image left_rect_image_;
+    sensor_msgs::CameraInfo left_rect_info_;
+    sensor_msgs::Image right_rect_image_;
+    sensor_msgs::CameraInfo right_rect_info_;
+    
+    void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
+    
+  public:
+    InputSynchronizer(ros::NodeHandle& node_handle, image_transport::ImageTransport& image_transport);
+    void publish();
+  };
+  
+  std::shared_ptr<InputSynchronizer> input_synchronizer_;
 };
 
 #endif
