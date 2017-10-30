@@ -4,8 +4,8 @@
   <param name="use_sim_time" value="true"/>
   
   <arg name="camera_fixed" default="true"/>
-  <arg if="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_603_camera_fixed_person_walk_2017-10-26-14-01-49.bag"/>
-  <arg unless="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_603_camera_move_person_walk_2017-10-26-14-17-06.bag"/>
+  <arg if="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_503_camera_fixed_person_walk_2017-10-26-14-01-49.bag"/>
+  <arg unless="$(arg camera_fixed)" name="bag_file" value="/home/aisl/research/research_storage/2017-10-26/zed_503_camera_move_person_walk_2017-10-26-14-17-06.bag"/>
   
   <node name="bag_play" pkg="rosbag" type="play" args="-l --clock $(arg bag_file)"/>
   
