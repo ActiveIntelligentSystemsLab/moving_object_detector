@@ -12,7 +12,7 @@
   <node name="depth_image_rectifier" pkg="nodelet" type="nodelet" args="standalone image_proc/rectify">
     <remap from="image_mono" to="/synchronized/depth/image_registered"/>
     <remap from="camera_info" to="/synchronized/depth/camera_info"/>
-    <remap from="image_rect" to="/depth_image_rectifier/depth/depth_registered_rect"/>
+    <remap from="image_rect" to="/synchronized/depth/image_registered_rect"/>
   </node>
   
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
@@ -36,7 +36,7 @@
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
     
-    <remap from="depth_image_rectified" to="/depth_image_rectifier/depth/depth_registered_rect"/>
+    <remap from="depth_image_rectified" to="/synchronized/depth/image_registered_rect"/>
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow" to="/optical_flow/flows"/>
     <param name="image_transport" value="compressed"/>
