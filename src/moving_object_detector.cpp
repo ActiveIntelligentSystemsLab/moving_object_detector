@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
+#include <cmath>
 
 // depth_image_procパッケージより
 template<typename T> struct DepthTraits {};
@@ -80,6 +81,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_now.y = flow.point.y + flow.velocity.y;
       uv_previous.x = flow.point.x;
       uv_previous.y = flow.point.y;
+      
+      if(std::isnan(uv_now.x))
+        continue;
+      if(std::isnan(uv_now.y))
+        continue;
       
       tf2::Vector3 point3d_now, point3d_previous;
       if(!getPoint3D(uv_now.x, uv_now.y, *depth_image_now, point3d_now))
