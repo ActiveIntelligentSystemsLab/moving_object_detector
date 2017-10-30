@@ -22,7 +22,14 @@
     <param name="image_transport" value="compressed"/>
   </node>
   
+  <!--
   <node name="optical_flow" pkg="opencv_apps" type="fback_flow">
+    <remap from="image" to="/synchronized/left/image_rect_color"/>
+    <param name="image_transport" value="compressed"/>
+  </node>
+  -->
+  
+  <node name="optical_flow" pkg="opencv_apps" type="simple_flow">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
     <param name="image_transport" value="compressed"/>
   </node>
