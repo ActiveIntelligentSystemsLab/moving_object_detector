@@ -230,13 +230,13 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node
   std::string subscribe_depth_image_topic = node_handle.resolveName("synchronizer_input_depth_image");
   std::string subscribe_left_rect_image_topic = node_handle.resolveName("synchronizer_input_left_rect_image");
   std::string subscribe_right_rect_image_topic = node_handle.resolveName("synchronizer_input_right_rect_image");
-  depth_image_sub_.subscribe(node_handle, subscribe_depth_image_topic, 1);
-  depth_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 1);
-  left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 1);
-  left_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 1);
-  right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 1);
-  right_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 1);
-  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 1);
+  depth_image_sub_.subscribe(node_handle, subscribe_depth_image_topic, 10);
+  depth_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 10);
+  left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 10);
+  left_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
+  right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
+  right_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
+  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 10);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6));
 }
 
