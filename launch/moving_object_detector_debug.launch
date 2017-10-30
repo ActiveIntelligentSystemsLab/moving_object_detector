@@ -26,6 +26,7 @@
     <param name="image_transport" value="compressed"/>
   </node>
   
+  <!-- This is executed from KDevelop
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
     <remap from="synchronizer_input_depth_image" to="/depth/depth_registered"/>
     <remap from="synchronizer_input_left_rect_image" to="/left/image_rect_color"/>
@@ -40,6 +41,7 @@
     <remap from="optical_flow" to="/optical_flow/flows"/>
     <param name="image_transport" value="compressed"/>
   </node>
+  -->
   
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz"/>
   <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find moving_object_detector)/rqt/debug_view.perspective"/>
