@@ -63,14 +63,6 @@ MovingObjectDetector::MovingObjectDetector() {
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
-  
-  // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期起動時に2フレーム分のデータを送信する
-  ros::Duration(0.5).sleep();
-  ros::spinOnce();
-  input_synchronizer_->publish();
-  ros::Duration(0.5).sleep();
-  ros::spinOnce();
-  input_synchronizer_->publish();
 }
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
@@ -250,12 +242,20 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node
 
 void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
 {
+  static int count = 0;
+  
   depth_image_ = *depth_image;
   depth_image_info_ = *depth_image_info;
   left_rect_image_ = *left_rect_image;
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
   right_rect_info_ = *right_rect_info;
+  
+  // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
+  if (count < 2) {
+    publish();
+    count++;
+  }
 }
 
 void MovingObjectDetector::InputSynchronizer::publish()
