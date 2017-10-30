@@ -254,6 +254,9 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   if (count < 10) {
     publish();
     count++;
+  } else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
+    publish();
+    count++;
   }
 }
 
@@ -262,4 +265,6 @@ void MovingObjectDetector::InputSynchronizer::publish()
   depth_image_pub_.publish(depth_image_, depth_image_info_);
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
+  
+  last_publish_time_ = ros::Time::now();
 }
