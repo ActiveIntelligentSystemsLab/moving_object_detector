@@ -13,6 +13,7 @@
     <remap from="image_mono" to="/synchronized/depth/image_registered"/>
     <remap from="camera_info" to="/synchronized/depth/camera_info"/>
     <remap from="image_rect" to="/synchronized/depth/image_registered_rect"/>
+    <param name="queue_size" value="1"/>
   </node>
   
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">

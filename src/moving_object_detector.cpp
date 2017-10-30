@@ -54,11 +54,11 @@ MovingObjectDetector::MovingObjectDetector() {
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
   
-  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 2);
-  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 2); // optical flowはrectified imageで計算すること
-  depth_image_sub_.subscribe(node_handle_, depth_image_topic, 2);
-  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 2);
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 2);
+  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
+  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 1); // optical flowはrectified imageで計算すること
+  depth_image_sub_.subscribe(node_handle_, depth_image_topic, 1);
+  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 1);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 1);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
@@ -251,12 +251,11 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   right_rect_info_ = *right_rect_info;
   
   // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
-  if (count < 10) {
+  if (count < 2) {
     publish();
     count++;
   } else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
     publish();
-    count++;
   }
 }
 
