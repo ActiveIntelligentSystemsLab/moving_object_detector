@@ -1,7 +1,6 @@
 #include "moving_object_detector.h"
 #include "flow_3d.h"
 
-
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
@@ -252,7 +251,7 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   right_rect_info_ = *right_rect_info;
   
   // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
-  if (count < 2) {
+  if (count < 10) {
     publish();
     count++;
   }
