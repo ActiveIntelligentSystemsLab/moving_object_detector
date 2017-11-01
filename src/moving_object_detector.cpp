@@ -77,10 +77,10 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     for (int i = 0; i < optical_flow->flow.size(); i++) {
       opencv_apps::Flow flow = optical_flow->flow[i];
       cv::Point2d uv_now, uv_previous;
-      uv_now.x = flow.point.x + flow.velocity.x;
-      uv_now.y = flow.point.y + flow.velocity.y;
-      uv_previous.x = flow.point.x;
-      uv_previous.y = flow.point.y;
+      uv_now.x = flow.point.x;
+      uv_now.y = flow.point.y;
+      uv_previous.x = flow.point.x - flow.velocity.x;
+      uv_previous.y = flow.point.y - flow.velocity.y;
       
       if(std::isnan(uv_now.x))
         continue;
