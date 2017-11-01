@@ -82,9 +82,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_previous.x = flow.point.x - flow.velocity.x;
       uv_previous.y = flow.point.y - flow.velocity.y;
       
-      if(std::isnan(uv_now.x))
+      if(std::isnan(flow.velocity.x))
         continue;
-      if(std::isnan(uv_now.y))
+      if(std::isnan(flow.velocity.y))
         continue;
       
       tf2::Vector3 point3d_now, point3d_previous;
