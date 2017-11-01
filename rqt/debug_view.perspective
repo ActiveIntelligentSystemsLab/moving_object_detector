@@ -129,7 +129,7 @@
                 }, 
                 "mouse_pub_topic": {
                   "type": "repr", 
-                  "repr": "u'/synchronized/depth/image_registered_rect_mouse_left'"
+                  "repr": "u'/synchronized/depth/image_registered_mouse_left'"
                 }, 
                 "toolbar_hidden": {
                   "type": "repr", 
@@ -145,7 +145,7 @@
                 }, 
                 "topic": {
                   "type": "repr", 
-                  "repr": "u'/synchronized/depth/image_registered_rect'"
+                  "repr": "u'/synchronized/depth/image_registered'"
                 }, 
                 "publish_click_location": {
                   "type": "repr", 
