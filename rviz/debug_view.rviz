@@ -58,7 +58,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: RGB8
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -73,7 +73,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.00999999978
       Style: Flat Squares
-      Topic: /clustered_point_cloud
+      Topic: /flow3d
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -102,7 +102,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.11376333
+      Distance: 3.86381078
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -110,17 +110,17 @@ Visualization Manager:
         Value: false
       Focal Point:
         X: 0
-        Y: 0
+        Y: 0.0599999987
         Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: -1.56979632
-      Target Frame: <Fixed Frame>
+      Pitch: -1.35479653
+      Target Frame: zed_center
       Value: Orbit (rviz)
-      Yaw: 4.75356579
+      Yaw: 4.73318291
     Saved: ~
 Window Geometry:
   "&Displays":
@@ -138,5 +138,5 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Width: 1195
-  X: 717
+  X: 713
   Y: 0

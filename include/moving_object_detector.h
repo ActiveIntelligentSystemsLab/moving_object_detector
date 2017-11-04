@@ -20,7 +20,7 @@ public:
 private:
   ros::NodeHandle node_handle_;
   
-  ros::Publisher point_cloud_pub_;
+  ros::Publisher flow3d_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub_;
@@ -34,6 +34,7 @@ private:
   double flow_length_diff_;
   double flow_start_diff_;
   double flow_radian_diff_;
+  double flow_axis_max_;
   
   image_geometry::PinholeCameraModel camera_model_;
   sensor_msgs::Image depth_image_previous_;

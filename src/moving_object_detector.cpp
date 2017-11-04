@@ -49,8 +49,9 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.05);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
+  ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
   
-  point_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("clustered_point_cloud", 10);
+  flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -68,7 +69,7 @@ MovingObjectDetector::MovingObjectDetector() {
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
 {
   camera_model_.fromCameraInfo(depth_image_info);
-  pcl::PointCloud<pcl::PointXYZI> pcl_point_cloud;
+  pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
   
   if (first_run_) {
     first_run_ = false;
@@ -101,12 +102,47 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
       ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
       
-      pcl::PointXYZI pcl_point;
+      pcl::PointXYZRGB pcl_point;
       pcl_point.x = flow3d.end.getX();
       pcl_point.y = flow3d.end.getY();
       pcl_point.z = flow3d.end.getZ();
-      pcl_point.intensity = flow3d.length() * time_between_frames.toSec();
-      pcl_point_cloud.push_back(pcl_point);
+      
+      tf2::Vector3 flow3d_vector = flow3d.distanceVector();
+      uint32_t red, blue, green; 
+      
+      double flow_x_per_second = flow3d_vector.getX() / time_between_frames.toSec();
+      if (std::abs(flow_x_per_second) > flow_axis_max_) {
+        if (flow_x_per_second < 0)
+          red = 0;
+        else
+          red = 254;
+      } else {
+        red = flow_x_per_second / flow_axis_max_ * 127 + 127;
+      }
+      
+      double flow_y_per_second = flow3d_vector.getY() / time_between_frames.toSec();
+      if (std::abs(flow_y_per_second) > flow_axis_max_) {
+        if (flow_y_per_second < 0)
+          green = 0;
+        else
+          green = 254;
+      } else {
+        green = flow_y_per_second / flow_axis_max_ * 127 + 127;
+      }
+      
+      double flow_z_per_second = flow3d_vector.getZ() / time_between_frames.toSec();
+      if (std::abs(flow_z_per_second) > flow_axis_max_) {
+        if (flow_z_per_second < 0)
+          blue = 0;
+        else
+          blue = 254;
+      } else {
+        blue = flow_z_per_second / flow_axis_max_ * 127 + 127;
+      }
+
+      uint32_t rgb = red << 16 | green << 8 | blue;
+      pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
+      flow3d_pcl.push_back(pcl_point);
       
       /*
       if (flow3d.length() < moving_flow_length_ * time_between_frames.toSec())
@@ -164,11 +200,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     
     
     sensor_msgs::PointCloud2 msg_point_cloud;
-    pcl::toROSMsg(pcl_point_cloud, msg_point_cloud);
+    pcl::toROSMsg(flow3d_pcl, msg_point_cloud);
     msg_point_cloud.header.frame_id = depth_image_info->header.frame_id;
     msg_point_cloud.header.stamp = depth_image_info->header.stamp;
     
-    point_cloud_pub_.publish(msg_point_cloud);
+    flow3d_pub_.publish(msg_point_cloud);
   }
   depth_image_previous_ = *depth_image_now;
   time_stamp_previous_ = camera_transform->header.stamp;
