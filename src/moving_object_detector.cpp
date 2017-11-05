@@ -52,6 +52,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
+  cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -144,8 +145,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
       flow3d_pcl.push_back(pcl_point);
       
-      /*
-      if (flow3d.length() < moving_flow_length_ * time_between_frames.toSec())
+      if (flow3d.length() < moving_flow_length_ / time_between_frames.toSec())
         continue;
       
       // まだクラスターが一つも存在していなければ
@@ -159,7 +159,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           for (auto& clustered_flow : *cluster_it) {
             if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
               continue;
-            if (flow_length_diff_ < abs(flow3d.length() - clustered_flow.length()))
+            if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
               continue;
             if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
               continue;
@@ -177,13 +177,14 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           }
         }
       }
-      */
-      
-      
     }
+    sensor_msgs::PointCloud2 flow3d_msg;
+    pcl::toROSMsg(flow3d_pcl, flow3d_msg);
+    flow3d_msg.header.frame_id = depth_image_info->header.frame_id;
+    flow3d_msg.header.stamp = depth_image_info->header.stamp;
+    flow3d_pub_.publish(flow3d_msg);
     
-    /*
-    pcl::PointCloud<pcl::PointXYZI> pcl_point_cloud;
+    pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
     for (int i = 0; i < clusters.size(); i++) {
       for (auto& clustered_flow : clusters[i]) {
         pcl::PointXYZI point_clustered;
@@ -193,18 +194,14 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         point_clustered.z = clustered_flow.end.getZ();
         point_clustered.intensity = i;
         
-        pcl_point_cloud.push_back(point_clustered);
+        cluster_pcl.push_back(point_clustered);
       }
     }
-    */
-    
-    
-    sensor_msgs::PointCloud2 msg_point_cloud;
-    pcl::toROSMsg(flow3d_pcl, msg_point_cloud);
-    msg_point_cloud.header.frame_id = depth_image_info->header.frame_id;
-    msg_point_cloud.header.stamp = depth_image_info->header.stamp;
-    
-    flow3d_pub_.publish(msg_point_cloud);
+    sensor_msgs::PointCloud2 cluster_msg;
+    pcl::toROSMsg(cluster_pcl, cluster_msg);
+    cluster_msg.header.frame_id = depth_image_info->header.frame_id;
+    cluster_msg.header.stamp = depth_image_info->header.stamp;
+    cluster_pub_.publish(cluster_msg);
   }
   depth_image_previous_ = *depth_image_now;
   time_stamp_previous_ = camera_transform->header.stamp;

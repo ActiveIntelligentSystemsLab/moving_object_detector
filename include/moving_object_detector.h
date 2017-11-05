@@ -21,6 +21,7 @@ private:
   ros::NodeHandle node_handle_;
   
   ros::Publisher flow3d_pub_;
+  ros::Publisher cluster_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub_;
