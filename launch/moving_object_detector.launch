@@ -8,8 +8,9 @@
     <remap from="image" to="image_rect_color"/>
   </node>
   
-  <node name="optical_flow" pkg="opencv_apps" type="fback_flow">
+  <node name="optical_flow" pkg="opencv_apps" type="simple_flow">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
+    <param name="scale" value="24"/>
   </node>
   
   <!-- Kdevelopから実行するのでコメントアウト
