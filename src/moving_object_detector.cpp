@@ -58,11 +58,11 @@ MovingObjectDetector::MovingObjectDetector() {
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
   
-  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
-  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 1); // optical flowはrectified imageで計算すること
-  depth_image_sub_.subscribe(node_handle_, depth_image_topic, 1);
-  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 1);
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 1);
+  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 2);
+  optical_flow_sub_.subscribe(node_handle_, "optical_flow", 2); // optical flowはrectified imageで計算すること
+  depth_image_sub_.subscribe(node_handle_, depth_image_topic, 2);
+  depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 2);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>>(camera_transform_sub_, optical_flow_sub_, depth_image_sub_, depth_image_info_sub_, 2);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
@@ -70,6 +70,9 @@ MovingObjectDetector::MovingObjectDetector() {
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
 {
+  // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
+  input_synchronizer_->publish();
+  
   ros::Time start_process = ros::Time::now();
   camera_model_.fromCameraInfo(depth_image_info);
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
@@ -225,8 +228,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   }
   depth_image_previous_ = *depth_image_now;
   time_stamp_previous_ = camera_transform->header.stamp;
-  
-  input_synchronizer_->publish();
   
   ros::Duration process_time = ros::Time::now() - start_process;
   ROS_INFO("process time: %f", process_time.toSec());
