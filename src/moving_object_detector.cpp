@@ -70,6 +70,7 @@ MovingObjectDetector::MovingObjectDetector() {
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowArrayStampedConstPtr& optical_flow, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info)
 {
+  ros::Time start_process = ros::Time::now();
   camera_model_.fromCameraInfo(depth_image_info);
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
   
@@ -226,6 +227,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   time_stamp_previous_ = camera_transform->header.stamp;
   
   input_synchronizer_->publish();
+  
+  ros::Duration process_time = ros::Time::now() - start_process;
+  ROS_INFO("process time: %f", process_time.toSec());
 }
 
 template<typename T>
