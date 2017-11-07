@@ -155,7 +155,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       } else {
         bool already_clustered = false;
         std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
-        for (auto cluster_it = clusters.begin();  cluster_it != clusters.end(); cluster_it++) {
+        for (int i = 0; i < clusters.size(); i++) {
+          // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
+          auto cluster_it = clusters.begin() + i;
           for (auto& clustered_flow : *cluster_it) {
             if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
               continue;
@@ -168,7 +170,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
               cluster_it->push_back(flow3d);
               already_clustered = true;
               belonged_cluster_it = cluster_it;
-            } 
+            } else {
+              belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
+              clusters.erase(cluster_it);
+              i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
+            }
             
             break;
           }
