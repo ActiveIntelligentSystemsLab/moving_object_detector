@@ -45,7 +45,7 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
-  ros::param::param("~moving_flow_length", moving_flow_length_, 0.05);
+  ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.05);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
@@ -145,7 +145,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
       flow3d_pcl.push_back(pcl_point);
       
-      if (flow3d.length() < moving_flow_length_ / time_between_frames.toSec())
+      if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
         continue;
       
       // まだクラスターが一つも存在していなければ
@@ -168,13 +168,16 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
               cluster_it->push_back(flow3d);
               already_clustered = true;
               belonged_cluster_it = cluster_it;
-            } else {
-              belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
-              clusters.erase(cluster_it);
-            }
+            } 
             
             break;
           }
+        }
+        
+        // どのクラスタにも振り分けられなければ，新しいクラスタを作成
+        if (!already_clustered) {
+          clusters.emplace_back();
+          clusters.back().push_back(flow3d);
         }
       }
     }
