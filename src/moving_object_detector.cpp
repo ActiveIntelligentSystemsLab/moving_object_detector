@@ -46,10 +46,11 @@ MovingObjectDetector::MovingObjectDetector() {
   first_run_ = true;
   
   ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
-  ros::param::param("~flow_length_diff", flow_length_diff_, 0.05);
+  ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
+  ros::param::param("~cluster_element_num", cluster_element_num_, 5);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
@@ -192,6 +193,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     flow3d_msg.header.frame_id = depth_image_info->header.frame_id;
     flow3d_msg.header.stamp = depth_image_info->header.stamp;
     flow3d_pub_.publish(flow3d_msg);
+    
+    // 要素数の少なすぎるクラスタの削除
+    for (int i = 0; i < clusters.size(); i++) {
+      auto cluster_it = clusters.begin() + i;
+      if (cluster_it->size() < cluster_element_num_) {
+        clusters.erase(cluster_it);
+        i--;
+      }
+    }
     
     pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
     for (int i = 0; i < clusters.size(); i++) {
