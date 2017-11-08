@@ -1,5 +1,6 @@
 #include "moving_object_detector.h"
 #include "flow_3d.h"
+#include "moving_object_detector/MatchPointArray.h"
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
@@ -54,6 +55,7 @@ MovingObjectDetector::MovingObjectDetector() {
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
+  debug_pub_ = node_handle_.advertise<moving_object_detector::MatchPointArray>("debug", 10);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -81,18 +83,26 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     first_run_ = false;
   } else {
     std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
+    moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
+    
     for (int i = 0; i < optical_flow->flow.size(); i++) {
+      moving_object_detector::MatchPoint match_point;
+      
       opencv_apps::Flow flow = optical_flow->flow[i];
       cv::Point2d uv_now, uv_previous;
+      if(std::isnan(flow.velocity.x))
+        continue;
+      if(std::isnan(flow.velocity.y))
+        continue;
       uv_now.x = flow.point.x;
       uv_now.y = flow.point.y;
       uv_previous.x = flow.point.x - flow.velocity.x;
       uv_previous.y = flow.point.y - flow.velocity.y;
       
-      if(std::isnan(flow.velocity.x))
-        continue;
-      if(std::isnan(flow.velocity.y))
-        continue;
+      match_point.now_u = uv_now.x;
+      match_point.now_v = uv_now.y;
+      match_point.prev_u = uv_previous.x;
+      match_point.prev_v = uv_previous.y;
       
       tf2::Vector3 point3d_now, point3d_previous;
       if(!getPoint3D(uv_now.x, uv_now.y, *depth_image_now, point3d_now))
@@ -107,6 +117,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       
       Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
       ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
+      
+      match_point.now_x = flow3d.start.getX();
+      match_point.now_y = flow3d.start.getY();
+      match_point.now_z = flow3d.start.getZ();
+      match_point.prev_x = flow3d.end.getX();
+      match_point.prev_y = flow3d.end.getY();
+      match_point.prev_z = flow3d.end.getZ();
+      
+      debug_msg.match_point_array.push_back(match_point);
       
       pcl::PointXYZRGB pcl_point;
       pcl_point.x = flow3d.end.getX();
@@ -153,36 +172,30 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
         continue;
       
-      // まだクラスターが一つも存在していなければ
-      if (clusters.size() <= 0) {
-        clusters.emplace_back();
-        clusters[0].push_back(flow3d);
-      } else {
-        bool already_clustered = false;
-        std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
-        for (int i = 0; i < clusters.size(); i++) {
-          // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
-          auto cluster_it = clusters.begin() + i;
-          for (auto& clustered_flow : *cluster_it) {
-            if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
-              continue;
-            if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
-              continue;
-            if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
-              continue;
-            
-            if (!already_clustered) {
-              cluster_it->push_back(flow3d);
-              already_clustered = true;
-              belonged_cluster_it = cluster_it;
-            } else {
-              belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
-              clusters.erase(cluster_it);
-              i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
-            }
-            
-            break;
+      bool already_clustered = false;
+      std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
+      for (int i = 0; i < clusters.size(); i++) {
+        // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
+        auto cluster_it = clusters.begin() + i;
+        for (auto& clustered_flow : *cluster_it) {
+          if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
+            continue;
+          if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
+            continue;
+          if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
+            continue;
+          
+          if (!already_clustered) {
+            cluster_it->push_back(flow3d);
+            already_clustered = true;
+            belonged_cluster_it = cluster_it;
+          } else {
+            belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
+            clusters.erase(cluster_it);
+            i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
           }
+          
+          break;
         }
         
         // どのクラスタにも振り分けられなければ，新しいクラスタを作成
@@ -192,6 +205,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         }
       }
     }
+    if (debug_pub_.getNumSubscribers() > 0) {
+      debug_msg.header.stamp = depth_image_info->header.stamp;
+      debug_pub_.publish(debug_msg);
+    }
+    
     sensor_msgs::PointCloud2 flow3d_msg;
     pcl::toROSMsg(flow3d_pcl, flow3d_msg);
     flow3d_msg.header.frame_id = depth_image_info->header.frame_id;

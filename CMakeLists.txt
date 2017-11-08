@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   tf2
   tf2_geometry_msgs
+  message_generation
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,11 +56,11 @@ find_package(OpenCV)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  MatchPoint.msg
+  MatchPointArray.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -75,10 +77,10 @@ find_package(OpenCV)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -112,7 +114,7 @@ find_package(OpenCV)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs
+  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs
   DEPENDS OpenCV
 )
 
