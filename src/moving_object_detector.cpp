@@ -86,8 +86,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
     for (int i = 0; i < optical_flow->flow.size(); i++) {
-      moving_object_detector::MatchPoint match_point;
-      
       opencv_apps::Flow flow = optical_flow->flow[i];
       cv::Point2d uv_now, uv_previous;
       if(std::isnan(flow.velocity.x))
@@ -99,10 +97,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_previous.x = flow.point.x - flow.velocity.x;
       uv_previous.y = flow.point.y - flow.velocity.y;
       
-      match_point.now_u = uv_now.x;
-      match_point.now_v = uv_now.y;
-      match_point.prev_u = uv_previous.x;
-      match_point.prev_v = uv_previous.y;
+
       
       tf2::Vector3 point3d_now, point3d_previous;
       if(!getPoint3D(uv_now.x, uv_now.y, *depth_image_now, point3d_now))
@@ -115,17 +110,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       tf2::fromMsg(*camera_transform, tf_previous2now);
       tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
       
-      Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now);
+      Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, uv_previous, uv_now);
       ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
-      
-      match_point.now_x = flow3d.start.getX();
-      match_point.now_y = flow3d.start.getY();
-      match_point.now_z = flow3d.start.getZ();
-      match_point.prev_x = flow3d.end.getX();
-      match_point.prev_y = flow3d.end.getY();
-      match_point.prev_z = flow3d.end.getZ();
-      
-      debug_msg.match_point_array.push_back(match_point);
       
       pcl::PointXYZRGB pcl_point;
       pcl_point.x = flow3d.end.getX();
@@ -205,10 +191,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         clusters.back().push_back(flow3d);
       }
     }
-    if (debug_pub_.getNumSubscribers() > 0) {
-      debug_msg.header.stamp = depth_image_info->header.stamp;
-      debug_pub_.publish(debug_msg);
-    }
     
     sensor_msgs::PointCloud2 flow3d_msg;
     pcl::toROSMsg(flow3d_pcl, flow3d_msg);
@@ -236,8 +218,32 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         point_clustered.intensity = i;
         
         cluster_pcl.push_back(point_clustered);
+        
+        if (debug_pub_.getNumSubscribers() > 0) {
+          moving_object_detector::MatchPoint match_point;
+          
+          match_point.now_x = clustered_flow.end.getX();
+          match_point.now_y = clustered_flow.end.getY();
+          match_point.now_z = clustered_flow.end.getZ();
+          match_point.prev_x = clustered_flow.start.getX();
+          match_point.prev_y = clustered_flow.start.getY();
+          match_point.prev_z = clustered_flow.start.getZ();
+          match_point.now_u = clustered_flow.end_uv.x;
+          match_point.now_v = clustered_flow.end_uv.y;
+          match_point.prev_u = clustered_flow.start_uv.x;
+          match_point.prev_v = clustered_flow.start_uv.y;
+          match_point.cluster = i;
+          
+          debug_msg.match_point_array.push_back(match_point);
+        }
       }
     }
+    
+    if (debug_pub_.getNumSubscribers() > 0) {
+      debug_msg.header.stamp = depth_image_info->header.stamp;
+      debug_pub_.publish(debug_msg);
+    }
+    
     sensor_msgs::PointCloud2 cluster_msg;
     pcl::toROSMsg(cluster_pcl, cluster_msg);
     cluster_msg.header.frame_id = depth_image_info->header.frame_id;
