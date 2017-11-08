@@ -197,12 +197,12 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           
           break;
         }
-        
-        // どのクラスタにも振り分けられなければ，新しいクラスタを作成
-        if (!already_clustered) {
-          clusters.emplace_back();
-          clusters.back().push_back(flow3d);
-        }
+      }
+      
+      // どのクラスタにも振り分けられなければ，新しいクラスタを作成
+      if (!already_clustered) {
+        clusters.emplace_back();
+        clusters.back().push_back(flow3d);
       }
     }
     if (debug_pub_.getNumSubscribers() > 0) {
