@@ -51,7 +51,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~cluster_element_num", cluster_element_num_, 5);
+  ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
