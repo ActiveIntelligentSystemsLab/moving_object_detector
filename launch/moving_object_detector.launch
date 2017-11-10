@@ -3,9 +3,31 @@
 <launch>
   <include file="$(find zed_wrapper)/launch/zed.launch"/>
   
+  <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
+  
+  <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
+    <remap from="camera" to="synchronized/left"/>
+    <remap from="synchronized/left/image_raw" to="synchronized/left/image_rect_color"/>
+    <remap from="camera_out" to="viso2/input/left"/>
+    
+    <param name="width" value="1280"/>
+    <param name="height" value="360"/>
+    <param name="y_offset" value="180"/>
+  </node>
+  
+  <node name="right_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
+    <remap from="camera" to="synchronized/right"/>
+    <remap from="synchronized/right/image_raw" to="synchronized/right/image_rect_color"/>
+    <remap from="camera_out" to="viso2/input/right"/>
+    
+    <param name="width" value="1280"/>
+    <param name="height" value="360"/>
+    <param name="y_offset" value="180"/>
+  </node>
+  
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer">
-    <remap from="stereo" to="/synchronized"/>
-    <remap from="image" to="image_rect_color"/>
+    <remap from="stereo" to="/viso2/input"/>
+    <remap from="image" to="image_raw"/>
   </node>
   
   <node name="optical_flow" pkg="opencv_apps" type="simple_flow">
