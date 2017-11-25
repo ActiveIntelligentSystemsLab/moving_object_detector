@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <opencv_apps/FlowArrayStamped.h>
+#include <opencv_apps/FlowMap.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <image_geometry/pinhole_camera_model.h>
@@ -13,6 +13,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
+#include <stereo_msgs/DisparityImage.h>
 
 class MovingObjectDetector {
 public:
@@ -25,12 +26,13 @@ private:
   ros::Publisher debug_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<opencv_apps::FlowArrayStamped> optical_flow_sub_;
-  
+  message_filters::Subscriber<opencv_apps::FlowMap> optical_flow_left_sub_;
+  message_filters::Subscriber<opencv_apps::FlowMap> optical_flow_right_sub_;
   message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub_;
-  
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowArrayStamped, sensor_msgs::Image, sensor_msgs::CameraInfo>> time_sync_;
+  message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
+
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowMap, opencv_apps::FlowMap, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
   double moving_flow_length_;
   double flow_length_diff_;
@@ -41,11 +43,12 @@ private:
   
   image_geometry::PinholeCameraModel camera_model_;
   sensor_msgs::Image depth_image_previous_;
+  cv::Mat disparity_map_previous_;
   ros::Time time_stamp_previous_;
   
   bool first_run_;
   
-  void dataCB(const geometry_msgs::TransformStampedConstPtr&, const opencv_apps::FlowArrayStampedConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr&, const opencv_apps::FlowMapConstPtr&, const opencv_apps::FlowMapConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const stereo_msgs::DisparityImageConstPtr&);
   
   template<typename T>
   bool getPoint3D_internal(int, int, const sensor_msgs::Image&, tf2::Vector3&);
@@ -59,6 +62,7 @@ private:
     image_transport::CameraPublisher depth_image_pub_;
     image_transport::CameraPublisher left_rect_image_pub_;
     image_transport::CameraPublisher right_rect_image_pub_;
+    ros::Publisher disparity_image_pub_;
     
     message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_; // depth imageのフォーマットはcompress transportに対応していないため，image_transportは使用しない
     message_filters::Subscriber<sensor_msgs::CameraInfo> depth_info_sub_;
@@ -66,8 +70,9 @@ private:
     message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
     image_transport::SubscriberFilter right_rect_image_sub_;
     message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
+    message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
     
-    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> DataTimeSynchronizer;
+    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage> DataTimeSynchronizer;
     std::shared_ptr<DataTimeSynchronizer> time_sync_;
     
     sensor_msgs::Image depth_image_;
@@ -76,10 +81,11 @@ private:
     sensor_msgs::CameraInfo left_rect_info_;
     sensor_msgs::Image right_rect_image_;
     sensor_msgs::CameraInfo right_rect_info_;
+    stereo_msgs::DisparityImage disparity_image_;
     
     ros::Time last_publish_time_;
     
-    void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
+    void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
     
   public:
     InputSynchronizer(ros::NodeHandle& node_handle);

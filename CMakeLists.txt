@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   message_generation
   std_msgs
+  stereo_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -114,7 +115,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs
+  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs stereo_msgs
   DEPENDS OpenCV
 )
 
