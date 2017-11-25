@@ -51,6 +51,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, 10.0);
   ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
@@ -91,22 +92,46 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
     for (int i = 0; i < optical_flow_left->flows.size(); i++) {
-      opencv_apps::Point2D flow = optical_flow_left->flows[i];
+      opencv_apps::Point2D flow_left = optical_flow_left->flows[i];
       
-      int x = i % optical_flow_left->width * optical_flow_left->scale_x;
-      int y = i / optical_flow_left->width * optical_flow_left->scale_y;
+      // オプティカルフローは画像をスケーリングして計算される
+      double flow_scale_x = optical_flow_left->scale_x;
+      double flow_scale_y = optical_flow_left->scale_y;
+      int flow_width = optical_flow_left->width;
+      int flow_height = optical_flow_left->height;
 
-      cv::Point2d uv_left_now, uv_left_previous, uv_right_now, uv_right_previous;
-      if(std::isnan(flow.x))
+      if(std::isnan(flow_left.x))
         continue;
-      if(std::isnan(flow.y))
+      if(std::isnan(flow_left.y))
         continue;
-      uv_left_now.x = x;
-      uv_left_now.y = y;
-      uv_left_previous.x = x + flow.x;
-      uv_left_previous.y = y + flow.y;
       
-      float disparity_now = disparity_map_now.at<float>(uv_left_now.x, uv_left_now.y);
+      cv::Point2d uv_left_now, uv_left_previous, uv_right_now, uv_right_previous;
+      uv_left_previous.x = i % optical_flow_left->width * optical_flow_left->scale_x;
+      uv_left_previous.y = i / optical_flow_left->width * optical_flow_left->scale_y;
+      uv_left_now.x = uv_left_previous.x + flow_left.x * flow_scale_x;
+      uv_left_now.y = uv_left_previous.y + flow_left.y * flow_scale_y;
+      
+      float disparity_now = disparity_map_now.at<float>(uv_left_now.y, uv_left_now.x);
+      uv_right_now.x = uv_left_now.x + disparity_now;
+      uv_right_now.y = uv_left_now.y;
+      float disparity_previous = disparity_map_previous_.at<float>(uv_left_previous.y, uv_left_previous.x);
+      uv_right_previous.x = uv_left_previous.x + disparity_previous;
+      uv_right_previous.y = uv_left_previous.y;
+      
+      int flow_right_index = uv_right_previous.x / flow_scale_x + uv_right_previous.y / flow_scale_y * flow_width;
+      opencv_apps::Point2D flow_right = optical_flow_right->flows[flow_right_index];
+      
+      if(std::isnan(flow_right.x))
+        continue;
+      if(std::isnan(flow_right.y))
+        continue;
+      
+      double x_diff = uv_right_previous.x + flow_right.x * flow_scale_x - uv_right_now.x;
+      double y_diff = uv_right_previous.y + flow_right.y * flow_scale_y - uv_right_now.y;
+      double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
+      
+      if (diff > matching_tolerance_)
+        continue;
       
       tf2::Vector3 point3d_now, point3d_previous;
       if(!getPoint3D(uv_left_now.x, uv_left_now.y, *depth_image_now, point3d_now))
