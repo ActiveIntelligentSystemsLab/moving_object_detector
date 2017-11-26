@@ -91,25 +91,25 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
     moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
-    for (int i = 0; i < optical_flow_left->flows.size(); i++) {
-      opencv_apps::Point2D flow_left = optical_flow_left->flows[i];
-      
+    for (int i = 0; i < optical_flow_left->flows.size(); i++) {      
       // オプティカルフローは画像をスケーリングして計算される
       double flow_scale_x = optical_flow_left->scale_x;
       double flow_scale_y = optical_flow_left->scale_y;
       int flow_width = optical_flow_left->width;
       int flow_height = optical_flow_left->height;
 
+      opencv_apps::Point2D flow_left = optical_flow_left->flows[i];
+
       if(std::isnan(flow_left.x))
         continue;
       if(std::isnan(flow_left.y))
         continue;
       
-      cv::Point2d uv_left_now, uv_left_previous, uv_right_now, uv_right_previous;
-      uv_left_previous.x = i % optical_flow_left->width * optical_flow_left->scale_x;
-      uv_left_previous.y = i / optical_flow_left->width * optical_flow_left->scale_y;
-      uv_left_now.x = uv_left_previous.x + flow_left.x * flow_scale_x;
-      uv_left_now.y = uv_left_previous.y + flow_left.y * flow_scale_y;
+      cv::Point2i uv_left_now, uv_left_previous, uv_right_now, uv_right_previous;
+      uv_left_previous.x = std::round(i % optical_flow_left->width * optical_flow_left->scale_x);
+      uv_left_previous.y = std::round(i / optical_flow_left->width * optical_flow_left->scale_y);
+      uv_left_now.x = std::round(uv_left_previous.x + flow_left.x * flow_scale_x);
+      uv_left_now.y = std::round(uv_left_previous.y + flow_left.y * flow_scale_y);
       
       float disparity_now = disparity_map_now.at<float>(uv_left_now.y, uv_left_now.x);
       uv_right_now.x = uv_left_now.x + disparity_now;
@@ -118,7 +118,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_right_previous.x = uv_left_previous.x + disparity_previous;
       uv_right_previous.y = uv_left_previous.y;
       
-      int flow_right_index = uv_right_previous.x / flow_scale_x + uv_right_previous.y / flow_scale_y * flow_width;
+      int flow_right_index = std::round(uv_right_previous.x / flow_scale_x) + std::round(uv_right_previous.y / flow_scale_y) * flow_width;
       opencv_apps::Point2D flow_right = optical_flow_right->flows[flow_right_index];
       
       if(std::isnan(flow_right.x))
