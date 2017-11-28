@@ -112,11 +112,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_left_now.y = std::round(uv_left_previous.y + flow_left.y * flow_scale_y);
       
       float disparity_now = disparity_map_now.at<float>(uv_left_now.y, uv_left_now.x);
-      if (std::isnan(disparity_now) || std::isinf(disparity_now))
+      if (std::isnan(disparity_now) || std::isinf(disparity_now) || disparity_now < 0)
         continue;
       
       float disparity_previous = disparity_map_previous_.at<float>(uv_left_previous.y, uv_left_previous.x);
-      if (std::isnan(disparity_previous) || std::isinf(disparity_previous))
+      if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
         continue;
       
       uv_right_now.x = uv_left_now.x + disparity_now;
