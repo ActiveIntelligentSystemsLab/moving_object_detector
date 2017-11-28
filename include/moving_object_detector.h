@@ -26,14 +26,15 @@ private:
   ros::Publisher debug_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<opencv_apps::FlowMap> optical_flow_left_sub_;
-  message_filters::Subscriber<opencv_apps::FlowMap> optical_flow_right_sub_;
+  message_filters::Subscriber<sensor_msgs::Image> optical_flow_left_sub_;
+  message_filters::Subscriber<sensor_msgs::Image> optical_flow_right_sub_;
   message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowMap, opencv_apps::FlowMap, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
+  int downsample_scale_;
   double moving_flow_length_;
   double flow_length_diff_;
   double flow_start_diff_;
@@ -49,7 +50,7 @@ private:
   
   bool first_run_;
   
-  void dataCB(const geometry_msgs::TransformStampedConstPtr&, const opencv_apps::FlowMapConstPtr&, const opencv_apps::FlowMapConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const stereo_msgs::DisparityImageConstPtr&);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const stereo_msgs::DisparityImageConstPtr&);
   
   template<typename T>
   bool getPoint3D_internal(int, int, const sensor_msgs::Image&, tf2::Vector3&);

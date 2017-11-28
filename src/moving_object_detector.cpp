@@ -11,6 +11,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <image_transport/camera_common.h>
+#include <cv_bridge/cv_bridge.h>
 #include <algorithm>
 #include <limits>
 #include <vector>
@@ -46,6 +47,7 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
+  ros::param::param("~downsample_scale", downsample_scale_, 10);
   ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
@@ -68,13 +70,13 @@ MovingObjectDetector::MovingObjectDetector() {
   depth_image_sub_.subscribe(node_handle_, depth_image_topic, 2);
   depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 2);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, opencv_apps::FlowMap, opencv_apps::FlowMap, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, depth_image_sub_, depth_image_info_sub_, disparity_image_sub_, 2);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, depth_image_sub_, depth_image_info_sub_, disparity_image_sub_, 2);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5, _6));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
 }
 
-void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const opencv_apps::FlowMapConstPtr& optical_flow_left, const opencv_apps::FlowMapConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
   input_synchronizer_->publish();
@@ -91,149 +93,145 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
     moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
-    for (int i = 0; i < optical_flow_left->flows.size(); i++) {      
-      // オプティカルフローは画像をスケーリングして計算される
-      double flow_scale_x = optical_flow_left->scale_x;
-      double flow_scale_y = optical_flow_left->scale_y;
-      int flow_width = optical_flow_left->width;
-      int flow_height = optical_flow_left->height;
-
-      opencv_apps::Point2D flow_left = optical_flow_left->flows[i];
-
-      if(std::isnan(flow_left.x))
-        continue;
-      if(std::isnan(flow_left.y))
-        continue;
-      
-      cv::Point2i uv_left_now, uv_left_previous, uv_right_now, uv_right_previous;
-      uv_left_previous.x = std::round(i % optical_flow_left->width * optical_flow_left->scale_x);
-      uv_left_previous.y = std::round(i / optical_flow_left->width * optical_flow_left->scale_y);
-      uv_left_now.x = std::round(uv_left_previous.x + flow_left.x * flow_scale_x);
-      uv_left_now.y = std::round(uv_left_previous.y + flow_left.y * flow_scale_y);
-      
-      float disparity_now = disparity_map_now.at<float>(uv_left_now.y, uv_left_now.x);
-      if (std::isnan(disparity_now) || std::isinf(disparity_now) || disparity_now < 0)
-        continue;
-      
-      float disparity_previous = disparity_map_previous_.at<float>(uv_left_previous.y, uv_left_previous.x);
-      if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
-        continue;
-      
-      uv_right_now.x = uv_left_now.x + disparity_now;
-      uv_right_now.y = uv_left_now.y;
-      
-      uv_right_previous.x = uv_left_previous.x + disparity_previous;
-      uv_right_previous.y = uv_left_previous.y;
-      
-      int flow_right_index = std::round(uv_right_previous.x / flow_scale_x) + std::round(uv_right_previous.y / flow_scale_y) * flow_width;
-      
-      if(flow_right_index < 0 || flow_right_index > optical_flow_right->flows.size())
-        continue;
-      
-      opencv_apps::Point2D flow_right = optical_flow_right->flows[flow_right_index];
-      
-      if(std::isnan(flow_right.x))
-        continue;
-      if(std::isnan(flow_right.y))
-        continue;
-      
-      double x_diff = uv_right_previous.x + flow_right.x * flow_scale_x - uv_right_now.x;
-      double y_diff = uv_right_previous.y + flow_right.y * flow_scale_y - uv_right_now.y;
-      double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-      
-      if (diff > matching_tolerance_)
-        continue;
-      
-      tf2::Vector3 point3d_now, point3d_previous;
-      if(!getPoint3D(uv_left_now.x, uv_left_now.y, *depth_image_now, point3d_now))
-        continue;
-      if(!getPoint3D(uv_left_previous.x, uv_left_previous.y, depth_image_previous_, point3d_previous))
-        continue;
-      
-      // 以前のフレームを現在のフレームに座標変換
-      tf2::Stamped<tf2::Transform> tf_previous2now;
-      tf2::fromMsg(*camera_transform, tf_previous2now);
-      tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
-      
-      Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, uv_left_previous, uv_left_now);
-      ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
-      
-      pcl::PointXYZRGB pcl_point;
-      pcl_point.x = flow3d.end.getX();
-      pcl_point.y = flow3d.end.getY();
-      pcl_point.z = flow3d.end.getZ();
-      
-      tf2::Vector3 flow3d_vector = flow3d.distanceVector();
-      uint32_t red, blue, green; 
-      
-      double flow_x_per_second = flow3d_vector.getX() / time_between_frames.toSec();
-      if (std::abs(flow_x_per_second) > flow_axis_max_) {
-        if (flow_x_per_second < 0)
-          red = 0;
-        else
-          red = 254;
-      } else {
-        red = flow_x_per_second / flow_axis_max_ * 127 + 127;
-      }
-      
-      double flow_y_per_second = flow3d_vector.getY() / time_between_frames.toSec();
-      if (std::abs(flow_y_per_second) > flow_axis_max_) {
-        if (flow_y_per_second < 0)
-          green = 0;
-        else
-          green = 254;
-      } else {
-        green = flow_y_per_second / flow_axis_max_ * 127 + 127;
-      }
-      
-      double flow_z_per_second = flow3d_vector.getZ() / time_between_frames.toSec();
-      if (std::abs(flow_z_per_second) > flow_axis_max_) {
-        if (flow_z_per_second < 0)
-          blue = 0;
-        else
-          blue = 254;
-      } else {
-        blue = flow_z_per_second / flow_axis_max_ * 127 + 127;
-      }
-
-      uint32_t rgb = red << 16 | green << 8 | blue;
-      pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
-      flow3d_pcl.push_back(pcl_point);
-      
-      if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
-        continue;
-      
-      bool already_clustered = false;
-      std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
-      for (int i = 0; i < clusters.size(); i++) {
-        // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
-        auto cluster_it = clusters.begin() + i;
-        for (auto& clustered_flow : *cluster_it) {
-          if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
-            continue;
-          if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
-            continue;
-          if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
-            continue;
-          
-          if (!already_clustered) {
-            cluster_it->push_back(flow3d);
-            already_clustered = true;
-            belonged_cluster_it = cluster_it;
-          } else {
-            belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
-            clusters.erase(cluster_it);
-            i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
-          }
-          
-          break;
+    cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
+    cv::Mat flow_map_right = cv_bridge::toCvShare(optical_flow_right)->image;
+    
+    for (int left_previous_y = 0; left_previous_y < flow_map_left.cols; left_previous_y += downsample_scale_) 
+    {
+      for (int left_previous_x = 0; left_previous_x < flow_map_left.cols; left_previous_x += downsample_scale_)
+      {
+        cv::Point2i left_previous, left_now, right_now, right_previous;
+        left_previous.x = left_previous_x;
+        left_previous.y = left_previous_y;
+        
+        cv::Vec2f flow_left = flow_map_left.at<cv::Vec2f>(left_previous_y, left_previous_x);
+        
+        if(std::isnan(flow_left[0]) || std::isnan(flow_left[1]))
+          continue;
+        
+        left_now.x = std::round(left_previous_x + flow_left[0]);
+        left_now.y = std::round(left_previous_y + flow_left[1]);
+        
+        float disparity_now = disparity_map_now.at<float>(left_now.y, left_now.x);
+        if (std::isnan(disparity_now) || std::isinf(disparity_now) || disparity_now < 0)
+          continue;
+        
+        float disparity_previous = disparity_map_previous_.at<float>(left_previous_y, left_previous_x);
+        if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
+          continue;
+        
+        right_now.x = left_now.x + disparity_now;
+        right_now.y = left_now.y;
+        
+        right_previous.x = left_previous_x + disparity_previous;
+        right_previous.y = left_previous_y;
+        
+        if (right_previous.x >= flow_map_right.cols)
+          continue;
+        
+        cv::Vec2f flow_right = flow_map_right.at<cv::Vec2f>(right_previous.y, right_previous.x);
+        
+        if(std::isnan(flow_right[0]) || std::isnan(flow_right[1]))
+          continue;
+        
+        double x_diff = right_previous.x + flow_right[0] - right_now.x;
+        double y_diff = right_previous.y + flow_right[1] - right_now.y;
+        double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
+        
+        if (diff > matching_tolerance_)
+          continue;
+        
+        tf2::Vector3 point3d_now, point3d_previous;
+        if(!getPoint3D(left_now.x, left_now.y, *depth_image_now, point3d_now))
+          continue;
+        if(!getPoint3D(left_previous_x, left_previous_y, depth_image_previous_, point3d_previous))
+          continue;
+        
+        // 以前のフレームを現在のフレームに座標変換
+        tf2::Stamped<tf2::Transform> tf_previous2now;
+        tf2::fromMsg(*camera_transform, tf_previous2now);
+        tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
+        
+        Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
+        ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
+        
+        pcl::PointXYZRGB pcl_point;
+        pcl_point.x = flow3d.end.getX();
+        pcl_point.y = flow3d.end.getY();
+        pcl_point.z = flow3d.end.getZ();
+        
+        tf2::Vector3 flow3d_vector = flow3d.distanceVector();
+        uint32_t red, blue, green; 
+        
+        double flow_x_per_second = flow3d_vector.getX() / time_between_frames.toSec();
+        if (std::abs(flow_x_per_second) > flow_axis_max_) {
+          if (flow_x_per_second < 0)
+            red = 0;
+          else
+            red = 254;
+        } else {
+          red = flow_x_per_second / flow_axis_max_ * 127 + 127;
         }
-      }
-      
-      // どのクラスタにも振り分けられなければ，新しいクラスタを作成
-      if (!already_clustered) {
-        clusters.emplace_back();
-        clusters.back().push_back(flow3d);
+        
+        double flow_y_per_second = flow3d_vector.getY() / time_between_frames.toSec();
+        if (std::abs(flow_y_per_second) > flow_axis_max_) {
+          if (flow_y_per_second < 0)
+            green = 0;
+          else
+            green = 254;
+        } else {
+          green = flow_y_per_second / flow_axis_max_ * 127 + 127;
+        }
+        
+        double flow_z_per_second = flow3d_vector.getZ() / time_between_frames.toSec();
+        if (std::abs(flow_z_per_second) > flow_axis_max_) {
+          if (flow_z_per_second < 0)
+            blue = 0;
+          else
+            blue = 254;
+        } else {
+          blue = flow_z_per_second / flow_axis_max_ * 127 + 127;
+        }
+        
+        uint32_t rgb = red << 16 | green << 8 | blue;
+        pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
+        flow3d_pcl.push_back(pcl_point);
+        
+        if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
+          continue;
+        
+        bool already_clustered = false;
+        std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
+        for (int i = 0; i < clusters.size(); i++) {
+          // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
+          auto cluster_it = clusters.begin() + i;
+          for (auto& clustered_flow : *cluster_it) {
+            if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
+              continue;
+            if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
+              continue;
+            if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
+              continue;
+            
+            if (!already_clustered) {
+              cluster_it->push_back(flow3d);
+              already_clustered = true;
+              belonged_cluster_it = cluster_it;
+            } else {
+              belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
+              clusters.erase(cluster_it);
+              i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
+            }
+            
+            break;
+          }
+        }
+        
+        // どのクラスタにも振り分けられなければ，新しいクラスタを作成
+        if (!already_clustered) {
+          clusters.emplace_back();
+          clusters.back().push_back(flow3d);
+        }
       }
     }
     

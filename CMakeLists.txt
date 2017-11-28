@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   stereo_msgs
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
