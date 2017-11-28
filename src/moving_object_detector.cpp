@@ -84,7 +84,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
   
   cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
-  
+    
   if (first_run_) {
     first_run_ = false;
   } else {
@@ -112,13 +112,24 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       uv_left_now.y = std::round(uv_left_previous.y + flow_left.y * flow_scale_y);
       
       float disparity_now = disparity_map_now.at<float>(uv_left_now.y, uv_left_now.x);
+      if (std::isnan(disparity_now) || std::isinf(disparity_now))
+        continue;
+      
+      float disparity_previous = disparity_map_previous_.at<float>(uv_left_previous.y, uv_left_previous.x);
+      if (std::isnan(disparity_previous) || std::isinf(disparity_previous))
+        continue;
+      
       uv_right_now.x = uv_left_now.x + disparity_now;
       uv_right_now.y = uv_left_now.y;
-      float disparity_previous = disparity_map_previous_.at<float>(uv_left_previous.y, uv_left_previous.x);
+      
       uv_right_previous.x = uv_left_previous.x + disparity_previous;
       uv_right_previous.y = uv_left_previous.y;
       
       int flow_right_index = std::round(uv_right_previous.x / flow_scale_x) + std::round(uv_right_previous.y / flow_scale_y) * flow_width;
+      
+      if(flow_right_index < 0 || flow_right_index > optical_flow_right->flows.size())
+        continue;
+      
       opencv_apps::Point2D flow_right = optical_flow_right->flows[flow_right_index];
       
       if(std::isnan(flow_right.x))
