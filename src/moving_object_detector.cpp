@@ -304,7 +304,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     cluster_pub_.publish(cluster_msg);
   }
   depth_image_previous_ = *depth_image_now;
-  disparity_map_previous_ = disparity_map_now;
+  disparity_map_now.copyTo(disparity_map_previous_);
   time_stamp_previous_ = camera_transform->header.stamp;
   
   ros::Duration process_time = ros::Time::now() - start_process;
