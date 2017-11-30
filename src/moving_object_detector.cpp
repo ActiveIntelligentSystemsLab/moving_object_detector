@@ -130,10 +130,10 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
           continue;
         
-        right_now.x = left_now.x + disparity_now;
+        right_now.x = left_now.x - disparity_now;
         right_now.y = left_now.y;
         
-        right_previous.x = left_previous_x + disparity_previous;
+        right_previous.x = left_previous_x - disparity_previous;
         right_previous.y = left_previous_y;
 
         if (right_previous.x < 0 || right_previous.x >= flow_map_right.cols)
