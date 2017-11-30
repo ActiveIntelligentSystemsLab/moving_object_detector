@@ -53,7 +53,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, 10.0);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, 2.0);
   ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
@@ -149,7 +149,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         double x_diff = right_previous.x + flow_right[0] - right_now.x;
         double y_diff = right_previous.y + flow_right[1] - right_now.y;
         double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-        
+                
         if (diff > matching_tolerance_)
           continue;
         
