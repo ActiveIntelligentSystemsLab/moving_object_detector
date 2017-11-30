@@ -96,7 +96,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
     cv::Mat flow_map_right = cv_bridge::toCvShare(optical_flow_right)->image;
     
-    for (int left_previous_y = 0; left_previous_y < flow_map_left.cols; left_previous_y += downsample_scale_) 
+    for (int left_previous_y = 0; left_previous_y < flow_map_left.rows; left_previous_y += downsample_scale_) 
     {
       for (int left_previous_x = 0; left_previous_x < flow_map_left.cols; left_previous_x += downsample_scale_)
       {
