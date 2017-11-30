@@ -93,24 +93,26 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
     moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
+    // flow_mapの(x, y)には(dx,dy)が格納されている
+    // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
     cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
     cv::Mat flow_map_right = cv_bridge::toCvShare(optical_flow_right)->image;
     
-    for (int left_previous_y = 0; left_previous_y < flow_map_left.rows; left_previous_y += downsample_scale_) 
+    for (int left_now_y = 0; left_now_y < flow_map_left.rows; left_now_y += downsample_scale_) 
     {
-      for (int left_previous_x = 0; left_previous_x < flow_map_left.cols; left_previous_x += downsample_scale_)
+      for (int left_now_x = 0; left_now_x < flow_map_left.cols; left_now_x += downsample_scale_)
       {
         cv::Point2i left_previous, left_now, right_now, right_previous;
-        left_previous.x = left_previous_x;
-        left_previous.y = left_previous_y;
+        left_now.x = left_now_x;
+        left_now.y = left_now_y;
         
-        cv::Vec2f flow_left = flow_map_left.at<cv::Vec2f>(left_previous_y, left_previous_x);
+        cv::Vec2f flow_left = flow_map_left.at<cv::Vec2f>(left_now.y, left_now.x);
         
         if(std::isnan(flow_left[0]) || std::isnan(flow_left[1]))
           continue;
         
-        left_now.x = std::round(left_previous_x + flow_left[0]);
-        left_now.y = std::round(left_previous_y + flow_left[1]);
+        left_previous.x = std::round(left_now.x - flow_left[0]);
+        left_previous.y = std::round(left_now.y - flow_left[1]);
         
         if (left_now.x < 0 || left_now.x >= disparity_map_now.cols)
           continue;
@@ -130,16 +132,16 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
           continue;
         
-        right_now.x = left_now.x - disparity_now;
+        right_now.x = std::round(left_now.x - disparity_now);
         right_now.y = left_now.y;
         
-        right_previous.x = left_previous_x - disparity_previous;
-        right_previous.y = left_previous_y;
+        right_previous.x = std::round(left_previous.x - disparity_previous);
+        right_previous.y = left_previous.y;
 
-        if (right_previous.x < 0 || right_previous.x >= flow_map_right.cols)
+        if (right_now.x < 0 || right_now.x >= flow_map_right.cols)
           continue;
         
-        cv::Vec2f flow_right = flow_map_right.at<cv::Vec2f>(right_previous.y, right_previous.x);
+        cv::Vec2f flow_right = flow_map_right.at<cv::Vec2f>(right_now.y, right_now.x);
         
         if(std::isnan(flow_right[0]) || std::isnan(flow_right[1]))
           continue;
@@ -154,7 +156,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         tf2::Vector3 point3d_now, point3d_previous;
         if(!getPoint3D(left_now.x, left_now.y, *depth_image_now, point3d_now))
           continue;
-        if(!getPoint3D(left_previous_x, left_previous_y, depth_image_previous_, point3d_previous))
+        if(!getPoint3D(left_previous.x, left_previous.y, depth_image_previous_, point3d_previous))
           continue;
         
         // 以前のフレームを現在のフレームに座標変換
