@@ -112,11 +112,21 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         left_now.x = std::round(left_previous_x + flow_left[0]);
         left_now.y = std::round(left_previous_y + flow_left[1]);
         
+        if (left_now.x < 0 || left_now.x >= disparity_map_now.cols)
+          continue;
+        if (left_now.y < 0 || left_now.y >= disparity_map_now.rows)
+          continue;
+        
         float disparity_now = disparity_map_now.at<float>(left_now.y, left_now.x);
         if (std::isnan(disparity_now) || std::isinf(disparity_now) || disparity_now < 0)
           continue;
         
-        float disparity_previous = disparity_map_previous_.at<float>(left_previous_y, left_previous_x);
+        if (left_previous.x < 0 || left_previous.x >= disparity_map_previous_.cols)
+          continue;
+        if (left_previous.y < 0 || left_previous.y >= disparity_map_previous_.rows)
+          continue;
+        
+        float disparity_previous = disparity_map_previous_.at<float>(left_previous.y, left_previous.x);
         if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
           continue;
         
@@ -125,8 +135,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         
         right_previous.x = left_previous_x + disparity_previous;
         right_previous.y = left_previous_y;
-        
-        if (right_previous.x >= flow_map_right.cols)
+
+        if (right_previous.x < 0 || right_previous.x >= flow_map_right.cols)
           continue;
         
         cv::Vec2f flow_right = flow_map_right.at<cv::Vec2f>(right_previous.y, right_previous.x);
