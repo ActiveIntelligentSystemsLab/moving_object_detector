@@ -176,34 +176,19 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         uint32_t red, blue, green; 
         
         double flow_x_per_second = flow3d_vector.getX() / time_between_frames.toSec();
-        if (std::abs(flow_x_per_second) > flow_axis_max_) {
-          if (flow_x_per_second < 0)
-            red = 0;
-          else
-            red = 254;
-        } else {
-          red = flow_x_per_second / flow_axis_max_ * 127 + 127;
-        }
+        red = std::abs(flow_x_per_second) / flow_axis_max_ * 255;
+        if (red > 255)
+          red = 255;
         
         double flow_y_per_second = flow3d_vector.getY() / time_between_frames.toSec();
-        if (std::abs(flow_y_per_second) > flow_axis_max_) {
-          if (flow_y_per_second < 0)
-            green = 0;
-          else
-            green = 254;
-        } else {
-          green = flow_y_per_second / flow_axis_max_ * 127 + 127;
-        }
+        green = std::abs(flow_y_per_second) / flow_axis_max_ * 255;
+        if (green > 255)
+          green = 255;
         
         double flow_z_per_second = flow3d_vector.getZ() / time_between_frames.toSec();
-        if (std::abs(flow_z_per_second) > flow_axis_max_) {
-          if (flow_z_per_second < 0)
-            blue = 0;
-          else
-            blue = 254;
-        } else {
-          blue = flow_z_per_second / flow_axis_max_ * 127 + 127;
-        }
+        blue = std::abs(flow_z_per_second) / flow_axis_max_ * 255;
+        if (blue > 255)
+          blue = 255;
         
         uint32_t rgb = red << 16 | green << 8 | blue;
         pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
