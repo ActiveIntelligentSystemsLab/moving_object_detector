@@ -62,6 +62,9 @@
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
+    
+    <param name="downsample_scale" value="24"/>
+    <param name="matching_tolerance" value="1.0"/>
   </node>
   
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz"/>
