@@ -67,5 +67,5 @@
     <param name="matching_tolerance" value="1.0"/>
   </node>
   
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
 </launch>
