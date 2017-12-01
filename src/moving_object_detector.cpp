@@ -62,7 +62,6 @@ MovingObjectDetector::MovingObjectDetector() {
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
-  debug_pub_ = node_handle_.advertise<moving_object_detector::MatchPointArray>("debug", 10);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -109,7 +108,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     first_run_ = false;
   } else {
     std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
-    moving_object_detector::MatchPointArray debug_msg; // デバッグ出力用
     
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
@@ -282,30 +280,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           point_clustered.intensity = i;
           
           cluster_pcl.push_back(point_clustered);
-          
-          if (debug_pub_.getNumSubscribers() > 0) {
-            moving_object_detector::MatchPoint match_point;
-            
-            match_point.now_x = clustered_flow.end.getX();
-            match_point.now_y = clustered_flow.end.getY();
-            match_point.now_z = clustered_flow.end.getZ();
-            match_point.prev_x = clustered_flow.start.getX();
-            match_point.prev_y = clustered_flow.start.getY();
-            match_point.prev_z = clustered_flow.start.getZ();
-            match_point.now_u = clustered_flow.end_uv.x;
-            match_point.now_v = clustered_flow.end_uv.y;
-            match_point.prev_u = clustered_flow.start_uv.x;
-            match_point.prev_v = clustered_flow.start_uv.y;
-            match_point.cluster = i;
-            
-            debug_msg.match_point_array.push_back(match_point);
-          }
         }
-      }
-      
-      if (debug_pub_.getNumSubscribers() > 0) {
-        debug_msg.header.stamp = depth_image_info->header.stamp;
-        debug_pub_.publish(debug_msg);
       }
       
       sensor_msgs::PointCloud2 cluster_msg;

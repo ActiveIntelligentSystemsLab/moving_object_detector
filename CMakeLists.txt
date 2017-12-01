@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   tf2
   tf2_geometry_msgs
-  message_generation
   std_msgs
   stereo_msgs
   cv_bridge
@@ -59,11 +58,11 @@ find_package(OpenCV)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  MatchPoint.msg
-  MatchPointArray.msg
-)
+# add_message_files(
+#   FILES
+#   MatchPoint.msg
+#   MatchPointArray.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -80,10 +79,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -116,7 +115,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs stereo_msgs dynamic_reconfigure
+  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs std_msgs stereo_msgs dynamic_reconfigure
   DEPENDS OpenCV
 )
 

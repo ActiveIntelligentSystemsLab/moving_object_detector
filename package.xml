@@ -51,7 +51,6 @@
   <build_depend>tf2</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
-  <build_depend>message_generation</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>stereo_msgs</build_depend>
   <build_depend>cv_bridge</build_depend>
@@ -67,7 +66,6 @@
   <run_depend>tf2</run_depend>
   <run_depend>tf2_geometry_msgs</run_depend>
   <run_depend>libpcl-all</run_depend>
-  <run_depend>message_runtime</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>stereo_msgs</run_depend>
   <run_depend>cv_bridge</run_depend>
