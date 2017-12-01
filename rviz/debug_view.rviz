@@ -138,7 +138,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
+    Background Color: 127; 127; 127
     Fixed Frame: zed_left_camera
     Frame Rate: 30
   Name: root
