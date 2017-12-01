@@ -62,6 +62,7 @@ MovingObjectDetector::MovingObjectDetector() {
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
+  removed_points_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_points", 10);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -101,6 +102,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   ros::Time start_process = ros::Time::now();
   camera_model_.fromCameraInfo(depth_image_info);
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
+  pcl::PointCloud<pcl::PointXYZ> removed_points;
   
   cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
     
@@ -165,15 +167,25 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         double x_diff = right_previous.x + flow_right[0] - right_now.x;
         double y_diff = right_previous.y + flow_right[1] - right_now.y;
         double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-                
-        if (diff > matching_tolerance_)
-          continue;
         
         tf2::Vector3 point3d_now, point3d_previous;
         if(!getPoint3D(left_now.x, left_now.y, *depth_image_now, point3d_now))
           continue;
         if(!getPoint3D(left_previous.x, left_previous.y, depth_image_previous_, point3d_previous))
           continue;
+        
+        if (diff > matching_tolerance_) {
+          if (removed_points_pub_.getNumSubscribers() > 0) 
+          {
+            pcl::PointXYZ pcl_point;
+            pcl_point.x = point3d_now.getX();
+            pcl_point.y = point3d_now.getY();
+            pcl_point.z = point3d_now.getZ();
+            removed_points.push_back(pcl_point);
+          }
+          
+          continue;
+        }
         
         // 以前のフレームを現在のフレームに座標変換
         tf2::Stamped<tf2::Transform> tf_previous2now;
@@ -257,6 +269,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     flow3d_msg.header.frame_id = depth_image_info->header.frame_id;
     flow3d_msg.header.stamp = depth_image_info->header.stamp;
     flow3d_pub_.publish(flow3d_msg);
+    
+    if (removed_points_pub_.getNumSubscribers() > 0)
+    {
+      sensor_msgs::PointCloud2 removed_points_msg;
+      pcl::toROSMsg(removed_points, removed_points_msg);
+      removed_points_msg.header.frame_id = depth_image_info->header.frame_id;
+      removed_points_msg.header.stamp = depth_image_info->header.stamp;
+      removed_points_pub_.publish(removed_points_msg);
+    }
     
     if (cluster_pub_.getNumSubscribers() > 0)
     {
