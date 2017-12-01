@@ -212,40 +212,44 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
         flow3d_pcl.push_back(pcl_point);
         
-        if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
-          continue;
-        
-        bool already_clustered = false;
-        std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
-        for (int i = 0; i < clusters.size(); i++) {
-          // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
-          auto cluster_it = clusters.begin() + i;
-          for (auto& clustered_flow : *cluster_it) {
-            if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
-              continue;
-            if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
-              continue;
-            if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
-              continue;
-            
-            if (!already_clustered) {
-              cluster_it->push_back(flow3d);
-              already_clustered = true;
-              belonged_cluster_it = cluster_it;
-            } else {
-              belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
-              clusters.erase(cluster_it);
-              i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
+        if (cluster_pub_.getNumSubscribers() > 0)
+        {
+          
+          if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
+            continue;
+          
+          bool already_clustered = false;
+          std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
+          for (int i = 0; i < clusters.size(); i++) {
+            // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
+            auto cluster_it = clusters.begin() + i;
+            for (auto& clustered_flow : *cluster_it) {
+              if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
+                continue;
+              if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
+                continue;
+              if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
+                continue;
+              
+              if (!already_clustered) {
+                cluster_it->push_back(flow3d);
+                already_clustered = true;
+                belonged_cluster_it = cluster_it;
+              } else {
+                belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
+                clusters.erase(cluster_it);
+                i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
+              }
+              
+              break;
             }
-            
-            break;
           }
-        }
-        
-        // どのクラスタにも振り分けられなければ，新しいクラスタを作成
-        if (!already_clustered) {
-          clusters.emplace_back();
-          clusters.back().push_back(flow3d);
+          
+          // どのクラスタにも振り分けられなければ，新しいクラスタを作成
+          if (!already_clustered) {
+            clusters.emplace_back();
+            clusters.back().push_back(flow3d);
+          }
         }
       }
     }
@@ -256,57 +260,60 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     flow3d_msg.header.stamp = depth_image_info->header.stamp;
     flow3d_pub_.publish(flow3d_msg);
     
-    // 要素数の少なすぎるクラスタの削除
-    for (int i = 0; i < clusters.size(); i++) {
-      auto cluster_it = clusters.begin() + i;
-      if (cluster_it->size() < cluster_element_num_) {
-        clusters.erase(cluster_it);
-        i--;
-      }
-    }
-    
-    pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
-    for (int i = 0; i < clusters.size(); i++) {
-      for (auto& clustered_flow : clusters[i]) {
-        pcl::PointXYZI point_clustered;
-        
-        point_clustered.x = clustered_flow.end.getX();
-        point_clustered.y = clustered_flow.end.getY();
-        point_clustered.z = clustered_flow.end.getZ();
-        point_clustered.intensity = i;
-        
-        cluster_pcl.push_back(point_clustered);
-        
-        if (debug_pub_.getNumSubscribers() > 0) {
-          moving_object_detector::MatchPoint match_point;
-          
-          match_point.now_x = clustered_flow.end.getX();
-          match_point.now_y = clustered_flow.end.getY();
-          match_point.now_z = clustered_flow.end.getZ();
-          match_point.prev_x = clustered_flow.start.getX();
-          match_point.prev_y = clustered_flow.start.getY();
-          match_point.prev_z = clustered_flow.start.getZ();
-          match_point.now_u = clustered_flow.end_uv.x;
-          match_point.now_v = clustered_flow.end_uv.y;
-          match_point.prev_u = clustered_flow.start_uv.x;
-          match_point.prev_v = clustered_flow.start_uv.y;
-          match_point.cluster = i;
-          
-          debug_msg.match_point_array.push_back(match_point);
+    if (cluster_pub_.getNumSubscribers() > 0)
+    {
+      // 要素数の少なすぎるクラスタの削除
+      for (int i = 0; i < clusters.size(); i++) {
+        auto cluster_it = clusters.begin() + i;
+        if (cluster_it->size() < cluster_element_num_) {
+          clusters.erase(cluster_it);
+          i--;
         }
       }
+      
+      pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
+      for (int i = 0; i < clusters.size(); i++) {
+        for (auto& clustered_flow : clusters[i]) {
+          pcl::PointXYZI point_clustered;
+          
+          point_clustered.x = clustered_flow.end.getX();
+          point_clustered.y = clustered_flow.end.getY();
+          point_clustered.z = clustered_flow.end.getZ();
+          point_clustered.intensity = i;
+          
+          cluster_pcl.push_back(point_clustered);
+          
+          if (debug_pub_.getNumSubscribers() > 0) {
+            moving_object_detector::MatchPoint match_point;
+            
+            match_point.now_x = clustered_flow.end.getX();
+            match_point.now_y = clustered_flow.end.getY();
+            match_point.now_z = clustered_flow.end.getZ();
+            match_point.prev_x = clustered_flow.start.getX();
+            match_point.prev_y = clustered_flow.start.getY();
+            match_point.prev_z = clustered_flow.start.getZ();
+            match_point.now_u = clustered_flow.end_uv.x;
+            match_point.now_v = clustered_flow.end_uv.y;
+            match_point.prev_u = clustered_flow.start_uv.x;
+            match_point.prev_v = clustered_flow.start_uv.y;
+            match_point.cluster = i;
+            
+            debug_msg.match_point_array.push_back(match_point);
+          }
+        }
+      }
+      
+      if (debug_pub_.getNumSubscribers() > 0) {
+        debug_msg.header.stamp = depth_image_info->header.stamp;
+        debug_pub_.publish(debug_msg);
+      }
+      
+      sensor_msgs::PointCloud2 cluster_msg;
+      pcl::toROSMsg(cluster_pcl, cluster_msg);
+      cluster_msg.header.frame_id = depth_image_info->header.frame_id;
+      cluster_msg.header.stamp = depth_image_info->header.stamp;
+      cluster_pub_.publish(cluster_msg);
     }
-    
-    if (debug_pub_.getNumSubscribers() > 0) {
-      debug_msg.header.stamp = depth_image_info->header.stamp;
-      debug_pub_.publish(debug_msg);
-    }
-    
-    sensor_msgs::PointCloud2 cluster_msg;
-    pcl::toROSMsg(cluster_pcl, cluster_msg);
-    cluster_msg.header.frame_id = depth_image_info->header.frame_id;
-    cluster_msg.header.stamp = depth_image_info->header.stamp;
-    cluster_pub_.publish(cluster_msg);
   }
   depth_image_previous_ = *depth_image_now;
   disparity_map_now.copyTo(disparity_map_previous_);
