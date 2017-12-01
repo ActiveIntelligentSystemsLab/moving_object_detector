@@ -12,6 +12,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <image_transport/camera_common.h>
 #include <cv_bridge/cv_bridge.h>
+
 #include <algorithm>
 #include <limits>
 #include <vector>
@@ -47,6 +48,9 @@ struct DepthTraits<float>
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
   
+  reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
+  reconfigure_server_.setCallback(reconfigure_func_);
+  
   ros::param::param("~downsample_scale", downsample_scale_, 10);
   ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
@@ -74,6 +78,20 @@ MovingObjectDetector::MovingObjectDetector() {
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5, _6));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
+}
+
+void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
+{
+  ROS_INFO("Reconfigure Request: downsample_scale = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
+  
+  downsample_scale_ = config.downsample_scale;
+  moving_flow_length_ = config.moving_flow_length;
+  flow_length_diff_ = config.flow_length_diff;
+  flow_start_diff_ = config.flow_start_diff;
+  flow_radian_diff_ = config.flow_radian_diff;
+  flow_axis_max_ = config.flow_axis_max;
+  matching_tolerance_ = config.matching_tolerance;
+  cluster_element_num_ = config.cluster_element_num;
 }
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)

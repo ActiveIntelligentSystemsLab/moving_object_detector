@@ -14,6 +14,8 @@
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
 #include <stereo_msgs/DisparityImage.h>
+#include <dynamic_reconfigure/server.h>
+#include <moving_object_detector/MovingObjectDetectorConfig.h>
 
 class MovingObjectDetector {
 public:
@@ -34,6 +36,9 @@ private:
 
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
+  dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig> reconfigure_server_;
+  dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig>::CallbackType reconfigure_func_;
+  
   int downsample_scale_;
   double moving_flow_length_;
   double flow_length_diff_;
@@ -50,6 +55,7 @@ private:
   
   bool first_run_;
   
+  void reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const stereo_msgs::DisparityImageConstPtr&);
   
   template<typename T>

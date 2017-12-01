@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   stereo_msgs
   cv_bridge
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -99,10 +100,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/DynamicReconfigure.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -116,7 +116,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs stereo_msgs
+  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs message_runtime std_msgs stereo_msgs dynamic_reconfigure
   DEPENDS OpenCV
 )
 
@@ -160,6 +160,7 @@ add_executable(${PROJECT_NAME}_node
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
