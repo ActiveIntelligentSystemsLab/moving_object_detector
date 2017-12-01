@@ -114,7 +114,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /diff_view
+      Image Topic: /depth_diff
       Max Value: 10
       Median window: 5
       Min Value: 0
