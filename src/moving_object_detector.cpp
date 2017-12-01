@@ -132,6 +132,12 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         left_previous.x = std::round(left_now.x - flow_left[0]);
         left_previous.y = std::round(left_now.y - flow_left[1]);
         
+        tf2::Vector3 point3d_now, point3d_previous;
+        if(!getPoint3D(left_now.x, left_now.y, *depth_image_now, point3d_now))
+          continue;
+        if(!getPoint3D(left_previous.x, left_previous.y, depth_image_previous_, point3d_previous))
+          continue;
+        
         if (left_now.x < 0 || left_now.x >= disparity_map_now.cols)
           continue;
         if (left_now.y < 0 || left_now.y >= disparity_map_now.rows)
@@ -167,12 +173,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         double x_diff = right_previous.x + flow_right[0] - right_now.x;
         double y_diff = right_previous.y + flow_right[1] - right_now.y;
         double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-        
-        tf2::Vector3 point3d_now, point3d_previous;
-        if(!getPoint3D(left_now.x, left_now.y, *depth_image_now, point3d_now))
-          continue;
-        if(!getPoint3D(left_previous.x, left_previous.y, depth_image_previous_, point3d_previous))
-          continue;
         
         if (diff > matching_tolerance_) {
           if (removed_points_pub_.getNumSubscribers() > 0) 
