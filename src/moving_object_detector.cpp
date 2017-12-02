@@ -14,6 +14,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <algorithm>
+#include <list>
 #include <limits>
 #include <vector>
 #include <cmath>
@@ -123,7 +124,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   if (first_run_) {
     first_run_ = false;
   } else {
-    std::vector<std::vector<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
+    std::list<std::list<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
     
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
@@ -249,10 +250,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
             continue;
           
           bool already_clustered = false;
-          std::vector<std::vector<Flow3D>>::iterator belonged_cluster_it;
+          auto belonged_cluster_it;
           for (int i = 0; i < clusters.size(); i++) {
-            // iteratorを使うにも関わらずループにはindexを用いているのは，ループ中でeraseによる要素の再配置が起こるため
-            auto cluster_it = clusters.begin() + i;
+          for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
             for (auto& clustered_flow : *cluster_it) {
               if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
                 continue;
@@ -266,9 +266,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
                 already_clustered = true;
                 belonged_cluster_it = cluster_it;
               } else {
-                belonged_cluster_it->insert(belonged_cluster_it->end(), cluster_it->begin(), cluster_it->end());
-                clusters.erase(cluster_it);
-                i--; // 現在参照していた要素を削除したため，次に参照する予定の要素が現在操作していたindexを持つことになる
+                // クラスタに所属済みの点が，他のクラスタにも属していればクラスタ同士を結合する
+                auto tmp_cluster_it = cluster_it;
+                cluster_it--; // 現在のクラスタが消去されるので，イテレータを一つ前に戻す 次のループのインクリメントで消去されたクラスタの次のクラスタに到達することになる
+                belonged_cluster_it->splice(belonged_cluster_it->end(), *tmp_cluster_it);
+                clusters.erase(tmp_cluster_it);
               }
               
               break;
