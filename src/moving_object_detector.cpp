@@ -79,7 +79,7 @@ MovingObjectDetector::MovingObjectDetector() {
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, depth_image_sub_, depth_image_info_sub_, confidence_map_sub_, disparity_image_sub_, 2);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5, _6, _7));
   
-  input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
+  input_synchronizer_ = std::make_shared<InputSynchronizer>(*this);
 }
 
 void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
@@ -385,30 +385,34 @@ bool MovingObjectDetector::getPoint3D(int u, int v, const sensor_msgs::Image& de
   }
 }
 
-MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node_handle)
+MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector& outer_instance)
 {
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle);
+  image_transport_ = std::make_shared<image_transport::ImageTransport>(outer_instance.node_handle_);
   
-  std::string publish_depth_image_topic = node_handle.resolveName("synchronizer_output_depth_image");
-  std::string publish_left_rect_image_topic = node_handle.resolveName("synchronizer_output_left_rect_image");
-  std::string publish_right_rect_image_topic = node_handle.resolveName("synchronizer_output_right_rect_image");
+  std::string publish_depth_image_topic = outer_instance.depth_image_sub_.getTopic();
+  std::string publish_confidence_map_topic = outer_instance.confidence_map_sub_.getTopic();
+  std::string publish_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_left_rect_image");
+  std::string publish_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_right_rect_image");
+  std::string publish_disparity_image_topic = outer_instance.disparity_image_sub_.getTopic();
+  
   depth_image_pub_ = image_transport_->advertiseCamera(publish_depth_image_topic, 1);
-  confidence_map_pub_ = node_handle.advertise<sensor_msgs::Image>("synchronizer_output_confidence_map", 1);
+  confidence_map_pub_ = outer_instance.node_handle_.advertise<sensor_msgs::Image>(publish_confidence_map_topic, 1);
   left_rect_image_pub_ = image_transport_->advertiseCamera(publish_left_rect_image_topic, 1);
   right_rect_image_pub_ = image_transport_->advertiseCamera(publish_right_rect_image_topic, 1);
-  disparity_image_pub_ = node_handle.advertise<stereo_msgs::DisparityImage>("synchronizer_output_disparity_image", 1);
+  disparity_image_pub_ = outer_instance.node_handle_.advertise<stereo_msgs::DisparityImage>(publish_disparity_image_topic, 1);
   
-  std::string subscribe_depth_image_topic = node_handle.resolveName("synchronizer_input_depth_image");
-  std::string subscribe_left_rect_image_topic = node_handle.resolveName("synchronizer_input_left_rect_image");
-  std::string subscribe_right_rect_image_topic = node_handle.resolveName("synchronizer_input_right_rect_image");
-  depth_image_sub_.subscribe(node_handle, subscribe_depth_image_topic, 10);
-  depth_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 10);
-  confidence_map_sub_.subscribe(node_handle, "synchronizer_input_confidence_map", 10);
+  std::string subscribe_depth_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_depth_image");
+  std::string subscribe_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_left_rect_image");
+  std::string subscribe_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_right_rect_image");
+  
+  depth_image_sub_.subscribe(outer_instance.node_handle_, subscribe_depth_image_topic, 10);
+  depth_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 10);
+  confidence_map_sub_.subscribe(outer_instance.node_handle_, "synchronizer_input_confidence_map", 10);
   left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 10);
-  left_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
+  left_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
   right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
-  right_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
-  disparity_image_sub_.subscribe(node_handle, "synchronizer_input_disparity_image", 10);
+  right_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
+  disparity_image_sub_.subscribe(outer_instance.node_handle_, "synchronizer_input_disparity_image", 10);
   time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, confidence_map_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6, _7, _8));
 }

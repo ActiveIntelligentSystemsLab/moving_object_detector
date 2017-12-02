@@ -103,7 +103,7 @@ private:
     void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& confidence_map, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
     
   public:
-    InputSynchronizer(ros::NodeHandle& node_handle);
+    InputSynchronizer(MovingObjectDetector& outer_instance);
     void publish();
   };
   

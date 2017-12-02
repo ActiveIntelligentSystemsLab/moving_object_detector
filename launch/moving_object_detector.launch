@@ -57,11 +57,8 @@
     <remap from="synchronizer_input_right_rect_image" to="/zed/right/image_rect_color"/>
     <remap from="synchronizer_input_disparity_image" to="/zed/disparity/disparity_image"/>
     
-    <remap from="synchronizer_output_depth_image" to="/synchronized/depth/image_registered"/>
-    <remap from="synchronizer_output_confidence_map" to="/synchronized/confidence/confidence_map"/>
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
-    <remap from="synchronizer_output_disparity_image" to="/synchronized/disparity/disparity_image"/>
     
     <remap from="depth_image_rectified" to="/synchronized/depth/image_registered"/>
     <remap from="confidence_map" to="/synchronized/confidence/confidence_map"/>
