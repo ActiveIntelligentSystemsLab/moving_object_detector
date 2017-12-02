@@ -52,6 +52,7 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_server_.setCallback(reconfigure_func_);
   
   ros::param::param("~downsample_scale", downsample_scale_, 10);
+  ros::param::param("~confidence_limit", confidence_limit_, 100);
   ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
@@ -73,18 +74,20 @@ MovingObjectDetector::MovingObjectDetector() {
   disparity_image_sub_.subscribe(node_handle_, "disparity_image", 2);
   depth_image_sub_.subscribe(node_handle_, depth_image_topic, 2);
   depth_image_info_sub_.subscribe(node_handle_, depth_image_info_topic, 2);
+  confidence_map_sub_.subscribe(node_handle_, "confidence_map", 2);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, depth_image_sub_, depth_image_info_sub_, disparity_image_sub_, 2);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5, _6));
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, depth_image_sub_, depth_image_info_sub_, confidence_map_sub_, disparity_image_sub_, 2);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5, _6, _7));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(node_handle_);
 }
 
 void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: downsample_scale = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
+  ROS_INFO("Reconfigure Request: downsample_scale = %d, confidence_limit = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.confidence_limit, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
   
   downsample_scale_ = config.downsample_scale;
+  confidence_limit_ = config.confidence_limit;
   moving_flow_length_ = config.moving_flow_length;
   flow_length_diff_ = config.flow_length_diff;
   flow_start_diff_ = config.flow_start_diff;
@@ -94,7 +97,7 @@ void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDet
   cluster_element_num_ = config.cluster_element_num;
 }
 
-void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& confidence_map, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
   input_synchronizer_->publish();
@@ -105,6 +108,17 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   pcl::PointCloud<pcl::PointXYZ> removed_points;
   
   cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
+  
+  cv::Mat confidence_now;
+  try
+  {
+    confidence_now = cv_bridge::toCvShare(confidence_map, sensor_msgs::image_encodings::TYPE_32FC1)->image;
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
     
   if (first_run_) {
     first_run_ = false;
@@ -137,6 +151,12 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           continue;
         if(!getPoint3D(left_previous.x, left_previous.y, depth_image_previous_, point3d_previous))
           continue;
+        
+
+        if (confidence_now.at<float>(left_now.y, left_now.x) > confidence_limit_ || confidence_previous_.at<float>(left_previous.y, left_previous.x) > confidence_limit_)
+        {
+          continue;
+        }
         
         if (left_now.x < 0 || left_now.x >= disparity_map_now.cols)
           continue;
@@ -313,6 +333,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   }
   depth_image_previous_ = *depth_image_now;
   disparity_map_now.copyTo(disparity_map_previous_);
+  confidence_now.copyTo(confidence_previous_);
   time_stamp_previous_ = camera_transform->header.stamp;
   
   ros::Duration process_time = ros::Time::now() - start_process;
@@ -372,6 +393,7 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node
   std::string publish_left_rect_image_topic = node_handle.resolveName("synchronizer_output_left_rect_image");
   std::string publish_right_rect_image_topic = node_handle.resolveName("synchronizer_output_right_rect_image");
   depth_image_pub_ = image_transport_->advertiseCamera(publish_depth_image_topic, 1);
+  confidence_map_pub_ = node_handle.advertise<sensor_msgs::Image>("synchronizer_output_confidence_map", 1);
   left_rect_image_pub_ = image_transport_->advertiseCamera(publish_left_rect_image_topic, 1);
   right_rect_image_pub_ = image_transport_->advertiseCamera(publish_right_rect_image_topic, 1);
   disparity_image_pub_ = node_handle.advertise<stereo_msgs::DisparityImage>("synchronizer_output_disparity_image", 1);
@@ -381,21 +403,23 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(ros::NodeHandle& node
   std::string subscribe_right_rect_image_topic = node_handle.resolveName("synchronizer_input_right_rect_image");
   depth_image_sub_.subscribe(node_handle, subscribe_depth_image_topic, 10);
   depth_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 10);
+  confidence_map_sub_.subscribe(node_handle, "synchronizer_input_confidence_map", 10);
   left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 10);
   left_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
   right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
   right_rect_info_sub_.subscribe(node_handle, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
   disparity_image_sub_.subscribe(node_handle, "synchronizer_input_disparity_image", 10);
-  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6, _7));
+  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, confidence_map_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6, _7, _8));
 }
 
-void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& confidence_map, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   static int count = 0;
   
   depth_image_ = *depth_image;
   depth_image_info_ = *depth_image_info;
+  confidence_map_ = *confidence_map;
   left_rect_image_ = *left_rect_image;
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
@@ -414,6 +438,7 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
 void MovingObjectDetector::InputSynchronizer::publish()
 {
   depth_image_pub_.publish(depth_image_, depth_image_info_);
+  confidence_map_pub_.publish(confidence_map_);
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
   disparity_image_pub_.publish(disparity_image_);
