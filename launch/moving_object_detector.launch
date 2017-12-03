@@ -25,6 +25,7 @@
     <param name="y_offset" value="180"/>
   </node>
   
+  <!--
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="/viso2/input"/>
     <remap from="image" to="image_raw"/>
@@ -41,6 +42,20 @@
     <remap from="image" to="/synchronized/right/image_rect_color"/>
     <param name="debug_view" value="false"/>
   </node>
+  -->
+  
+  <node name="viso2" pkg="moving_object_detector_dummy_nodes" type="odometry_dummy_node">
+    <remap from="stereo" to="/viso2/input"/>
+    <remap from="image" to="image_raw"/>
+  </node>
+  
+  <node name="optical_flow_left" pkg="moving_object_detector_dummy_nodes" type="optical_flow_dummy_node">
+    <remap from="image" to="/synchronized/left/image_rect_color"/>
+  </node>
+  
+  <node name="optical_flow_right" pkg="moving_object_detector_dummy_nodes" type="optical_flow_dummy_node">
+    <remap from="image" to="/synchronized/right/image_rect_color"/>
+  </node>
   
   <node name="depth_image_diff_viewer" pkg="depth_image_diff_viewer" type="depth_image_diff_viewer_node">
     <remap from="depth_image" to="/synchronized/depth/image_registered"/>
@@ -49,6 +64,11 @@
   <node name="disparity_image_diff_viewer" pkg="disparity_image_diff_viewer" type="disparity_image_diff_viewer_node">
     <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
   </node>  
+  
+  <node name="removed_by_confidence_to_image" pkg="plot_pointcloud_to_image" type="plot_pointcloud_to_image_node">
+    <remap from="input_image" to="/synchronized/left/image_rect_color"/>
+    <remap from="input_pointcloud" to="/removed_by_confidence"/>
+  </node>
   
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
     <remap from="synchronizer_input_depth_image" to="/zed/depth/depth_registered"/>
@@ -67,7 +87,7 @@
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
     
-    <param name="downsample_scale" value="2"/>
+    <param name="downsample_scale" value="24"/>
     <param name="matching_tolerance" value="3.0"/>
   </node>
   
