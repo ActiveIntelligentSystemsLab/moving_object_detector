@@ -26,6 +26,7 @@ private:
   ros::Publisher flow3d_pub_;
   ros::Publisher cluster_pub_;
   ros::Publisher removed_points_pub_;
+  ros::Publisher removed_by_confidence_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<sensor_msgs::Image> optical_flow_left_sub_;

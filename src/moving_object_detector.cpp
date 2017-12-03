@@ -39,6 +39,7 @@ MovingObjectDetector::MovingObjectDetector() {
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_points_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_points", 10);
+  removed_by_confidence_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_confidence", 1);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
   std::string depth_image_info_topic = image_transport::getCameraInfoTopic(depth_image_topic);
@@ -81,6 +82,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   camera_model_.fromCameraInfo(depth_image_info);
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
   pcl::PointCloud<pcl::PointXYZ> removed_points;
+  pcl::PointCloud<pcl::PointXYZ> removed_by_confidence;
   
   cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
   
@@ -134,6 +136,14 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
 
         if (confidence_now.at<float>(left_now.y, left_now.x) > confidence_limit_ || confidence_previous_.at<float>(left_previous.y, left_previous.x) > confidence_limit_)
         {
+          if (removed_by_confidence_pub_.getNumSubscribers() > 0)
+          {
+            pcl::PointXYZ removed_point;
+            removed_point.x = point3d_now.getX();
+            removed_point.y = point3d_now.getY();
+            removed_point.z = point3d_now.getZ();
+            removed_by_confidence.push_back(removed_point);
+          }
           continue;
         }
         
@@ -267,6 +277,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     flow3d_msg.header.frame_id = depth_image_info->header.frame_id;
     flow3d_msg.header.stamp = depth_image_info->header.stamp;
     flow3d_pub_.publish(flow3d_msg);
+    
+    if (removed_by_confidence_pub_.getNumSubscribers() > 0)
+    {
+      sensor_msgs::PointCloud2 pointcloud_msg;
+      pcl::toROSMsg(removed_by_confidence, pointcloud_msg);
+      pointcloud_msg.header.frame_id = depth_image_info->header.frame_id;
+      pointcloud_msg.header.stamp = depth_image_info->header.stamp;
+      removed_by_confidence_pub_.publish(pointcloud_msg);
+    }
     
     if (removed_points_pub_.getNumSubscribers() > 0)
     {
