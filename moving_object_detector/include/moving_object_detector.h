@@ -16,6 +16,7 @@
 #include <stereo_msgs/DisparityImage.h>
 #include <dynamic_reconfigure/server.h>
 #include <moving_object_detector/MovingObjectDetectorConfig.h>
+#include <list>
 
 class MovingObjectDetector {
 public:
@@ -57,6 +58,8 @@ private:
   cv::Mat confidence_previous_;
   cv::Mat disparity_map_previous_;
   ros::Time time_stamp_previous_;
+  
+  std::list<double> confidence_error_rate_;
   
   bool first_run_;
   

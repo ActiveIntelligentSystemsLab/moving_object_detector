@@ -15,7 +15,6 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <algorithm>
-#include <list>
 #include <limits>
 #include <vector>
 #include <cmath>
@@ -286,7 +285,15 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     if (removed_by_confidence_pub_.getNumSubscribers() > 0)
     {
       double error_rate = 100.0 * removed_by_confidence_error_num / removed_by_confidence.size();
-      ROS_INFO("confidence filter error rate[percent]: %f", error_rate);
+      confidence_error_rate_.push_back(error_rate);
+      if (confidence_error_rate_.size() > 10)
+        confidence_error_rate_.pop_front();
+      double sum = 0;
+      for (double rate : confidence_error_rate_)
+        sum += rate;
+      
+      double average = sum / confidence_error_rate_.size();
+      ROS_INFO("confidence average error rate in 10 frames[percent]: %f", average);
       
       sensor_msgs::PointCloud2 pointcloud_msg;
       pcl::toROSMsg(removed_by_confidence, pointcloud_msg);
