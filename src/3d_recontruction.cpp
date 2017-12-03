@@ -1,5 +1,6 @@
 #include "3d_recontruction.h"
 
+#include <sensor_msgs/image_encodings.h>
 #include <vector>
 
 // depth_image_procパッケージより
