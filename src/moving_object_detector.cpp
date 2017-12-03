@@ -225,7 +225,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           
           bool already_clustered = false;
           std::list<std::list<Flow3D>>::iterator belonged_cluster_it;
-          for (int i = 0; i < clusters.size(); i++) {
           for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
             for (auto& clustered_flow : *cluster_it) {
               if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
