@@ -277,17 +277,18 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     if (cluster_pub_.getNumSubscribers() > 0)
     {
       // 要素数の少なすぎるクラスタの削除
-      for (int i = 0; i < clusters.size(); i++) {
-        auto cluster_it = clusters.begin() + i;
+      for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
         if (cluster_it->size() < cluster_element_num_) {
-          clusters.erase(cluster_it);
-          i--;
+          auto tmp_cluster_it = cluster_it;
+          cluster_it--; // 現在のクラスタを消去するので，1つ前のクラスタに戻ることで，次のループのインクリメントで消去したクラスタの次にクラスタに移動できる
+          clusters.erase(tmp_cluster_it);
         }
       }
       
       pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
-      for (int i = 0; i < clusters.size(); i++) {
-        for (auto& clustered_flow : clusters[i]) {
+      int i = 0;
+      for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
+        for (auto& clustered_flow : *cluster_it) {
           pcl::PointXYZI point_clustered;
           
           point_clustered.x = clustered_flow.end.getX();
@@ -297,6 +298,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           
           cluster_pcl.push_back(point_clustered);
         }
+        i++;
       }
       
       sensor_msgs::PointCloud2 cluster_msg;
