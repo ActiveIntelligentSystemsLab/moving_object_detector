@@ -105,6 +105,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
     cv::Mat flow_map_right = cv_bridge::toCvShare(optical_flow_right)->image;
     
+    ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
+    
     for (int left_now_y = 0; left_now_y < flow_map_left.rows; left_now_y += downsample_scale_) 
     {
       for (int left_now_x = 0; left_now_x < flow_map_left.cols; left_now_x += downsample_scale_)
@@ -190,7 +192,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
         
         Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
-        ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
         
         pcl::PointXYZRGB pcl_point;
         pcl_point.x = flow3d.end.getX();
