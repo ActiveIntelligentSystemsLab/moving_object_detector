@@ -62,10 +62,6 @@ private:
   void reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& confidence_map, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   
-  template<typename T>
-  bool getPoint3D_internal(int, int, const sensor_msgs::Image&, tf2::Vector3&);
-  bool getPoint3D(int, int, const sensor_msgs::Image&, tf2::Vector3&);
-  
   // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
   class InputSynchronizer {
   private:
