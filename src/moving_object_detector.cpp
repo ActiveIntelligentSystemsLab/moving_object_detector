@@ -127,6 +127,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         if(!getPoint3D(left_previous.x, left_previous.y, camera_model_, depth_image_previous_, point3d_previous))
           continue;
         
+        if (left_previous.y < 0 || left_previous.y >= confidence_previous_.rows || left_previous.x < 0 || left_previous.x >= confidence_previous_.cols)
+          continue;
 
         if (confidence_now.at<float>(left_now.y, left_now.x) > confidence_limit_ || confidence_previous_.at<float>(left_previous.y, left_previous.x) > confidence_limit_)
         {
