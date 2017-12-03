@@ -109,6 +109,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
     
+    int removed_by_confidence_error_num = 0; // 静止しているにも関わらず confidence によって除去されてしまった点の数
+    
     for (int left_now_y = 0; left_now_y < flow_map_left.rows; left_now_y += downsample_scale_) 
     {
       for (int left_now_x = 0; left_now_x < flow_map_left.cols; left_now_x += downsample_scale_)
@@ -130,22 +132,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           continue;
         if(!getPoint3D(left_previous.x, left_previous.y, camera_model_, depth_image_previous_, point3d_previous))
           continue;
-        
-        if (left_previous.y < 0 || left_previous.y >= confidence_previous_.rows || left_previous.x < 0 || left_previous.x >= confidence_previous_.cols)
-          continue;
-
-        if (confidence_now.at<float>(left_now.y, left_now.x) > confidence_limit_ || confidence_previous_.at<float>(left_previous.y, left_previous.x) > confidence_limit_)
-        {
-          if (removed_by_confidence_pub_.getNumSubscribers() > 0)
-          {
-            pcl::PointXYZ removed_point;
-            removed_point.x = point3d_now.getX();
-            removed_point.y = point3d_now.getY();
-            removed_point.z = point3d_now.getZ();
-            removed_by_confidence.push_back(removed_point);
-          }
-          continue;
-        }
         
         if (left_now.x < 0 || left_now.x >= disparity_map_now.cols)
           continue;
@@ -202,6 +188,25 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
         
         Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
+        
+        if (left_previous.y < 0 || left_previous.y >= confidence_previous_.rows || left_previous.x < 0 || left_previous.x >= confidence_previous_.cols)
+          continue;
+        
+        if (confidence_now.at<float>(left_now.y, left_now.x) > confidence_limit_ || confidence_previous_.at<float>(left_previous.y, left_previous.x) > confidence_limit_)
+        {
+          if (removed_by_confidence_pub_.getNumSubscribers() > 0)
+          {
+            pcl::PointXYZ pcl_point;
+            pcl_point.x = flow3d.end.getX();
+            pcl_point.y = flow3d.end.getY();
+            pcl_point.z = flow3d.end.getZ();
+            removed_by_confidence.push_back(pcl_point);
+            
+            if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_)
+              removed_by_confidence_error_num++;
+          }
+          continue;
+        }
         
         pcl::PointXYZRGB pcl_point;
         pcl_point.x = flow3d.end.getX();
@@ -280,6 +285,9 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     
     if (removed_by_confidence_pub_.getNumSubscribers() > 0)
     {
+      double error_rate = 100.0 * removed_by_confidence_error_num / removed_by_confidence.size();
+      ROS_INFO("confidence filter error rate[percent]: %f", error_rate);
+      
       sensor_msgs::PointCloud2 pointcloud_msg;
       pcl::toROSMsg(removed_by_confidence, pointcloud_msg);
       pointcloud_msg.header.frame_id = depth_image_info->header.frame_id;
