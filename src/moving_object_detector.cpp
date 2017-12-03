@@ -38,7 +38,7 @@ MovingObjectDetector::MovingObjectDetector() {
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
-  removed_points_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_points", 10);
+  removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   removed_by_confidence_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_confidence", 1);
   
   std::string depth_image_topic = node_handle_.resolveName("depth_image_rectified"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
@@ -81,7 +81,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   ros::Time start_process = ros::Time::now();
   camera_model_.fromCameraInfo(depth_image_info);
   pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
-  pcl::PointCloud<pcl::PointXYZ> removed_points;
+  pcl::PointCloud<pcl::PointXYZ> removed_by_matching;
   pcl::PointCloud<pcl::PointXYZ> removed_by_confidence;
   
   cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
@@ -184,13 +184,13 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
         
         if (diff > matching_tolerance_) {
-          if (removed_points_pub_.getNumSubscribers() > 0) 
+          if (removed_by_matching_pub_.getNumSubscribers() > 0) 
           {
             pcl::PointXYZ pcl_point;
             pcl_point.x = point3d_now.getX();
             pcl_point.y = point3d_now.getY();
             pcl_point.z = point3d_now.getZ();
-            removed_points.push_back(pcl_point);
+            removed_by_matching.push_back(pcl_point);
           }
           
           continue;
@@ -287,13 +287,13 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       removed_by_confidence_pub_.publish(pointcloud_msg);
     }
     
-    if (removed_points_pub_.getNumSubscribers() > 0)
+    if (removed_by_matching_pub_.getNumSubscribers() > 0)
     {
-      sensor_msgs::PointCloud2 removed_points_msg;
-      pcl::toROSMsg(removed_points, removed_points_msg);
-      removed_points_msg.header.frame_id = depth_image_info->header.frame_id;
-      removed_points_msg.header.stamp = depth_image_info->header.stamp;
-      removed_points_pub_.publish(removed_points_msg);
+      sensor_msgs::PointCloud2 pointcloud_msg;
+      pcl::toROSMsg(removed_by_matching, pointcloud_msg);
+      pointcloud_msg.header.frame_id = depth_image_info->header.frame_id;
+      pointcloud_msg.header.stamp = depth_image_info->header.stamp;
+      removed_by_matching_pub_.publish(pointcloud_msg);
     }
     
     if (cluster_pub_.getNumSubscribers() > 0)
