@@ -32,7 +32,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, 100);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, -1);
   ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
@@ -168,17 +168,19 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         double y_diff = right_previous.y + flow_right[1] - right_now.y;
         double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
         
-        if (diff > matching_tolerance_) {
-          if (removed_by_matching_pub_.getNumSubscribers() > 0) 
-          {
-            pcl::PointXYZ pcl_point;
-            pcl_point.x = point3d_now.getX();
-            pcl_point.y = point3d_now.getY();
-            pcl_point.z = point3d_now.getZ();
-            removed_by_matching.push_back(pcl_point);
+        if (matching_tolerance_ >= 0) { // matching_toleranceが負なら無効化
+          if (diff > matching_tolerance_) {
+            if (removed_by_matching_pub_.getNumSubscribers() > 0) 
+            {
+              pcl::PointXYZ pcl_point;
+              pcl_point.x = point3d_now.getX();
+              pcl_point.y = point3d_now.getY();
+              pcl_point.z = point3d_now.getZ();
+              removed_by_matching.push_back(pcl_point);
+            }
+            
+            continue;
           }
-          
-          continue;
         }
         
         // 以前のフレームを現在のフレームに座標変換
