@@ -2,18 +2,18 @@
 
 <!-- 
      pioneer を操作して，データを記録するためのlaunchファイル 
-     このままでは，rosbag時にHDDへの書き込みがデータの流入に追いつかないので，何かしらの工夫が必要
+     zedのすべてのノードをbagで記録するにはデータ転送が追いつかないため，zedのデータはZED ExplorerによってSVOファイルとして保存する
 -->
 
 <launch>
-  <include file="$(find zed_wrapper)/launch/zed.launch"/>
-  
-  <node name="rosbag_record" pkg="rosbag" type="record" args="/RosAria/pose /tf /tf_static /zed/confidence/confidence_map /zed/depth/camera_info /zed/depth/depth_registered /zed/disparity/disparity_image /zed/left/camera_info /zed/left/image_rect_color /zed/right/camera_info /zed/right/image_rect_color"/>
+  <node name="rosbag_record" pkg="rosbag" type="record" args="/RosAria/pose /tf /tf_static"/>
   
   <node name="ros_area" pkg="rosarea" type="RosArea"/>
+  
   <node name="joy" pkg="joy" type="joy_node">
     <param name="autorepeat_rate" value="10"/>
   </node>
+  
   <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node">
     <remap from="cmd_vel" to="/RosAria/cmd_vel"/>
     <param name="scale_linear" value="0.1"/>
