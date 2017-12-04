@@ -32,7 +32,7 @@ MovingObjectDetector::MovingObjectDetector() {
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, 2.0);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, 100);
   ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
@@ -59,7 +59,7 @@ MovingObjectDetector::MovingObjectDetector() {
 
 void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: downsample_scale = %d, confidence_limit = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.confidence_limit, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
+  ROS_INFO("Reconfigure Request: downsample_scale = %d, confidence_limit = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %d, cluster_element_num = %d", config.downsample_scale, config.confidence_limit, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
   
   downsample_scale_ = config.downsample_scale;
   confidence_limit_ = config.confidence_limit;
