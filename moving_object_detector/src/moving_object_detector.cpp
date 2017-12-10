@@ -184,9 +184,10 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         }
         
         // 以前のフレームを現在のフレームに座標変換
-        tf2::Stamped<tf2::Transform> tf_previous2now;
-        tf2::fromMsg(*camera_transform, tf_previous2now);
-        tf2::Vector3 point3d_previous_transformed = tf_previous2now * point3d_previous;
+        // VISO2からメッセージとして取得するtfは，現在の点を前フレームの座標系に座標変換する行列である
+        tf2::Stamped<tf2::Transform> tf_now2previous;
+        tf2::fromMsg(*camera_transform, tf_now2previous);
+        tf2::Vector3 point3d_previous_transformed = tf_now2previous.inverse() * point3d_previous;
         
         Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
         
