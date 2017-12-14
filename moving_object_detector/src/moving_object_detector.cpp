@@ -25,13 +25,13 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
-  ros::param::param("~downsample_scale", downsample_scale_, 10);
+  ros::param::param("~downsample_scale", downsample_scale_, 8);
   ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
   ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, -1);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, 1);
   ros::param::param("~cluster_element_num", cluster_element_num_, 10);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
@@ -342,7 +342,8 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   if (count < 2) {
     publish();
     count++;
-  } else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
+  }
+  else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
     publish();
   }
 }
