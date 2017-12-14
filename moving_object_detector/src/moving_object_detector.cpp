@@ -318,22 +318,20 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector&
   std::string subscribe_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_right_rect_image");
   
   depth_image_sub_.subscribe(outer_instance.node_handle_, subscribe_depth_image_topic, 10);
-  depth_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_depth_image_topic), 10);
   left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 10);
   left_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
   right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
   right_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
   disparity_image_sub_.subscribe(outer_instance.node_handle_, "synchronizer_input_disparity_image", 10);
-  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, depth_info_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6, _7));
+  time_sync_ = std::make_shared<DataTimeSynchronizer>(depth_image_sub_, left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5, _6));
 }
 
-void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   static int count = 0;
   
   depth_image_ = *depth_image;
-  depth_image_info_ = *depth_image_info;
   left_rect_image_ = *left_rect_image;
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
@@ -351,7 +349,7 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
 
 void MovingObjectDetector::InputSynchronizer::publish()
 {
-  depth_image_pub_.publish(depth_image_, depth_image_info_);
+  depth_image_pub_.publish(depth_image_, left_rect_info_);
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
   disparity_image_pub_.publish(disparity_image_);
