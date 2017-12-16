@@ -46,7 +46,7 @@ private:
   double flow_start_diff_;
   double flow_radian_diff_;
   double flow_axis_max_;
-  int matching_tolerance_;
+  double matching_tolerance_;
   int cluster_element_num_;
   
   image_geometry::PinholeCameraModel camera_model_;

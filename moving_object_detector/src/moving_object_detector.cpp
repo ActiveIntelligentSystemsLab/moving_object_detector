@@ -25,14 +25,14 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
-  ros::param::param("~downsample_scale", downsample_scale_, 8);
-  ros::param::param("~moving_flow_length", moving_flow_length_, 0.10);
+  ros::param::param("~downsample_scale", downsample_scale_, 18);
+  ros::param::param("~moving_flow_length", moving_flow_length_, 0.30);
   ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
   ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
-  ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.17);
+  ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.10);
   ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, 1);
-  ros::param::param("~cluster_element_num", cluster_element_num_, 10);
+  ros::param::param("~matching_tolerance_", matching_tolerance_, 0.62);
+  ros::param::param("~cluster_element_num", cluster_element_num_, 20);
   
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
@@ -56,7 +56,7 @@ MovingObjectDetector::MovingObjectDetector() {
 
 void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: downsample_scale = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %d, cluster_element_num = %d", config.downsample_scale, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
+  ROS_INFO("Reconfigure Request: downsample_scale = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
   
   downsample_scale_ = config.downsample_scale;
   moving_flow_length_ = config.moving_flow_length;
