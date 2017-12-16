@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" value="true"/>
+  <node name="bag_play" pkg="rosbag" type="play" args="--clock -l /home/aisl/research/research_storage/2017-12-15/test_data_sim/test_data_sim_elas.bag /home/aisl/research/research_storage/2017-12-15/test_data_sim/test_data_sim.bag"/>
+  
+  <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
+  
+  <!--
+  <node name="elas" pkg="elas_ros" type="elas_ros">
+    <remap from="stereo" to="mobile_base/camera"/>
+    <remap from="image" to="image_raw"/>
+    <param name="image_transport" value="compressed"/>
+  </node>
+  -->
+  
+  <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
+    <remap from="stereo" to="/synchronized"/>
+    <remap from="image" to="image_rect_color"/>
+    <param name="publish_tf" value="false"/>
+  </node>
+  
+  <node name="optical_flow_left" pkg="opencv_apps" type="dis_flow">
+    <remap from="image" to="/synchronized/left/image_rect_color"/>
+    <param name="debug_view" value="false"/>
+  </node>
+  
+  <node name="optical_flow_right" pkg="opencv_apps" type="dis_flow">
+    <remap from="image" to="/synchronized/right/image_rect_color"/>
+    <param name="debug_view" value="false"/>
+  </node>
+  
+  <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
+    <remap from="synchronizer_input_depth_image" to="/elas/depth"/>
+    <remap from="synchronizer_input_left_rect_image" to="/mobile_base/camera/left/image_raw"/>
+    <remap from="synchronizer_input_right_rect_image" to="/mobile_base/camera/right/image_raw"/>
+    <remap from="synchronizer_input_disparity_image" to="/elas/disparity"/>
+    
+    <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
+    <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
+    
+    <remap from="depth_image_rectified" to="/synchronized/depth/image_registered"/>
+    <remap from="confidence_map" to="/synchronized/confidence/confidence_map"/>
+    <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
+    
+    <param name="image_transport" value="compressed"/>
+  </node>
+  
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
+</launch>

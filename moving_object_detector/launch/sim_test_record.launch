@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="bag_record" pkg="rosbag" type="record" args="/mars/odom /mobile_base/camera/left/camera_info /mobile_base/camera/left/image_raw/compressed /mobile_base/camera/right/camera_info /mobile_base/camera/right/image_raw/compressed /odom /warehouse/odom"/>
+</launch>
