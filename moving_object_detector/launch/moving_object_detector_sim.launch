@@ -40,7 +40,6 @@
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
     
     <remap from="depth_image_rectified" to="/synchronized/depth/image_registered"/>
-    <remap from="confidence_map" to="/synchronized/confidence/confidence_map"/>
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
