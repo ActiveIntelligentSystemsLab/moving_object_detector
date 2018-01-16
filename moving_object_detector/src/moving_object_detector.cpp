@@ -83,12 +83,12 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   pcl::PointCloud<pcl::PointXYZ> removed_by_matching;
   pcl::PointCloud<pcl::PointXYZ> removed_by_confidence;
   
-  cv::Mat disparity_map_now = cv::Mat_<float>(disparity_image->image.height, disparity_image->image.width, (float*)&disparity_image->image.data[0], disparity_image->image.step);
-  
+  cv::Mat disparity_map_now;
   cv::Mat confidence_now;
   try
   {
     confidence_now = cv_bridge::toCvShare(confidence_map, sensor_msgs::image_encodings::TYPE_32FC1)->image;
+    disparity_map_now = cv_bridge::toCvShare(disparity_image->image, sensor_msgs::image_encodings::TYPE_32FC1)->image;
   }
   catch (cv_bridge::Exception& e)
   {
