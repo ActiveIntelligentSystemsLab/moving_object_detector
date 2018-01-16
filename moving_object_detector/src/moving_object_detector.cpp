@@ -1,6 +1,5 @@
 #include "moving_object_detector.h"
 #include "flow_3d.h"
-#include "moving_object_detector/MatchPointArray.h"
 #include "3d_recontruction.h"
 
 #include <pcl_conversions/pcl_conversions.h>
