@@ -1,7 +1,17 @@
 <?xml version="1.0"?>
 
 <launch>
-  <include file="$(find zed_wrapper)/launch/zed.launch"/>
+  <arg name="odometry_frame" default="map" />
+  
+  <group ns="zed">
+    <include file="$(find zed_wrapper)/launch/zed_camera.launch" pass_all_args="true">
+      <!-- compliant mode for rviz -->
+      <arg name="odometry_frame"        value="$(arg odometry_frame)" />
+      
+      <arg name="svo_file" value="/home/aisl/research/research_storage/2017-12-17/HD720_SN14266_17-13-07.svo"/>
+      
+    </include>
+  </group>
   
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
   
@@ -25,7 +35,6 @@
     <param name="y_offset" value="180"/>
   </node>
   
-  <!--
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="/viso2/input"/>
     <remap from="image" to="image_raw"/>
@@ -42,8 +51,8 @@
     <remap from="image" to="/synchronized/right/image_rect_color"/>
     <param name="debug_view" value="false"/>
   </node>
-  -->
-  
+
+<!--  
   <node name="viso2" pkg="moving_object_detector_dummy_nodes" type="odometry_dummy_node">
     <remap from="stereo" to="/viso2/input"/>
     <remap from="image" to="image_raw"/>
@@ -56,23 +65,15 @@
   <node name="optical_flow_right" pkg="moving_object_detector_dummy_nodes" type="optical_flow_dummy_node">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
   </node>
+  -->
   
-  <node name="depth_image_diff_viewer" pkg="depth_image_diff_viewer" type="depth_image_diff_viewer_node">
-    <remap from="depth_image" to="/synchronized/depth/image_registered"/>
-  </node>
-  
-  <node name="disparity_image_diff_viewer" pkg="disparity_image_diff_viewer" type="disparity_image_diff_viewer_node">
-    <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
-  </node>  
-  
-  <node name="removed_by_confidence_to_image" pkg="plot_pointcloud_to_image" type="plot_pointcloud_to_image_node">
+  <node name="removed_by_matching_to_image" pkg="plot_pointcloud_to_image" type="plot_pointcloud_to_image_node">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
-    <remap from="input_pointcloud" to="/removed_by_confidence"/>
+    <remap from="input_pointcloud" to="/removed_by_matching"/>
   </node>
   
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
     <remap from="synchronizer_input_depth_image" to="/zed/depth/depth_registered"/>
-    <remap from="synchronizer_input_confidence_map" to="/zed/confidence/confidence_map"/>
     <remap from="synchronizer_input_left_rect_image" to="/zed/left/image_rect_color"/>
     <remap from="synchronizer_input_right_rect_image" to="/zed/right/image_rect_color"/>
     <remap from="synchronizer_input_disparity_image" to="/zed/disparity/disparity_image"/>
@@ -81,14 +82,11 @@
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
     
     <remap from="depth_image_rectified" to="/synchronized/depth/image_registered"/>
-    <remap from="confidence_map" to="/synchronized/confidence/confidence_map"/>
+
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
-    
-    <param name="downsample_scale" value="24"/>
-    <param name="matching_tolerance" value="3.0"/>
   </node>
   
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
