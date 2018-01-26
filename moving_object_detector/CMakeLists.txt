@@ -149,6 +149,7 @@ add_executable(${PROJECT_NAME}_node
   src/flow_3d.cpp
   src/moving_object_detector.cpp
   src/moving_object_detector_node.cpp
+  src/process_disparity_image.cpp
 )
 
 ## Rename C++ executable without prefix
