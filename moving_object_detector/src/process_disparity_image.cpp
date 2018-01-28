@@ -1,8 +1,8 @@
 #include "process_disparity_image.h"
 
-ProcessDisparityImage::ProcessDisparityImage(stereo_msgs::DisparityImage& disparity_msg, sensor_msgs::CameraInfo& left_camera_info) : _disparity_msg(disparity_msg)
+ProcessDisparityImage::ProcessDisparityImage(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info) : _disparity_msg(disparity_msg)
 {
-  _disparity_map = cv::Mat_<float>(_disparity_msg.image.height, _disparity_msg.image.width, (float*)&_disparity_msg.image.data[0], _disparity_msg.image.step);
+  _disparity_map = cv::Mat_<float>(_disparity_msg->image.height, _disparity_msg->image.width, (float*)&_disparity_msg->image.data[0], _disparity_msg->image.step);
   
   _left_camera_model.fromCameraInfo(left_camera_info);
 }
@@ -15,9 +15,9 @@ bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
     return false;
   disparity = _disparity_map.at<float>(v, u);
   
-  if (_disparity_msg.max_disparity < disparity)
+  if (_disparity_msg->max_disparity < disparity)
     return false;
-  else if (_disparity_msg.min_disparity > disparity)
+  else if (_disparity_msg->min_disparity > disparity)
     return false;
   
   return true;
@@ -28,8 +28,8 @@ bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
   float disparity;
   if (!getDisparity(u, v, disparity))
     return false;
-  float focal_length = _disparity_msg.f;
-  float baseline = _disparity_msg.T;
+  float focal_length = _disparity_msg->f;
+  float baseline = _disparity_msg->T;
   
   float z = focal_length * baseline / disparity;
   // a vector faces the point in 3D coordinate
