@@ -24,15 +24,6 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
-  ros::param::param("~downsample_scale", downsample_scale_, 5);
-  ros::param::param("~moving_flow_length", moving_flow_length_, 0.30);
-  ros::param::param("~flow_length_diff", flow_length_diff_, 0.10);
-  ros::param::param("~flow_start_diff", flow_start_diff_, 0.10);
-  ros::param::param("~flow_radian_diff", flow_radian_diff_, 0.10);
-  ros::param::param("~flow_axis_max_", flow_axis_max_, 0.5);
-  ros::param::param("~matching_tolerance_", matching_tolerance_, 1.0);
-  ros::param::param("~cluster_element_num", cluster_element_num_, 20);
-  
   flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
