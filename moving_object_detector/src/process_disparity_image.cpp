@@ -19,7 +19,6 @@ bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
   return true;
 }
 
-// 
 bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
 {
   float disparity;
@@ -40,4 +39,14 @@ bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
   point3d.setZ(z);
   
   return true;
+}
+
+int ProcessDisparityImage::getWidth()
+{
+  return _disparity_map.cols;
+}
+
+int ProcessDisparityImage::getHeight()
+{
+  return _disparity_map.rows;
 }

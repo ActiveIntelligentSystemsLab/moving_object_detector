@@ -16,6 +16,8 @@ public:
   
   bool getDisparity(int u, int v, float& disparity);
   bool getPoint3D(int u, int v, tf2::Vector3& point3d);
+  int getWidth();
+  int getHeight();
 private:
   image_geometry::PinholeCameraModel _left_camera_model;
   
