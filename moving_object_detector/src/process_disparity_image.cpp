@@ -9,6 +9,10 @@ ProcessDisparityImage::ProcessDisparityImage(stereo_msgs::DisparityImage& dispar
 
 bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
 {
+  if (u < 0 || u >= getWidth())
+    return false;
+  if (v < 0 || v >= getHeight())
+    return false;
   disparity = _disparity_map.at<float>(v, u);
   
   if (_disparity_msg.max_disparity < disparity)
