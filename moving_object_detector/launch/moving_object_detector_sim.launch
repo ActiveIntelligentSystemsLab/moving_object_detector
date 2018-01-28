@@ -2,7 +2,7 @@
 
 <launch>
   <param name="use_sim_time" value="true"/>
-  <node name="bag_play" pkg="rosbag" type="play" args="--clock -l /home/aisl/research/research_storage/2017-12-15/test_data_sim/test_data_sim_elas.bag /home/aisl/research/research_storage/2017-12-15/test_data_sim/test_data_sim.bag"/>
+  <node name="bag_play" pkg="rosbag" type="play" args="--clock -l $(env HOME)/research/research_storage/2017-12-15/test_data_sim/test_data_sim_elas.bag $(env HOME)/research/research_storage/2017-12-15/test_data_sim/test_data_sim.bag"/>
   
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
   
