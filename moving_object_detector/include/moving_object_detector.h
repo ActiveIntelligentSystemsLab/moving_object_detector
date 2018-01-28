@@ -31,11 +31,10 @@ private:
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<sensor_msgs::Image> optical_flow_left_sub_;
   message_filters::Subscriber<sensor_msgs::Image> optical_flow_right_sub_;
-  message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_image_info_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> left_camera_info_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
   dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig>::CallbackType reconfigure_func_;
@@ -48,40 +47,35 @@ private:
   double flow_axis_max_;
   double matching_tolerance_;
   int cluster_element_num_;
-  
-  image_geometry::PinholeCameraModel camera_model_;
-  
-  sensor_msgs::Image depth_image_previous_;
-  cv::Mat disparity_map_previous_;
+    
+  stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   ros::Time time_stamp_previous_;
     
   bool first_run_;
   
   void reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level);
-  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::ImageConstPtr& depth_image_now, const sensor_msgs::CameraInfoConstPtr& depth_image_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   
   // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
   class InputSynchronizer {
   private:
     std::shared_ptr<image_transport::ImageTransport> image_transport_;
     
-    image_transport::CameraPublisher depth_image_pub_;
     image_transport::CameraPublisher left_rect_image_pub_;
     image_transport::CameraPublisher right_rect_image_pub_;
     ros::Publisher disparity_image_pub_;
     
-    message_filters::Subscriber<sensor_msgs::Image> depth_image_sub_; // depth imageのフォーマットはcompress transportに対応していないため，image_transportは使用しない
     image_transport::SubscriberFilter left_rect_image_sub_;
     message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
     image_transport::SubscriberFilter right_rect_image_sub_;
     message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
     message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
     
-    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage> DataTimeSynchronizer;
+    // 要修正
+    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage> DataTimeSynchronizer;
     std::shared_ptr<DataTimeSynchronizer> time_sync_;
     
-    sensor_msgs::Image depth_image_;
-    sensor_msgs::CameraInfo depth_image_info_;
+    sensor_msgs::CameraInfo left_camera_info_;
     sensor_msgs::Image left_rect_image_;
     sensor_msgs::CameraInfo left_rect_info_;
     sensor_msgs::Image right_rect_image_;
@@ -90,7 +84,7 @@ private:
     
     ros::Time last_publish_time_;
     
-    void dataCallBack(const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+    void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
     
   public:
     InputSynchronizer(MovingObjectDetector& outer_instance);
