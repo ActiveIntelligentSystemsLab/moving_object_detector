@@ -29,13 +29,13 @@ MovingObjectDetector::MovingObjectDetector() {
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   
-  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 2);
-  optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 2); // optical flowはrectified imageで計算すること
-  optical_flow_right_sub_.subscribe(node_handle_, "optical_flow_right", 2); // optical flowはrectified imageで計算すること
-  disparity_image_sub_.subscribe(node_handle_, "disparity_image", 2);
+  camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
+  optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
+  optical_flow_right_sub_.subscribe(node_handle_, "optical_flow_right", 1); // optical flowはrectified imageで計算すること
+  disparity_image_sub_.subscribe(node_handle_, "disparity_image", 1);
   std::string left_camera_topic = node_handle_.resolveName("synchronizer_output_left_rect_image");
   std::string left_camera_info_topic = image_transport::getCameraInfoTopic(left_camera_topic);
-  left_camera_info_sub_.subscribe(node_handle_, left_camera_info_topic, 2);
+  left_camera_info_sub_.subscribe(node_handle_, left_camera_info_topic, 1);
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 2);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5));
