@@ -24,7 +24,7 @@ public:
 private:
   ros::NodeHandle node_handle_;
   
-  ros::Publisher flow3d_pub_;
+  ros::Publisher pc_with_velocity_pub_;
   ros::Publisher cluster_pub_;
   ros::Publisher removed_by_matching_pub_;
   

@@ -1,5 +1,6 @@
 #include "flow_3d.h"
 #include "moving_object_detector.h"
+#include "pcl_point_xyz_velocity.h"
 #include "process_disparity_image.h"
 
 #include <cv_bridge/cv_bridge.h>
@@ -24,7 +25,7 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
-  flow3d_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("flow3d", 10);
+  pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("pc_with_velocity", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   
@@ -63,7 +64,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   
   ros::Time start_process = ros::Time::now();
 
-  pcl::PointCloud<pcl::PointXYZRGB> flow3d_pcl;
+  pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
   pcl::PointCloud<pcl::PointXYZ> removed_by_matching;
     
   if (first_run_) {
@@ -157,32 +158,17 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         
         Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
         
-        pcl::PointXYZRGB pcl_point;
-        pcl_point.x = flow3d.end.getX();
-        pcl_point.y = flow3d.end.getY();
-        pcl_point.z = flow3d.end.getZ();
+        pcl::PointXYZVelocity point_with_velocity;
+        point_with_velocity.x = flow3d.end.getX();
+        point_with_velocity.y = flow3d.end.getY();
+        point_with_velocity.z = flow3d.end.getZ();
         
         tf2::Vector3 flow3d_vector = flow3d.distanceVector();
-        uint32_t red, blue, green; 
+        point_with_velocity.vx = flow3d_vector.getX() / time_between_frames.toSec();
+        point_with_velocity.vy = flow3d_vector.getY() / time_between_frames.toSec();
+        point_with_velocity.vz = flow3d_vector.getZ() / time_between_frames.toSec();
         
-        double flow_x_per_second = flow3d_vector.getX() / time_between_frames.toSec();
-        red = std::abs(flow_x_per_second) / flow_axis_max_ * 255;
-        if (red > 255)
-          red = 255;
-        
-        double flow_y_per_second = flow3d_vector.getY() / time_between_frames.toSec();
-        green = std::abs(flow_y_per_second) / flow_axis_max_ * 255;
-        if (green > 255)
-          green = 255;
-        
-        double flow_z_per_second = flow3d_vector.getZ() / time_between_frames.toSec();
-        blue = std::abs(flow_z_per_second) / flow_axis_max_ * 255;
-        if (blue > 255)
-          blue = 255;
-        
-        uint32_t rgb = red << 16 | green << 8 | blue;
-        pcl_point.rgb = *reinterpret_cast<float*>(&rgb);
-        flow3d_pcl.push_back(pcl_point);
+        pc_with_velocity.push_back(point_with_velocity);
         
         if (cluster_pub_.getNumSubscribers() > 0)
         {
@@ -226,11 +212,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       }
     }
     
-    sensor_msgs::PointCloud2 flow3d_msg;
-    pcl::toROSMsg(flow3d_pcl, flow3d_msg);
-    flow3d_msg.header.frame_id = left_camera_info->header.frame_id;
-    flow3d_msg.header.stamp = left_camera_info->header.stamp;
-    flow3d_pub_.publish(flow3d_msg);
+    sensor_msgs::PointCloud2 pc_with_velocity_msg;
+    pcl::toROSMsg(pc_with_velocity, pc_with_velocity_msg);
+    pc_with_velocity_msg.header.frame_id = left_camera_info->header.frame_id;
+    pc_with_velocity_msg.header.stamp = left_camera_info->header.stamp;
+    pc_with_velocity_pub_.publish(pc_with_velocity_msg);
     
     if (removed_by_matching_pub_.getNumSubscribers() > 0)
     {
