@@ -130,12 +130,11 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         
         if(std::isnan(flow_right[0]) || std::isnan(flow_right[1]))
           continue;
-        
-        double x_diff = right_previous.x + flow_right[0] - right_now.x;
-        double y_diff = right_previous.y + flow_right[1] - right_now.y;
-        double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-        
+
         if (matching_tolerance_ >= 0) { // matching_toleranceが負なら無効化
+          double x_diff = right_previous.x + flow_right[0] - right_now.x;
+          double y_diff = right_previous.y + flow_right[1] - right_now.y;
+          double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
           if (diff > matching_tolerance_) {
             if (removed_by_matching_pub_.getNumSubscribers() > 0) 
             {
