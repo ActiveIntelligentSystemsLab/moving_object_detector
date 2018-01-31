@@ -1,22 +1,22 @@
-#include "moving_object_detector.h"
 #include "flow_3d.h"
+#include "moving_object_detector.h"
 #include "process_disparity_image.h"
 
-#include <pcl_conversions/pcl_conversions.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_geometry/pinhole_camera_model.h>
+#include <image_transport/camera_common.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
-#include <image_geometry/pinhole_camera_model.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <image_transport/camera_common.h>
-#include <cv_bridge/cv_bridge.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <vector>
-#include <cmath>
 
 MovingObjectDetector::MovingObjectDetector() {  
   first_run_ = true;
