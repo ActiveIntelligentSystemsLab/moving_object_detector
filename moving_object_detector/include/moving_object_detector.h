@@ -71,7 +71,6 @@ private:
     message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
     message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
     
-    // 要修正
     typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage> DataTimeSynchronizer;
     std::shared_ptr<DataTimeSynchronizer> time_sync_;
     
