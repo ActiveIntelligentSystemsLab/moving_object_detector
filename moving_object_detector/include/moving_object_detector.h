@@ -63,15 +63,13 @@ private:
     
     image_transport::CameraPublisher left_rect_image_pub_;
     image_transport::CameraPublisher right_rect_image_pub_;
-    ros::Publisher disparity_image_pub_;
     
     image_transport::SubscriberFilter left_rect_image_sub_;
     message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
     image_transport::SubscriberFilter right_rect_image_sub_;
     message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
-    message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
     
-    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage> DataTimeSynchronizer;
+    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> DataTimeSynchronizer;
     std::shared_ptr<DataTimeSynchronizer> time_sync_;
     
     sensor_msgs::CameraInfo left_camera_info_;
@@ -79,11 +77,10 @@ private:
     sensor_msgs::CameraInfo left_rect_info_;
     sensor_msgs::Image right_rect_image_;
     sensor_msgs::CameraInfo right_rect_info_;
-    stereo_msgs::DisparityImage disparity_image_;
     
     ros::Time last_publish_time_;
     
-    void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+    void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
     
   public:
     InputSynchronizer(MovingObjectDetector& outer_instance);

@@ -273,11 +273,9 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector&
   
   std::string publish_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_left_rect_image");
   std::string publish_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_right_rect_image");
-  std::string publish_disparity_image_topic = outer_instance.disparity_image_sub_.getTopic();
   
   left_rect_image_pub_ = image_transport_->advertiseCamera(publish_left_rect_image_topic, 1);
   right_rect_image_pub_ = image_transport_->advertiseCamera(publish_right_rect_image_topic, 1);
-  disparity_image_pub_ = outer_instance.node_handle_.advertise<stereo_msgs::DisparityImage>(publish_disparity_image_topic, 1);
   
   std::string subscribe_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_left_rect_image");
   std::string subscribe_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_right_rect_image");
@@ -286,12 +284,11 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector&
   left_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
   right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
   right_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
-  disparity_image_sub_.subscribe(outer_instance.node_handle_, "synchronizer_input_disparity_image", 10);
-  time_sync_ = std::make_shared<DataTimeSynchronizer>(left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, disparity_image_sub_, 10);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4, _5));
+  time_sync_ = std::make_shared<DataTimeSynchronizer>(left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 10);
+  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4));
 }
 
-void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
 {
   static int count = 0;
   
@@ -299,7 +296,6 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
   right_rect_info_ = *right_rect_info;
-  disparity_image_ = *disparity_image;
   
   // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
   if (count < 2) {
@@ -315,7 +311,6 @@ void MovingObjectDetector::InputSynchronizer::publish()
 {
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
-  disparity_image_pub_.publish(disparity_image_);
   
   last_publish_time_ = ros::Time::now();
 }
