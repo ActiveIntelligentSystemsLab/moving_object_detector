@@ -8,19 +8,19 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  sensor_msgs
-  viso2_ros
-  image_geometry
-  pcl_conversions
-  geometry_msgs
-  opencv_apps
-  image_transport
-  tf2
-  tf2_geometry_msgs
-  std_msgs
-  stereo_msgs
   cv_bridge
   dynamic_reconfigure
+  geometry_msgs
+  image_geometry
+  image_transport
+  opencv_apps
+  pcl_conversions
+  sensor_msgs
+  std_msgs
+  stereo_msgs
+  tf2
+  tf2_geometry_msgs
+  viso2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -115,7 +115,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project-pointcloud-to-image
-  CATKIN_DEPENDS sensor_msgs viso2_ros image_geometry pcl_conversions geometry_msgs opencv_apps image_transport tf2 tf2_geometry_msgs std_msgs stereo_msgs dynamic_reconfigure
+  CATKIN_DEPENDS dynamic_reconfigure geometry_msgs image_geometry image_transport opencv_apps pcl_conversions sensor_msgs std_msgs stereo_msgs tf2 tf2_geometry_msgs viso2_ros
   DEPENDS OpenCV
 )
 
