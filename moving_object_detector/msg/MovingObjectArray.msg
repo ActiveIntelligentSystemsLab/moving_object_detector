@@ -1,0 +1,3 @@
+Header header
+
+moving_object_detector/MovingObject[] moving_object_array
