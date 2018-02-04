@@ -2,7 +2,7 @@
 <package>
   <name>moving_object_detector</name>
   <version>0.0.0</version>
-  <description>VISO2によってマッチングされた点から移動物体を抽出するノード</description>
+  <description>移動物体を抽出するノード</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
