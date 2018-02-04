@@ -27,7 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV)
-
+find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(PCL REQUIRED common)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -132,7 +133,11 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${openCV_INCLUDE_DIRS}
+  ${PCL_LIBRARY_DIRS}
 )
+
+## Specify additional locations of library files
+link_directories(${PCL_LIBRARY_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -148,6 +153,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
+  src/clusterer.cpp
   src/flow_3d.cpp
   src/moving_object_detector.cpp
   src/moving_object_detector_node.cpp
@@ -169,6 +175,7 @@ add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
 )
 
 #############
