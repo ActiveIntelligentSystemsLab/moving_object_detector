@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "velocity2color");
   ros::NodeHandle node_handle;
   
+  color_pub = node_handle.advertise<sensor_msgs::PointCloud2>("color_pc", 10);
   ros::Subscriber velocity_sub = node_handle.subscribe("velocity_pc", 10, callback);
   
   ros::spin();
