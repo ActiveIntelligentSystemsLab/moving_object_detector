@@ -4,7 +4,6 @@
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <opencv_apps/FlowMap.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <image_geometry/pinhole_camera_model.h>
