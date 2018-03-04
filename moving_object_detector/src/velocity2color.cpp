@@ -1,18 +1,27 @@
 #include "pcl_point_xyz_velocity.h"
+#include "moving_object_detector/Velocity2ColorConfig.h"
 
 #include <ros/ros.h>
 #include <cmath>
+#include <dynamic_reconfigure/server.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
 
 ros::Publisher color_pub;
-double max_velocity = 5.0;
+double max_velocity;
+
+dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig> reconfigure_server;
+dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig>::CallbackType reconfigure_func;
 
 void callback(const sensor_msgs::PointCloud2ConstPtr pc_velocity);
+void reconfigureCB(moving_object_detector::Velocity2ColorConfig& config, uint32_t level);
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "velocity2color");
   ros::NodeHandle node_handle;
+  
+  reconfigure_func = boost::bind(&reconfigureCB, _1, _2);
+  reconfigure_server.setCallback(reconfigure_func);
   
   color_pub = node_handle.advertise<sensor_msgs::PointCloud2>("color_pc", 10);
   ros::Subscriber velocity_sub = node_handle.subscribe("velocity_pc", 10, callback);
@@ -56,4 +65,9 @@ void callback(const sensor_msgs::PointCloud2ConstPtr velocity_pc_msg) {
   pcl::toROSMsg(color_pc, color_pc_msg);
   
   color_pub.publish(color_pc_msg);
+}
+
+void reconfigureCB(moving_object_detector::Velocity2ColorConfig& config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: velocity_max = %f", config.max_velocity);
+  max_velocity = config.max_velocity;
 }
