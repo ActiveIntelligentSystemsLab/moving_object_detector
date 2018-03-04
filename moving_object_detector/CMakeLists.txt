@@ -160,6 +160,10 @@ add_executable(${PROJECT_NAME}_node
   src/process_disparity_image.cpp
 )
 
+add_executable(velocity2color_node 
+  src/velocity2color.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -175,6 +179,11 @@ add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+)
+
+target_link_libraries(velocity2color_node
+  ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
 
