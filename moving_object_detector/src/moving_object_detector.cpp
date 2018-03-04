@@ -80,9 +80,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     ProcessDisparityImage disparity_processor(disparity_image, left_camera_info);
     ProcessDisparityImage disparity_processor_previous(disparity_image_previous_, left_camera_info);
 
-    
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
-        
+    
     for (int left_now_y = 0; left_now_y < flow_map_left.rows; left_now_y += downsample_scale_) 
     {
       for (int left_now_x = 0; left_now_x < flow_map_left.cols; left_now_x += downsample_scale_)
@@ -100,20 +99,20 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         left_previous.y = std::round(left_now.y - flow_left[1]);
         
         tf2::Vector3 point3d_now, point3d_previous;
-	if(!disparity_processor.getPoint3D(left_now.x, left_now.y, point3d_now))
+        if(!disparity_processor.getPoint3D(left_now.x, left_now.y, point3d_now))
           continue;
-	if(!disparity_processor_previous.getPoint3D(left_previous.x, left_previous.y, point3d_previous))
+        if(!disparity_processor_previous.getPoint3D(left_previous.x, left_previous.y, point3d_previous))
           continue;
         
         float disparity_now;
-	if (!disparity_processor.getDisparity(left_now.x, left_now.y, disparity_now))
-	  continue;
+        if (!disparity_processor.getDisparity(left_now.x, left_now.y, disparity_now))
+          continue;
         if (std::isnan(disparity_now) || std::isinf(disparity_now) || disparity_now < 0)
           continue;
         
         float disparity_previous;
-	if (!disparity_processor_previous.getDisparity(left_previous.x, left_previous.y, disparity_previous))
-	  continue;
+        if (!disparity_processor_previous.getDisparity(left_previous.x, left_previous.y, disparity_previous))
+          continue;
         if (std::isnan(disparity_previous) || std::isinf(disparity_previous) || disparity_previous < 0)
           continue;
         
@@ -122,7 +121,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         
         right_previous.x = std::round(left_previous.x - disparity_previous);
         right_previous.y = left_previous.y;
-
+        
         if (right_now.x < 0 || right_now.x >= flow_map_right.cols)
           continue;
         
