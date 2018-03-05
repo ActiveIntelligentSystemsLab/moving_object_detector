@@ -40,14 +40,12 @@
     <remap from="image" to="image_raw"/>
   </node>
   
-  <node name="optical_flow_left" pkg="opencv_apps" type="dis_flow">
+  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
     <param name="debug_view" value="false"/>
-    <param name="intensity_max" value="50"/>
-    <param name="intensity_view" value="true"/>
   </node>
   
-  <node name="optical_flow_right" pkg="opencv_apps" type="dis_flow">
+  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
     <param name="debug_view" value="false"/>
   </node>
