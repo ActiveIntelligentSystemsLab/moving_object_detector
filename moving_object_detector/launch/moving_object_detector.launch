@@ -65,11 +65,6 @@
   </node>
   -->
   
-  <node name="removed_by_matching_to_image" pkg="plot_pointcloud_to_image" type="plot_pointcloud_to_image_node">
-    <remap from="input_image" to="/synchronized/left/image_rect_color"/>
-    <remap from="input_pointcloud" to="/removed_by_matching"/>
-  </node>
-  
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
     <remap from="synchronizer_input_depth_image" to="/zed/depth/depth_registered"/>
     <remap from="synchronizer_input_left_rect_image" to="/zed/left/image_rect_color"/>
