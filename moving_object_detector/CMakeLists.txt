@@ -69,11 +69,24 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-set(MOVING_OBJECT_DETECTOR_NODE moving_object_detector_node)
-set(VELOCITY2COLOR_NODE velocity2color_node)
 set(CLUSTERER_NODE clusterer_node)
-set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
+add_executable(${CLUSTERER_NODE} 
+  src/clusterer.cpp
+  src/${CLUSTERER_NODE}.cpp
+)
+add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${CLUSTERER_NODE}
+  ${catkin_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+)
 
+set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
+add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
+target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
+  ${catkin_LIBRARIES}
+)
+
+set(MOVING_OBJECT_DETECTOR_NODE moving_object_detector_node)
 add_executable(${MOVING_OBJECT_DETECTOR_NODE} 
   src/flow_3d.cpp
   src/moving_object_detector.cpp
@@ -87,25 +100,10 @@ target_link_libraries(${MOVING_OBJECT_DETECTOR_NODE}
   ${PCL_COMMON_LIBRARIES}
 )
 
+set(VELOCITY2COLOR_NODE velocity2color_node)
 add_executable(${VELOCITY2COLOR_NODE} src/${VELOCITY2COLOR_NODE}.cpp)
 add_dependencies(${VELOCITY2COLOR_NODE} ${PROJECT_NAME}_gencfg)
 target_link_libraries(${VELOCITY2COLOR_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
-
-add_executable(${CLUSTERER_NODE} 
-  src/clusterer.cpp
-  src/${CLUSTERER_NODE}.cpp
-)
-add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg)
-target_link_libraries(${CLUSTERER_NODE}
-  ${catkin_LIBRARIES}
-  ${PCL_COMMON_LIBRARIES}
-)
-
-add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
-target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
-  ${catkin_LIBRARIES}
-)
-
