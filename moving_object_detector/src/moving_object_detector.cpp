@@ -37,7 +37,7 @@ MovingObjectDetector::MovingObjectDetector() {
   std::string left_camera_info_topic = image_transport::getCameraInfoTopic(left_camera_topic);
   left_camera_info_sub_.subscribe(node_handle_, left_camera_info_topic, 1);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 1);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(*this);
