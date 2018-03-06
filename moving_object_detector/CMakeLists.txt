@@ -74,7 +74,6 @@ set(VELOCITY2COLOR_NODE velocity2color_node)
 set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
 
 add_executable(${MOVING_OBJECT_DETECTOR_NODE} 
-  src/clusterer.cpp
   src/flow_3d.cpp
   src/moving_object_detector.cpp
   src/moving_object_detector_node.cpp
