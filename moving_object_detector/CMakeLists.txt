@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   stereo_msgs
   tf2
   tf2_geometry_msgs
+  visualization_msgs
 )
 
 find_package(OpenCV)
@@ -54,6 +55,7 @@ catkin_package(
     stereo_msgs 
     tf2 
     tf2_geometry_msgs
+    visualization_msgs
   DEPENDS
     OpenCV
 )
@@ -86,3 +88,9 @@ target_link_libraries(velocity2color_node
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
+
+add_executable(display_moving_objects_node src/display_moving_objects.cpp)
+target_link_libraries(display_moving_objects_node
+  ${catkin_LIBRARIES}
+)
+
