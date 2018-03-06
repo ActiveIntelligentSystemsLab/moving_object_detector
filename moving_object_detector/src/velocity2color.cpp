@@ -10,15 +10,15 @@
 ros::Publisher color_pub;
 double max_velocity;
 
-dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig> reconfigure_server;
-dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig>::CallbackType reconfigure_func;
-
 void callback(const sensor_msgs::PointCloud2ConstPtr pc_velocity);
 void reconfigureCB(moving_object_detector::Velocity2ColorConfig& config, uint32_t level);
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "velocity2color");
   ros::NodeHandle node_handle;
+  
+  dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig> reconfigure_server;
+  dynamic_reconfigure::Server<moving_object_detector::Velocity2ColorConfig>::CallbackType reconfigure_func;
   
   reconfigure_func = boost::bind(&reconfigureCB, _1, _2);
   reconfigure_server.setCallback(reconfigure_func);
