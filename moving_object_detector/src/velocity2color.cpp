@@ -63,7 +63,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr velocity_pc_msg) {
   
   sensor_msgs::PointCloud2 color_pc_msg;
   pcl::toROSMsg(color_pc, color_pc_msg);
-  
+  color_pc_msg.header = velocity_pc_msg->header;  
   color_pub.publish(color_pc_msg);
 }
 
