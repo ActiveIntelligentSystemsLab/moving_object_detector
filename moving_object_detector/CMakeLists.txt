@@ -83,13 +83,13 @@ target_link_libraries(${PROJECT_NAME}_node
   ${PCL_COMMON_LIBRARIES}
 )
 
-add_executable(velocity2color_node src/velocity2color.cpp)
+add_executable(velocity2color_node src/velocity2color_node.cpp)
 target_link_libraries(velocity2color_node
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
 
-add_executable(display_moving_objects_node src/display_moving_objects.cpp)
+add_executable(display_moving_objects_node src/display_moving_objects_node.cpp)
 target_link_libraries(display_moving_objects_node
   ${catkin_LIBRARIES}
 )
