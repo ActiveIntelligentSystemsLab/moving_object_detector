@@ -66,20 +66,16 @@
   -->
   
   <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
-    <remap from="synchronizer_input_depth_image" to="/zed/depth/depth_registered"/>
     <remap from="synchronizer_input_left_rect_image" to="/zed/left/image_rect_color"/>
     <remap from="synchronizer_input_right_rect_image" to="/zed/right/image_rect_color"/>
-    <remap from="synchronizer_input_disparity_image" to="/zed/disparity/disparity_image"/>
     
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
-    
-    <remap from="depth_image_rectified" to="/synchronized/depth/image_registered"/>
 
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
-    <remap from="disparity_image" to="/synchronized/disparity/disparity_image"/>
+    <remap from="disparity_image" to="/zed/disparity/disparity_image"/>
   </node>
   
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
