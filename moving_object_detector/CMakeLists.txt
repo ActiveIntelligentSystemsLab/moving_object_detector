@@ -71,6 +71,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 set(MOVING_OBJECT_DETECTOR_NODE moving_object_detector_node)
 set(VELOCITY2COLOR_NODE velocity2color_node)
+set(CLUSTERER_NODE clusterer_node)
 set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
 
 add_executable(${MOVING_OBJECT_DETECTOR_NODE} 
@@ -89,6 +90,16 @@ target_link_libraries(${MOVING_OBJECT_DETECTOR_NODE}
 add_executable(${VELOCITY2COLOR_NODE} src/${VELOCITY2COLOR_NODE}.cpp)
 add_dependencies(${VELOCITY2COLOR_NODE} ${PROJECT_NAME}_gencfg)
 target_link_libraries(${VELOCITY2COLOR_NODE}
+  ${catkin_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+)
+
+add_executable(${CLUSTERER_NODE} 
+  src/clusterer.cpp
+  src/${CLUSTERER_NODE}.cpp
+)
+add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${CLUSTERER_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
