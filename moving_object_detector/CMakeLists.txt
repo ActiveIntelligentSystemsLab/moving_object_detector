@@ -69,28 +69,33 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_executable(${PROJECT_NAME}_node 
+set(MOVING_OBJECT_DETECTOR_NODE moving_object_detector_node)
+set(VELOCITY2COLOR_NODE velocity2color_node)
+set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
+
+add_executable(${MOVING_OBJECT_DETECTOR_NODE} 
   src/clusterer.cpp
   src/flow_3d.cpp
   src/moving_object_detector.cpp
   src/moving_object_detector_node.cpp
   src/process_disparity_image.cpp
 )
-add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME}_node
+add_dependencies(${MOVING_OBJECT_DETECTOR_NODE} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${MOVING_OBJECT_DETECTOR_NODE}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
 
-add_executable(velocity2color_node src/velocity2color_node.cpp)
-target_link_libraries(velocity2color_node
+add_executable(${VELOCITY2COLOR_NODE} src/${VELOCITY2COLOR_NODE}.cpp)
+add_dependencies(${VELOCITY2COLOR_NODE} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${VELOCITY2COLOR_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
 
-add_executable(display_moving_objects_node src/display_moving_objects_node.cpp)
-target_link_libraries(display_moving_objects_node
+add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
+target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
   ${catkin_LIBRARIES}
 )
 
