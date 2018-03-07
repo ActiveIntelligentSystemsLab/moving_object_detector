@@ -37,7 +37,7 @@ generate_messages(
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/DynamicReconfigure.cfg
+  cfg/MovingObjectDetector.cfg
   cfg/Velocity2Color.cfg
 )
 
