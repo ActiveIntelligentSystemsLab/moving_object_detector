@@ -11,8 +11,10 @@
 
 Clusterer::Clusterer()
 {
-  velocity_pc_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &Clusterer::dataCB, this);
+  reconfigure_func_ = boost::bind(&Clusterer::reconfigureCB, this, _1, _2);
+  reconfigure_server_.setCallback(reconfigure_func_);
   
+  velocity_pc_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &Clusterer::dataCB, this);
   dynamic_objects_pub_ = node_handle_.advertise<moving_object_detector::MovingObjectArray>("moving_objects", 10);
 }
 
@@ -23,7 +25,6 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
   
   //std::list<std::list<pcl::PointXYZVelocity*>> cluster_list;
   std::list<pcl::PointCloud<pcl::PointXYZVelocity>> cluster_list;
-
 
   for (auto &point : velocity_pc)
   {
@@ -116,3 +117,12 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
   dynamic_objects_pub_.publish(pub_msg);
 }
 
+void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: cluster_size = %d, direction_diff = %f, dynamic_speed = %f, position_diff = %f, speed_diff = %f", config.cluster_size, config.direction_diff, config.dynamic_speed, config.position_diff, config.speed_diff);
+  
+  cluster_size_th_   = config.cluster_size;
+  direction_diff_th_ = config.direction_diff;
+  dynamic_speed_th_  = config.dynamic_speed;
+  position_diff_th_  = config.position_diff;
+  speed_diff_th_     = config.speed_diff;
+}
