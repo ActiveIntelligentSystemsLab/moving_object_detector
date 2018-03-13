@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   image_geometry
   image_transport
   message_generation
-  opencv_apps
   pcl_conversions
   sensor_msgs
   std_msgs
@@ -49,7 +48,6 @@ catkin_package(
     image_geometry
     image_transport
     message_runtime 
-    opencv_apps 
     pcl_conversions 
     sensor_msgs 
     std_msgs 
