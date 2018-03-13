@@ -73,7 +73,7 @@ add_executable(${CLUSTERER_NODE}
   src/clusterer.cpp
   src/${CLUSTERER_NODE}.cpp
 )
-add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg)
+add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${CLUSTERER_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
@@ -81,6 +81,7 @@ target_link_libraries(${CLUSTERER_NODE}
 
 set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
 add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
+add_dependencies(${CLUSTERER_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
   ${catkin_LIBRARIES}
 )
@@ -92,7 +93,7 @@ add_executable(${MOVING_OBJECT_DETECTOR_NODE}
   src/moving_object_detector_node.cpp
   src/process_disparity_image.cpp
 )
-add_dependencies(${MOVING_OBJECT_DETECTOR_NODE} ${PROJECT_NAME}_gencfg)
+add_dependencies(${MOVING_OBJECT_DETECTOR_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${MOVING_OBJECT_DETECTOR_NODE}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
