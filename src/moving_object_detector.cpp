@@ -26,7 +26,6 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_server_.setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
-  removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   
   camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
   optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
@@ -58,7 +57,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   ros::Time start_process = ros::Time::now();
 
   pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
-  pcl::PointCloud<pcl::PointXYZ> removed_by_matching;
     
   if (first_run_) {
     first_run_ = false;
@@ -125,18 +123,8 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
           double x_diff = right_previous.x + flow_right[0] - right_now.x;
           double y_diff = right_previous.y + flow_right[1] - right_now.y;
           double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-          if (diff > matching_tolerance_) {
-            if (removed_by_matching_pub_.getNumSubscribers() > 0) 
-            {
-              pcl::PointXYZ pcl_point;
-              pcl_point.x = point3d_now.getX();
-              pcl_point.y = point3d_now.getY();
-              pcl_point.z = point3d_now.getZ();
-              removed_by_matching.push_back(pcl_point);
-            }
-            
+          if (diff > matching_tolerance_)
             continue;
-          }
         }
         
         // 以前のフレームを現在のフレームに座標変換
@@ -166,15 +154,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
     pc_with_velocity_msg.header.frame_id = left_camera_info->header.frame_id;
     pc_with_velocity_msg.header.stamp = left_camera_info->header.stamp;
     pc_with_velocity_pub_.publish(pc_with_velocity_msg);
-    
-    if (removed_by_matching_pub_.getNumSubscribers() > 0)
-    {
-      sensor_msgs::PointCloud2 pointcloud_msg;
-      pcl::toROSMsg(removed_by_matching, pointcloud_msg);
-      pointcloud_msg.header.frame_id = left_camera_info->header.frame_id;
-      pointcloud_msg.header.stamp = left_camera_info->header.stamp;
-      removed_by_matching_pub_.publish(pointcloud_msg);
-    }
   }
   disparity_image_previous_ = disparity_image;
   time_stamp_previous_ = camera_transform->header.stamp;

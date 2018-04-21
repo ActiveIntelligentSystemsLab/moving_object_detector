@@ -24,7 +24,6 @@ private:
   ros::NodeHandle node_handle_;
   
   ros::Publisher pc_with_velocity_pub_;
-  ros::Publisher removed_by_matching_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<sensor_msgs::Image> optical_flow_left_sub_;
