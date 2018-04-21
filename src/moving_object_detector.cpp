@@ -31,7 +31,7 @@ MovingObjectDetector::MovingObjectDetector() {
   camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
   optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
   optical_flow_right_sub_.subscribe(node_handle_, "optical_flow_right", 1); // optical flowはrectified imageで計算すること
-  disparity_image_sub_.subscribe(node_handle_, "disparity_image", 1);
+  disparity_image_sub_.subscribe(node_handle_, "disparity_image", 20);
   std::string left_camera_topic = node_handle_.resolveName("synchronizer_output_left_rect_image");
   std::string left_camera_info_topic = image_transport::getCameraInfoTopic(left_camera_topic);
   left_camera_info_sub_.subscribe(node_handle_, left_camera_info_topic, 1);
