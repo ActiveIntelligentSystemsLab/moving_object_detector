@@ -103,8 +103,8 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
 
     Eigen::Vector4f center_point = (min_pt + max_pt) / 2;
     moving_object.center.x = center_point(0);
-    moving_object.center.x = center_point(1);
-    moving_object.center.x = center_point(2);
+    moving_object.center.y = center_point(1);
+    moving_object.center.z = center_point(2);
     
     Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
     for (auto& point : *cluster_it)
