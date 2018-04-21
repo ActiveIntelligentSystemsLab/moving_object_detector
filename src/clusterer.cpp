@@ -29,7 +29,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
     Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
     Eigen::Map<Eigen::Vector3f> position(point.data);
     
-    if (velocity.norm() > dynamic_speed_th_)
+    if (velocity.norm() < dynamic_speed_th_)
       continue;
     
     bool already_clustered = false;
