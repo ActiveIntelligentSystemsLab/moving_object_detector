@@ -19,13 +19,11 @@ Clusterer::Clusterer()
 }
 
 void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
-{
+{  
+  std::list<std::list<pcl::PointXYZVelocity>> cluster_list;
+
   pcl::PointCloud<pcl::PointXYZVelocity> velocity_pc;
   pcl::fromROSMsg(*velocity_pc_msg, velocity_pc);
-  
-  //std::list<std::list<pcl::PointXYZVelocity*>> cluster_list;
-  std::list<pcl::PointCloud<pcl::PointXYZVelocity>> cluster_list;
-
   for (auto &point : velocity_pc)
   {
     Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
@@ -35,7 +33,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
       continue;
     
     bool already_clustered = false;
-    std::list<pcl::PointCloud<pcl::PointXYZVelocity>>::iterator belonged_cluster_it;
+    std::list<std::list<pcl::PointXYZVelocity>>::iterator belonged_cluster_it;
     for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
     {
       for (auto& clustered_point : *cluster_it)
@@ -58,8 +56,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
           // クラスタに所属済みの点が，他のクラスタにも属していればクラスタ同士を結合する
           auto tmp_cluster_it = cluster_it;
           cluster_it--; // 現在のクラスタが消去されるので，イテレータを一つ前に戻す 次のループのインクリメントで消去されたクラスタの次のクラスタに到達することになる
-          //belonged_cluster_it->splice(belonged_cluster_it->end(), *tmp_cluster_it);
-          *belonged_cluster_it += *tmp_cluster_it;
+          belonged_cluster_it->splice(belonged_cluster_it->end(), *tmp_cluster_it);
           cluster_list.erase(tmp_cluster_it);
         }
         
@@ -87,10 +84,17 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
       
       continue;
     }
+
+    pcl::PointCloud<pcl::PointXYZVelocity> pcl_cluster;
+
+    for (auto cluster_element : *cluster_it)
+    {
+      pcl_cluster.push_back(cluster_element);
+    }
     
     moving_object_detector::MovingObject moving_object;
     Eigen::Vector4f min_pt, max_pt;
-    pcl::getMinMax3D(*cluster_it, min_pt, max_pt);
+    pcl::getMinMax3D(pcl_cluster, min_pt, max_pt);
     Eigen::Vector4f bounding_box_size = max_pt - min_pt;
     moving_object.bounding_box.x = bounding_box_size(0);
     moving_object.bounding_box.y = bounding_box_size(1);
