@@ -73,6 +73,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
   }
   
   moving_object_detector::MovingObjectArray pub_msg;
+  pub_msg.header = velocity_pc_msg->header;
   
   for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
   {
