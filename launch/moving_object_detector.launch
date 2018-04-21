@@ -7,9 +7,7 @@
     <include file="$(find zed_wrapper)/launch/zed_camera.launch" pass_all_args="true">
       <!-- compliant mode for rviz -->
       <arg name="odometry_frame"        value="$(arg odometry_frame)" />
-      
-      <arg name="svo_file" value="/home/aisl/research/research_storage/2017-12-17/HD720_SN14266_17-13-07.svo"/>
-      
+     <!-- <arg name="svo_file" value="/home/aisl/Research/ZED_walking_with_robot/ZED_data/walking_with_robot2.svo"/>-->
     </include>
   </group>
   
@@ -65,7 +63,7 @@
   </node>
   -->
   
-  <node name="moving_object_detector" pkg="moving_object_detector" type="moving_object_detector_node">
+  <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
     <remap from="synchronizer_input_left_rect_image" to="/zed/left/image_rect_color"/>
     <remap from="synchronizer_input_right_rect_image" to="/zed/right/image_rect_color"/>
     
@@ -77,6 +75,10 @@
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/zed/disparity/disparity_image"/>
   </node>
-  
+
+  <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
+  <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
+  <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
 </launch>
