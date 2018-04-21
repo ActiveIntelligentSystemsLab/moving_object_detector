@@ -19,6 +19,12 @@ int main(int argc, char **argv) {
 
 void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_objects_msg) {
   visualization_msgs::MarkerArray pub_msg;
+
+  // First element is used for delete markers in previous frame
+  visualization_msgs::Marker delete_marker;
+  delete_marker.header = moving_objects_msg->header;
+  delete_marker.action = visualization_msgs::Marker::DELETEALL;
+  pub_msg.markers.push_back(delete_marker);
   
   for (auto& moving_object : moving_objects_msg->moving_object_array) {
     visualization_msgs::Marker marker;
