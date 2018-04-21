@@ -30,6 +30,9 @@ int main(int argc, char **argv) {
 }
 
 void callback(const sensor_msgs::PointCloud2ConstPtr velocity_pc_msg) {
+  if (color_pub.getNumSubscribers() <= 0)
+    return;
+
   pcl::PointCloud<pcl::PointXYZVelocity> velocity_pc;
   pcl::fromROSMsg(*velocity_pc_msg, velocity_pc);
   
