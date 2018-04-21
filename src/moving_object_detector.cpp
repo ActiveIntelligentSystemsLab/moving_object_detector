@@ -25,7 +25,7 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
-  pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("pc_with_velocity", 10);
+  pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
   cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   
