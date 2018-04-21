@@ -78,13 +78,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
   for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
   {
     if (cluster_it->size() < cluster_size_th_)
-    {
-      auto tmp_cluster_it = cluster_it;
-      cluster_it--; // 現在のクラスタを消去するので，1つ前のクラスタに戻ることで，次のループのインクリメントで消去したクラスタの次にクラスタに移動できる
-      cluster_list.erase(tmp_cluster_it);
-      
       continue;
-    }
 
     pcl::PointCloud<pcl::PointXYZVelocity> pcl_cluster;
 
