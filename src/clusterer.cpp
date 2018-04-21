@@ -99,7 +99,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
     Eigen::Vector4f bounding_box_size = max_pt - min_pt;
     moving_object.bounding_box.x = bounding_box_size(0);
     moving_object.bounding_box.y = bounding_box_size(1);
-    moving_object.bounding_box.x = bounding_box_size(2);
+    moving_object.bounding_box.z = bounding_box_size(2);
 
     Eigen::Vector4f center_point = (min_pt + max_pt) / 2;
     moving_object.center.x = center_point(0);
