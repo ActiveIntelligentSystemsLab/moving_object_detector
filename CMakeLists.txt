@@ -37,7 +37,7 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/Clusterer.cfg
-  cfg/MovingObjectDetector.cfg
+  cfg/VelocityEstimator.cfg
   cfg/Velocity2Color.cfg
 )
 
@@ -86,15 +86,15 @@ target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
   ${catkin_LIBRARIES}
 )
 
-set(MOVING_OBJECT_DETECTOR_NODE moving_object_detector_node)
-add_executable(${MOVING_OBJECT_DETECTOR_NODE} 
+set(VELOCITY_ESTIMATOR_NODE velocity_estimator_node)
+add_executable(${VELOCITY_ESTIMATOR_NODE}
   src/flow_3d.cpp
-  src/moving_object_detector.cpp
-  src/moving_object_detector_node.cpp
+  src/velocity_estimator.cpp
+  src/velocity_estimator_node.cpp
   src/process_disparity_image.cpp
 )
-add_dependencies(${MOVING_OBJECT_DETECTOR_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${MOVING_OBJECT_DETECTOR_NODE}
+add_dependencies(${VELOCITY_ESTIMATOR_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${VELOCITY_ESTIMATOR_NODE}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}

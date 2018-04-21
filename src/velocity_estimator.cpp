@@ -1,5 +1,5 @@
 #include "flow_3d.h"
-#include "moving_object_detector.h"
+#include "velocity_estimator.h"
 #include "pcl_point_xyz_velocity.h"
 #include "process_disparity_image.h"
 
@@ -19,10 +19,10 @@
 #include <limits>
 #include <vector>
 
-MovingObjectDetector::MovingObjectDetector() {  
+VelocityEstimator::VelocityEstimator() {
   first_run_ = true;
   
-  reconfigure_func_ = boost::bind(&MovingObjectDetector::reconfigureCB, this, _1, _2);
+  reconfigure_func_ = boost::bind(&VelocityEstimator::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
@@ -36,12 +36,12 @@ MovingObjectDetector::MovingObjectDetector() {
   left_camera_info_sub_.subscribe(node_handle_, left_camera_info_topic, 1);
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::dataCB, this, _1, _2, _3, _4, _5));
+  time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
   
   input_synchronizer_ = std::make_shared<InputSynchronizer>(*this);
 }
 
-void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
+void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level)
 {
   ROS_INFO("Reconfigure Request: downsample_scale = %d, matching_tolerance = %f", config.downsample_scale, config.matching_tolerance);
   
@@ -49,7 +49,7 @@ void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDet
   matching_tolerance_ = config.matching_tolerance;
 }
 
-void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
   input_synchronizer_->publish();
@@ -162,7 +162,7 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   ROS_INFO("process time: %f", process_time.toSec());
 }
 
-MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector& outer_instance)
+VelocityEstimator::InputSynchronizer::InputSynchronizer(VelocityEstimator& outer_instance)
 {
   image_transport_ = std::make_shared<image_transport::ImageTransport>(outer_instance.node_handle_);
   
@@ -180,10 +180,10 @@ MovingObjectDetector::InputSynchronizer::InputSynchronizer(MovingObjectDetector&
   right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
   right_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
   time_sync_ = std::make_shared<DataTimeSynchronizer>(left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 10);
-  time_sync_->registerCallback(boost::bind(&MovingObjectDetector::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4));
+  time_sync_->registerCallback(boost::bind(&VelocityEstimator::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4));
 }
 
-void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
+void VelocityEstimator::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
 {
   static int count = 0;
   
@@ -192,7 +192,7 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   right_rect_image_ = *right_rect_image;
   right_rect_info_ = *right_rect_info;
   
-  // MovingObjectDetector内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
+  // VelocityEstimator内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
   if (count < 2) {
     publish();
     count++;
@@ -202,7 +202,7 @@ void MovingObjectDetector::InputSynchronizer::dataCallBack(const sensor_msgs::Im
   }
 }
 
-void MovingObjectDetector::InputSynchronizer::publish()
+void VelocityEstimator::InputSynchronizer::publish()
 {
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);

@@ -14,12 +14,12 @@
 #include <image_transport/camera_common.h>
 #include <stereo_msgs/DisparityImage.h>
 #include <dynamic_reconfigure/server.h>
-#include <moving_object_detector/MovingObjectDetectorConfig.h>
+#include <moving_object_detector/VelocityEstimatorConfig.h>
 #include <list>
 
-class MovingObjectDetector {
+class VelocityEstimator {
 public:
-  MovingObjectDetector();
+  VelocityEstimator();
 private:
   ros::NodeHandle node_handle_;
   
@@ -33,8 +33,8 @@ private:
 
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
-  dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig> reconfigure_server_;
-  dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig>::CallbackType reconfigure_func_;
+  dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
+  dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
   
   int downsample_scale_;
   double matching_tolerance_;
@@ -44,7 +44,7 @@ private:
     
   bool first_run_;
   
-  void reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level);
+  void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   
   // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
@@ -74,7 +74,7 @@ private:
     void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
     
   public:
-    InputSynchronizer(MovingObjectDetector& outer_instance);
+    InputSynchronizer(VelocityEstimator& outer_instance);
     void publish();
   };
   
