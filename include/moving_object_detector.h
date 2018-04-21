@@ -24,7 +24,6 @@ private:
   ros::NodeHandle node_handle_;
   
   ros::Publisher pc_with_velocity_pub_;
-  ros::Publisher cluster_pub_;
   ros::Publisher removed_by_matching_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
@@ -39,14 +38,8 @@ private:
   dynamic_reconfigure::Server<moving_object_detector::MovingObjectDetectorConfig>::CallbackType reconfigure_func_;
   
   int downsample_scale_;
-  double moving_flow_length_;
-  double flow_length_diff_;
-  double flow_start_diff_;
-  double flow_radian_diff_;
-  double flow_axis_max_;
   double matching_tolerance_;
-  int cluster_element_num_;
-    
+
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   ros::Time time_stamp_previous_;
     

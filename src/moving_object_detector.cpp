@@ -26,7 +26,6 @@ MovingObjectDetector::MovingObjectDetector() {
   reconfigure_server_.setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
-  cluster_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("cluster", 10);
   removed_by_matching_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("removed_by_matching", 10);
   
   camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
@@ -45,16 +44,10 @@ MovingObjectDetector::MovingObjectDetector() {
 
 void MovingObjectDetector::reconfigureCB(moving_object_detector::MovingObjectDetectorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: downsample_scale = %d, moving_flow_length = %f, flow_length_diff = %f, flow_start_diff = %f, flow_radian_diff = %f, flow_axis_max = %f, matching_tolerance = %f, cluster_element_num = %d", config.downsample_scale, config.moving_flow_length, config.flow_length_diff, config.flow_start_diff, config.flow_radian_diff, config.flow_axis_max, config.matching_tolerance, config.cluster_element_num);
+  ROS_INFO("Reconfigure Request: downsample_scale = %d, matching_tolerance = %f", config.downsample_scale, config.matching_tolerance);
   
   downsample_scale_ = config.downsample_scale;
-  moving_flow_length_ = config.moving_flow_length;
-  flow_length_diff_ = config.flow_length_diff;
-  flow_start_diff_ = config.flow_start_diff;
-  flow_radian_diff_ = config.flow_radian_diff;
-  flow_axis_max_ = config.flow_axis_max;
   matching_tolerance_ = config.matching_tolerance;
-  cluster_element_num_ = config.cluster_element_num;
 }
 
 void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
@@ -70,8 +63,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
   if (first_run_) {
     first_run_ = false;
   } else {
-    std::list<std::list<Flow3D>> clusters; // clusters[cluster_index][cluster_element_index]
-    
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
     cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
@@ -167,46 +158,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
         point_with_velocity.vz = flow3d_vector.getZ() / time_between_frames.toSec();
         
         pc_with_velocity.push_back(point_with_velocity);
-        
-        if (cluster_pub_.getNumSubscribers() > 0)
-        {
-          
-          if (flow3d.length() / time_between_frames.toSec() < moving_flow_length_ )
-            continue;
-          
-          bool already_clustered = false;
-          std::list<std::list<Flow3D>>::iterator belonged_cluster_it;
-          for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
-            for (auto& clustered_flow : *cluster_it) {
-              if (flow_start_diff_ < (flow3d.start - clustered_flow.start).length())
-                continue;
-              if (flow_length_diff_ < std::abs(flow3d.length() - clustered_flow.length()))
-                continue;
-              if (flow_radian_diff_ < flow3d.radian2otherFlow(clustered_flow))
-                continue;
-              
-              if (!already_clustered) {
-                cluster_it->push_back(flow3d);
-                already_clustered = true;
-                belonged_cluster_it = cluster_it;
-              } else {
-                // クラスタに所属済みの点が，他のクラスタにも属していればクラスタ同士を結合する
-                auto tmp_cluster_it = cluster_it;
-                cluster_it--; // 現在のクラスタが消去されるので，イテレータを一つ前に戻す 次のループのインクリメントで消去されたクラスタの次のクラスタに到達することになる
-                belonged_cluster_it->splice(belonged_cluster_it->end(), *tmp_cluster_it);
-                clusters.erase(tmp_cluster_it);
-              }
-              
-              break;
-            }
-          }
-          
-          // どのクラスタにも振り分けられなければ，新しいクラスタを作成
-          if (!already_clustered) {
-            clusters.emplace_back();
-            clusters.back().push_back(flow3d);
-          }
-        }
       }
     }
     
@@ -223,40 +174,6 @@ void MovingObjectDetector::dataCB(const geometry_msgs::TransformStampedConstPtr&
       pointcloud_msg.header.frame_id = left_camera_info->header.frame_id;
       pointcloud_msg.header.stamp = left_camera_info->header.stamp;
       removed_by_matching_pub_.publish(pointcloud_msg);
-    }
-    
-    if (cluster_pub_.getNumSubscribers() > 0)
-    {
-      // 要素数の少なすぎるクラスタの削除
-      for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
-        if (cluster_it->size() < cluster_element_num_) {
-          auto tmp_cluster_it = cluster_it;
-          cluster_it--; // 現在のクラスタを消去するので，1つ前のクラスタに戻ることで，次のループのインクリメントで消去したクラスタの次にクラスタに移動できる
-          clusters.erase(tmp_cluster_it);
-        }
-      }
-      
-      pcl::PointCloud<pcl::PointXYZI> cluster_pcl;
-      int i = 0;
-      for (auto cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++) {
-        for (auto& clustered_flow : *cluster_it) {
-          pcl::PointXYZI point_clustered;
-          
-          point_clustered.x = clustered_flow.end.getX();
-          point_clustered.y = clustered_flow.end.getY();
-          point_clustered.z = clustered_flow.end.getZ();
-          point_clustered.intensity = i;
-          
-          cluster_pcl.push_back(point_clustered);
-        }
-        i++;
-      }
-      
-      sensor_msgs::PointCloud2 cluster_msg;
-      pcl::toROSMsg(cluster_pcl, cluster_msg);
-      cluster_msg.header.frame_id = left_camera_info->header.frame_id;
-      cluster_msg.header.stamp = left_camera_info->header.stamp;
-      cluster_pub_.publish(cluster_msg);
     }
   }
   disparity_image_previous_ = disparity_image;
