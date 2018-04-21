@@ -81,7 +81,7 @@ target_link_libraries(${CLUSTERER_NODE}
 
 set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
 add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
-add_dependencies(${CLUSTERER_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(${DISPLAY_MOVING_OBJECTS_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
   ${catkin_LIBRARIES}
 )
