@@ -25,6 +25,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     
     marker.header = moving_objects_msg->header;
     marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position = moving_object.center;
     marker.scale.x = moving_object.bounding_box.x;
     marker.scale.y = moving_object.bounding_box.y;
