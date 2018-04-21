@@ -41,7 +41,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
         Eigen::Map<Eigen::Vector3f> velocity_clustered(clustered_point.data_velocity);
         Eigen::Map<Eigen::Vector3f> position_clustered(clustered_point.data);
         
-        if (position_diff_th_ < (velocity - velocity_clustered).norm())
+        if (position_diff_th_ < (position - position_clustered).norm())
           continue;
         if (speed_diff_th_ < std::abs(velocity.norm() - velocity_clustered.norm()))
           continue;
@@ -74,7 +74,6 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
   
   moving_object_detector::MovingObjectArray pub_msg;
   pub_msg.header = velocity_pc_msg->header;
-  
   for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
   {
     if (cluster_it->size() < cluster_size_th_)
