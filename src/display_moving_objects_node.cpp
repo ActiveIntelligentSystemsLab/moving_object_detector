@@ -26,10 +26,11 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
   delete_marker.action = visualization_msgs::Marker::DELETEALL;
   pub_msg.markers.push_back(delete_marker);
   
+  int i = 0;
   for (auto& moving_object : moving_objects_msg->moving_object_array) {
     visualization_msgs::Marker marker;
-    
     marker.header = moving_objects_msg->header;
+    marker.id = i;
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position = moving_object.center;
@@ -42,6 +43,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     marker.color.b = 0.0;
     
     pub_msg.markers.push_back(marker);
+    i++;
   }
   
   markers_pub.publish(pub_msg);
