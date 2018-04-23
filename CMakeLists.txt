@@ -21,7 +21,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV)
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(PCL REQUIRED common)
+find_package(PCL REQUIRED
+  common
+  filters
+  search
+  segmentation
+)
 
 add_message_files(
   FILES
@@ -37,6 +42,7 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/Clusterer.cfg
+  cfg/EuclideanClusterer.cfg
   cfg/VelocityEstimator.cfg
   cfg/Velocity2Color.cfg
 )
@@ -56,7 +62,9 @@ catkin_package(
     tf2_geometry_msgs
     visualization_msgs
   DEPENDS
+    Eigen3
     OpenCV
+    PCL
 )
 
 include_directories(
@@ -77,6 +85,20 @@ add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPO
 target_link_libraries(${CLUSTERER_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
+)
+
+set(EUCLIDEAN_CLUSTERER_NODE euclidean_clusterer_node)
+add_executable(${EUCLIDEAN_CLUSTERER_NODE}
+  src/euclidean_clusterer.cpp
+  src/${EUCLIDEAN_CLUSTERER_NODE}.cpp
+)
+add_dependencies(${EUCLIDEAN_CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${EUCLIDEAN_CLUSTERER_NODE}
+  ${catkin_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+  ${PCL_FILTERS_LIBRARIES}
+  ${PCL_SEARCH_LIBRARIES}
+  ${PCL_SEGMENTATION_LIBRARIES}
 )
 
 set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
