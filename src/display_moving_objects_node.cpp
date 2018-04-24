@@ -37,7 +37,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     marker.scale.x = moving_object.bounding_box.x;
     marker.scale.y = moving_object.bounding_box.y;
     marker.scale.z = moving_object.bounding_box.z;
-    marker.color.a = 1.0;
+    marker.color.a = 0.5;
     marker.color.r = 1.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
