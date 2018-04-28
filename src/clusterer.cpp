@@ -1,13 +1,16 @@
 #include "clusterer.h"
-#include "pcl_point_xyz_velocity.h"
 
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <cmath>
 #include <Eigen/Core>
 #include <list>
+
+double Clusterer::direction_diff_th_;
+double Clusterer::speed_diff_th_;
 
 Clusterer::Clusterer()
 {
@@ -18,101 +21,95 @@ Clusterer::Clusterer()
   dynamic_objects_pub_ = node_handle_.advertise<moving_object_detector::MovingObjectArray>("moving_objects", 10);
 }
 
-void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
-{  
-  std::list<std::list<pcl::PointXYZVelocity>> cluster_list;
+void Clusterer::cluster2movingObject(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, moving_object_detector::MovingObject& output_moving_object)
+{
+  Eigen::Vector4f min_point, max_point;
+  pcl::getMinMax3D(*input_cluster, min_point, max_point);
+  Eigen::Vector4f bounding_box_size = max_point - min_point;
+  output_moving_object.bounding_box.x = bounding_box_size(0);
+  output_moving_object.bounding_box.y = bounding_box_size(1);
+  output_moving_object.bounding_box.z = bounding_box_size(2);
 
-  pcl::PointCloud<pcl::PointXYZVelocity> velocity_pc;
-  pcl::fromROSMsg(*velocity_pc_msg, velocity_pc);
-  for (auto &point : velocity_pc)
+  Eigen::Vector4f center_point = (min_point + max_point) / 2;
+  output_moving_object.center.x = center_point(0);
+  output_moving_object.center.y = center_point(1);
+  output_moving_object.center.z = center_point(2);
+
+  Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
+  for (auto& point : *input_cluster)
   {
     Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
-    Eigen::Map<Eigen::Vector3f> position(point.data);
-    
-    if (velocity.norm() < dynamic_speed_th_)
-      continue;
-    
-    bool already_clustered = false;
-    std::list<std::list<pcl::PointXYZVelocity>>::iterator belonged_cluster_it;
-    for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
-    {
-      for (auto& clustered_point : *cluster_it)
-      {
-        Eigen::Map<Eigen::Vector3f> velocity_clustered(clustered_point.data_velocity);
-        Eigen::Map<Eigen::Vector3f> position_clustered(clustered_point.data);
-        
-        if (position_diff_th_ < (position - position_clustered).norm())
-          continue;
-        if (speed_diff_th_ < std::abs(velocity.norm() - velocity_clustered.norm()))
-          continue;
-        if (direction_diff_th_ < std::acos(velocity.dot(velocity_clustered) / (velocity.norm() * velocity_clustered.norm())))
-          continue;
-        
-        if (!already_clustered) {
-          cluster_it->push_back(point);
-          already_clustered = true;
-          belonged_cluster_it = cluster_it;
-        } else {
-          // クラスタに所属済みの点が，他のクラスタにも属していればクラスタ同士を結合する
-          auto tmp_cluster_it = cluster_it;
-          cluster_it--; // 現在のクラスタが消去されるので，イテレータを一つ前に戻す 次のループのインクリメントで消去されたクラスタの次のクラスタに到達することになる
-          belonged_cluster_it->splice(belonged_cluster_it->end(), *tmp_cluster_it);
-          cluster_list.erase(tmp_cluster_it);
-        }
-        
-        break;
-      }
-    }
-    
-    // どのクラスタにも振り分けられなければ，新しいクラスタを作成
-    if (!already_clustered)
-    {
-      cluster_list.emplace_back();
-      cluster_list.back().push_back(point);
-    }
+    velocity_sum += velocity;
   }
+  int cluster_size = input_cluster->points.size();
+  output_moving_object.velocity.x = velocity_sum(0) / cluster_size;
+  output_moving_object.velocity.y = velocity_sum(1) / cluster_size;
+  output_moving_object.velocity.z = velocity_sum(2) / cluster_size;
+}
+
+void Clusterer::clustering(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &input_pc, pcl::IndicesClusters &output_indices)
+{
+  pcl::search::KdTree<pcl::PointXYZVelocity>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZVelocity>);
+  tree->setInputCloud(input_pc);
+
+  pcl::ConditionalEuclideanClustering<pcl::PointXYZVelocity> cec;
+  cec.setInputCloud(input_pc);
+  cec.setConditionFunction(Clusterer::conditionFunction);
+  cec.setClusterTolerance(position_diff_th_);
+  cec.setMinClusterSize(cluster_size_th_);
+  cec.segment(output_indices);
+}
+
+// Before PCL 1.8, ConditionalEuclideanClustering.segment() has only raw function pointer as argument.
+bool Clusterer::conditionFunction(const pcl::PointXYZVelocity& point1, const pcl::PointXYZVelocity& point2, float squared_distance)
+{
+  pcl::PointXYZVelocity tmp_point1, tmp_point2;
+  tmp_point1 = point1;
+  Eigen::Map<Eigen::Vector3f> velocity1(tmp_point1.data_velocity);
+  tmp_point2 = point2;
+  Eigen::Map<Eigen::Vector3f> velocity2(tmp_point2.data_velocity);
+
+  if (Clusterer::speed_diff_th_ < std::abs(velocity1.norm() - velocity2.norm()))
+    return false;
+  if (Clusterer::direction_diff_th_ < std::acos(velocity1.dot(velocity2) / (velocity1.norm() * velocity2.norm())))
+    return false;
+
+  return true;
+}
+
+void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& velocity_pc_msg)
+{
+  pcl::PointCloud<pcl::PointXYZVelocity>::Ptr velocity_pc(new pcl::PointCloud<pcl::PointXYZVelocity>);
+  pcl::fromROSMsg(*velocity_pc_msg, *velocity_pc);
+
+  removeStaticPoints(velocity_pc);
+
+  pcl::IndicesClusters clusters;
+  clustering(velocity_pc, clusters);
   
   moving_object_detector::MovingObjectArray pub_msg;
   pub_msg.header = velocity_pc_msg->header;
-  for (auto cluster_it = cluster_list.begin(); cluster_it != cluster_list.end(); cluster_it++)
+  for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
-    if (cluster_it->size() < cluster_size_th_)
-      continue;
+    pcl::PointCloud<pcl::PointXYZVelocity>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZVelocity>);
+    indices2cloud(*cluster_it, velocity_pc, cluster);
 
-    pcl::PointCloud<pcl::PointXYZVelocity> pcl_cluster;
-
-    for (auto cluster_element : *cluster_it)
-    {
-      pcl_cluster.push_back(cluster_element);
-    }
-    
     moving_object_detector::MovingObject moving_object;
-    Eigen::Vector4f min_pt, max_pt;
-    pcl::getMinMax3D(pcl_cluster, min_pt, max_pt);
-    Eigen::Vector4f bounding_box_size = max_pt - min_pt;
-    moving_object.bounding_box.x = bounding_box_size(0);
-    moving_object.bounding_box.y = bounding_box_size(1);
-    moving_object.bounding_box.z = bounding_box_size(2);
+    cluster2movingObject(cluster, moving_object);
 
-    Eigen::Vector4f center_point = (min_pt + max_pt) / 2;
-    moving_object.center.x = center_point(0);
-    moving_object.center.y = center_point(1);
-    moving_object.center.z = center_point(2);
-    
-    Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
-    for (auto& point : *cluster_it)
-    {
-      Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
-      velocity_sum += velocity;
-    }
-    moving_object.velocity.x = velocity_sum(0) / cluster_it->size();
-    moving_object.velocity.y = velocity_sum(1) / cluster_it->size();
-    moving_object.velocity.z = velocity_sum(2) / cluster_it->size();
-    
     pub_msg.moving_object_array.push_back(moving_object);
   }
   
   dynamic_objects_pub_.publish(pub_msg);
+}
+
+void Clusterer::indices2cloud(pcl::PointIndices &input_indices, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &input_pc, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &output_pc)
+{
+  for (auto indice_it = input_indices.indices.begin(); indice_it != input_indices.indices.end(); indice_it++)
+    output_pc->points.push_back(input_pc->points[*indice_it]);
+  output_pc->width = output_pc->points.size();
+  output_pc->height = 1;
+  output_pc->is_dense = true;
 }
 
 void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) {
@@ -124,3 +121,17 @@ void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, u
   position_diff_th_  = config.position_diff;
   speed_diff_th_     = config.speed_diff;
 }
+
+void Clusterer::removeStaticPoints(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &velocity_pc)
+{
+  for (auto point_it = velocity_pc->begin(); point_it != velocity_pc->end(); point_it++)
+  {
+    Eigen::Map<Eigen::Vector3f> velocity(point_it->data_velocity);
+    if (velocity.norm() < dynamic_speed_th_)
+    {
+      point_it = velocity_pc->erase(point_it);
+      point_it--;
+    }
+  }
+}
+

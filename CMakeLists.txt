@@ -85,6 +85,8 @@ add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPO
 target_link_libraries(${CLUSTERER_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
+  ${PCL_SEARCH_LIBRARIES}
+  ${PCL_SEGMENTATION_LIBRARIES}
 )
 
 set(EUCLIDEAN_CLUSTERER_NODE euclidean_clusterer_node)
