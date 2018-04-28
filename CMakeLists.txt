@@ -95,6 +95,14 @@ target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
   ${catkin_LIBRARIES}
 )
 
+set(DISPLAY_MOVING_OBJECTS_2D_NODE display_moving_objects_2d_node)
+add_executable(${DISPLAY_MOVING_OBJECTS_2D_NODE} src/${DISPLAY_MOVING_OBJECTS_2D_NODE}.cpp)
+add_dependencies(${DISPLAY_MOVING_OBJECTS_2D_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${DISPLAY_MOVING_OBJECTS_2D_NODE}
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
 set(VELOCITY_ESTIMATOR_NODE velocity_estimator_node)
 add_executable(${VELOCITY_ESTIMATOR_NODE}
   src/flow_3d.cpp
