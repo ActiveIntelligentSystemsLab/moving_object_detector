@@ -42,7 +42,6 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/Clusterer.cfg
-  cfg/EuclideanClusterer.cfg
   cfg/VelocityEstimator.cfg
   cfg/Velocity2Color.cfg
 )
@@ -85,20 +84,6 @@ add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPO
 target_link_libraries(${CLUSTERER_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
-  ${PCL_SEARCH_LIBRARIES}
-  ${PCL_SEGMENTATION_LIBRARIES}
-)
-
-set(EUCLIDEAN_CLUSTERER_NODE euclidean_clusterer_node)
-add_executable(${EUCLIDEAN_CLUSTERER_NODE}
-  src/euclidean_clusterer.cpp
-  src/${EUCLIDEAN_CLUSTERER_NODE}.cpp
-)
-add_dependencies(${EUCLIDEAN_CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${EUCLIDEAN_CLUSTERER_NODE}
-  ${catkin_LIBRARIES}
-  ${PCL_COMMON_LIBRARIES}
-  ${PCL_FILTERS_LIBRARIES}
   ${PCL_SEARCH_LIBRARIES}
   ${PCL_SEGMENTATION_LIBRARIES}
 )
