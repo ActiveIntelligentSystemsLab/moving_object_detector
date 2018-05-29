@@ -1,0 +1,46 @@
+<launch>
+  <arg name="stereo_robot"  default="stereo_robot"/>
+  <arg name="moving_object" default="moving_object"/>
+
+  <arg name="stereo_robot_x_pos" default="1.0"/>
+  <arg name="stereo_robot_y_pos" default="6.0"/>
+  <arg name="stereo_robot_z_pos" default="0.1"/>
+  <arg name="stereo_robot_yaw"   default="0.0"/>
+
+  <arg name="moving_object_x_pos" default="1.0"/>
+  <arg name="moving_object_y_pos" default="10.0"/>
+  <arg name="moving_object_z_pos" default="0.1"/>
+  <arg name="moving_object_yaw"   default="0.0"/>
+
+<include file="$(find gazebo_ros)/launch/empty_world.launch">
+  <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/ariac_factory_mod.world"/>
+  <arg name="paused" value="false"/>
+  <arg name="use_sim_time" value="true"/>
+  <arg name="gui" value="true"/>
+  <arg name="headless" value="false"/>
+  <arg name="debug" value="false"/>
+</include>
+
+  <group ns = "$(arg stereo_robot)">
+    <param name="robot_description" command="$(find xacro)/xacro.py $(find turtlebot3_description)/urdf/turtlebot3_burger_stereo.urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" value="$(arg stereo_robot)" />
+    </node>
+
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg stereo_robot) -x $(arg stereo_robot_x_pos) -y $(arg stereo_robot_y_pos) -z $(arg stereo_robot_z_pos) -Y $(arg stereo_robot_yaw) -param robot_description" />
+  </group>
+
+  <group ns = "$(arg moving_object)">
+    <param name="robot_description" command="$(find xacro)/xacro.py $(find turtlebot3_description)/urdf/mars_rover.urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" value="$(arg moving_object)" />
+    </node>
+
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg moving_object) -x $(arg moving_object_x_pos) -y $(arg moving_object_y_pos) -z $(arg moving_object_z_pos) -Y $(arg moving_object_yaw) -param robot_description" />
+  </group>
+
+</launch>
