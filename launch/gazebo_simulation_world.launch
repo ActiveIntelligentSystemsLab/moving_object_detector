@@ -1,0 +1,14 @@
+<launch>
+  <!--
+  To load the factory world, it takes about 2 minites.
+  gazebo_simulation_spawn_robots.launch should be launched after the load.
+  -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/ariac_factory_mod.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>e
+  </include>
+</launch>

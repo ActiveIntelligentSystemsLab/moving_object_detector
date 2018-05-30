@@ -12,15 +12,6 @@
   <arg name="moving_object_z_pos" default="0.1"/>
   <arg name="moving_object_yaw"   default="0.0"/>
 
-<include file="$(find gazebo_ros)/launch/empty_world.launch">
-  <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/ariac_factory_mod.world"/>
-  <arg name="paused" value="false"/>
-  <arg name="use_sim_time" value="true"/>
-  <arg name="gui" value="true"/>
-  <arg name="headless" value="false"/>
-  <arg name="debug" value="false"/>
-</include>
-
   <group ns = "$(arg stereo_robot)">
     <param name="robot_description" command="$(find xacro)/xacro.py $(find turtlebot3_description)/urdf/turtlebot3_burger_stereo.urdf.xacro" />
 
