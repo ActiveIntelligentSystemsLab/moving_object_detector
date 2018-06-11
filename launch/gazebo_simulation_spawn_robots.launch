@@ -32,6 +32,9 @@
     </node>
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg moving_object) -x $(arg moving_object_x_pos) -y $(arg moving_object_y_pos) -z $(arg moving_object_z_pos) -Y $(arg moving_object_yaw) -param robot_description" />
+
+    <node name="xbox_con" pkg="joy" type="joy_node" />
+    <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" />
   </group>
 
 </launch>
