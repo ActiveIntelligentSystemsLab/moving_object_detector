@@ -9,6 +9,6 @@
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="true"/>
     <arg name="headless" value="false"/>
-    <arg name="debug" value="false"/>e
+    <arg name="debug" value="false"/>
   </include>
 </launch>
