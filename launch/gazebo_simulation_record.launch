@@ -1,0 +1,4 @@
+<launch>
+  <node name="bag_record" pkg="rosbag" type="record" args="/moving_object/odom /stereo_robot/mobile_base/camera/left/camera_info
+ /stereo_robot/mobile_base/camera/left/image_raw/compressed /stereo_robot/mobile_base/camera/right/camera_info /stereo_robot/mobile_base/camera/right/image_raw/compressed /stereo_robot/odom /tf /tf_static"/>
+</launch>
