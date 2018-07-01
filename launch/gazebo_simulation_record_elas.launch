@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" value="true"/>
+  <node name="bag_play" pkg="rosbag" type="play" args="--clock -r 0.05 /home/aisl/Desktop/simulation_exp_input_2018-06-29-15-31-57.bag" required="true"/>
+
+  <group ns="stereo_robot">
+    <node name="elas" pkg="elas_ros" type="elas_ros">
+      <remap from="stereo" to="mobile_base/camera"/>
+      <remap from="image" to="/image_raw"/>
+      <param name="image_transport" value="compressed"/>
+    </node>
+
+    <node name="bag_record" pkg="rosbag" type="record" args="elas/disparity"/>
+  </group>
+</launch>
