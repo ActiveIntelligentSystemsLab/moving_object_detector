@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" type="bool" value="true"/>
+
+  <node name="bag_player" pkg="rosbag" type="play" args="-l --clock /home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_elas_2018-07-01-19-34-34.bag /home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_input_2018-06-29-15-31-57.bag"/>
+
+  <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
+
+  <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
+    <remap from="camera" to="synchronized/left"/>
+    <remap from="synchronized/left/image_raw" to="synchronized/left/image_rect_color"/>
+    <remap from="camera_out" to="viso2/input/left"/>
+
+    <param name="width" value="1280"/>
+    <param name="height" value="360"/>
+    <param name="y_offset" value="180"/>
+  </node>
+
+  <node name="right_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
+    <remap from="camera" to="synchronized/right"/>
+    <remap from="synchronized/right/image_raw" to="synchronized/right/image_rect_color"/>
+    <remap from="camera_out" to="viso2/input/right"/>
+
+    <param name="width" value="1280"/>
+    <param name="height" value="360"/>
+    <param name="y_offset" value="180"/>
+  </node>
+
+  <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
+    <remap from="stereo" to="/viso2/input"/>
+    <remap from="image" to="image_raw"/>
+  </node>
+
+  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
+    <remap from="image" to="/synchronized/left/image_rect_color"/>
+    <param name="debug_view" value="false"/>
+  </node>
+
+  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
+    <remap from="image" to="/synchronized/right/image_rect_color"/>
+    <param name="debug_view" value="false"/>
+  </node>
+
+  <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
+    <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
+    <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
+
+    <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
+    <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
+
+    <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="disparity_image" to="/elas/disparity"/>
+
+    <param name="image_transport" value="compressed"/>
+  </node>
+
+  <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
+  <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
+  <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
+  <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
+    <remap from="input_image" to="/synchronized/left/image_rect_color"/>
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/gazebo_simulation.rviz" required="true"/>
+</launch>
