@@ -5,6 +5,8 @@
 
   <node name="bag_player" pkg="rosbag" type="play" args="-l --clock /home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_elas_2018-07-01-19-34-34.bag /home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_input_2018-06-29-15-31-57.bag"/>
 
+  <node name="bag_recorder" pkg="rosbag" type="record" args="/moving_objects"/>
+
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
 
   <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
