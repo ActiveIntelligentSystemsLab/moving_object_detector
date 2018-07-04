@@ -28,6 +28,8 @@ bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
   float disparity;
   if (!getDisparity(u, v, disparity))
     return false;
+  if (disparity == 0.0)
+    return false;
   float focal_length = _disparity_msg->f;
   float baseline = _disparity_msg->T;
   
