@@ -7,6 +7,13 @@
 
   <node name="bag_recorder" pkg="rosbag" type="record" args="/moving_objects"/>
 
+  <arg name="pi" value="3.14159265359"/>
+  <!-- Rotation from camera_link to camera coordinate -->
+  <arg name="yaw" value="$(eval -1.0 * arg('pi') / 2.0)"/>
+  <arg name="pitch" value="0"/>
+  <arg name="roll" value="$(eval -1.0 * arg('pi') / 2.0)"/>
+  <node name="tf_static_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 $(arg yaw) $(arg pitch) $(arg roll) stereo_robot/camera_link stereo_robot/zed_left_camera"/>
+
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
 
   <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
