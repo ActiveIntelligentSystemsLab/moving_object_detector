@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_generation
   pcl_conversions
+  roscpp
   sensor_msgs
   std_msgs
   stereo_msgs
@@ -54,6 +55,7 @@ catkin_package(
     image_transport
     message_runtime 
     pcl_conversions 
+    roscpp
     sensor_msgs 
     std_msgs 
     stereo_msgs 
