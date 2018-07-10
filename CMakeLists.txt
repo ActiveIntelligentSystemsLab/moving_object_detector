@@ -49,23 +49,9 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   CATKIN_DEPENDS
-    dynamic_reconfigure
     geometry_msgs
-    image_geometry
-    image_transport
     message_runtime 
-    pcl_conversions 
-    roscpp
-    sensor_msgs 
     std_msgs 
-    stereo_msgs 
-    tf2 
-    tf2_geometry_msgs
-    visualization_msgs
-  DEPENDS
-    Eigen3
-    OpenCV
-    PCL
 )
 
 include_directories(
