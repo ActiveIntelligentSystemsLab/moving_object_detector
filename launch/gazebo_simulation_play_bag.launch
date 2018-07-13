@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" type="bool" value="true"/>
+
+  <arg name="gazebo_bag" value="/home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_input_2018-06-29-15-31-57.bag"/>
+  <arg name="elas_bag" value="/home/aisl/Datasets/simulation_exp_static_camera/simulation_exp_elas_2018-07-01-19-34-34.bag"/>
+
+  <node name="bag_player" pkg="rosbag" type="play" args="--clock $(arg gazebo_bag) $(arg elas_bag)"/>
+</launch>
