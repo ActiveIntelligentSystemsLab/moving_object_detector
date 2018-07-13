@@ -71,5 +71,9 @@
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
 
+  <group ns="stereo_robot">
+    <node name="point_frame_converter" pkg="moving_object_detector" type="point_frame_converter"/>
+  </group>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/gazebo_simulation.rviz" required="true"/>
 </launch>

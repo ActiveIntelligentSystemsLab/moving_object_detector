@@ -112,3 +112,6 @@ target_link_libraries(${VELOCITY2COLOR_NODE}
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
+
+catkin_install_python(PROGRAMS nodes/point_frame_converter
+                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
