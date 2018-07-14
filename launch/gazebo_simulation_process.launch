@@ -72,7 +72,9 @@
   </node>
 
   <group ns="stereo_robot">
-    <node name="point_frame_converter" pkg="moving_object_detector" type="point_frame_converter"/>
+    <node name="point_frame_converter" pkg="moving_object_detector" type="point_frame_converter">
+      <param name="target_frame" value="odom"/>
+    </node>
   </group>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/gazebo_simulation.rviz" required="true"/>

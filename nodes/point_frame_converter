@@ -10,6 +10,8 @@ class PointFrameConverter:
   def __init__(self):
     rospy.init_node('point_frame_converter')
 
+    self._target_frame = rospy.get_param('~target_frame')
+
     self.rate = rospy.Rate(10.0)
 
     self._tf_buffer = tf2_ros.Buffer()
@@ -21,14 +23,14 @@ class PointFrameConverter:
   def callback(self, in_msg):
     while not rospy.is_shutdown():
       try:
-        self._tf_buffer.lookup_transform(in_msg.header.frame_id, 'odom', in_msg.header.stamp)
+        self._tf_buffer.lookup_transform(in_msg.header.frame_id, self._target_frame, in_msg.header.stamp)
       except(tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         self.rate.sleep()
         raise
         continue
       break
 
-    out_msg = self._tf_buffer.transform(in_msg, 'stereo_robot/zed_left_camera')
+    out_msg = self._tf_buffer.transform(in_msg, self._target_frame)
     self._pub.publish(out_msg)
 
 if __name__ == '__main__':
