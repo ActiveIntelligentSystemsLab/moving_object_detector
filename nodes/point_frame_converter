@@ -6,27 +6,31 @@ import rospy
 import tf2_geometry_msgs
 import tf2_ros
 
-def callback(in_msg):
-  rate = rospy.Rate(10.0)
-  while not rospy.is_shutdown():
-    try:
-      trans = tfBuffer.lookup_transform(in_msg.header.frame_id, 'odom', in_msg.header.stamp)
-    except(tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-      rate.sleep()
-      raise
-      continue
-    break
+class PointFrameConverter:
+  def __init__(self):
+    rospy.init_node('point_frame_converter')
 
-  out_msg = tfBuffer.transform(in_msg, 'stereo_robot/zed_left_camera')
-  pub.publish(out_msg)
+    self.rate = rospy.Rate(10.0)
+
+    self._tf_buffer = tf2_ros.Buffer()
+    self._listener = tf2_ros.TransformListener(self._tf_buffer)
+
+    self._pub = rospy.Publisher('center_converted', geometry_msgs.msg.PointStamped, queue_size=30)
+    self._sub = rospy.Subscriber("center", geometry_msgs.msg.PointStamped, self.callback)
+
+  def callback(self, in_msg):
+    while not rospy.is_shutdown():
+      try:
+        self._tf_buffer.lookup_transform(in_msg.header.frame_id, 'odom', in_msg.header.stamp)
+      except(tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+        self.rate.sleep()
+        raise
+        continue
+      break
+
+    out_msg = self._tf_buffer.transform(in_msg, 'stereo_robot/zed_left_camera')
+    self._pub.publish(out_msg)
 
 if __name__ == '__main__':
-  rospy.init_node('point_frame_converter')
-
-  tfBuffer = tf2_ros.Buffer()
-  listener = tf2_ros.TransformListener(tfBuffer)
-
-  pub = rospy.Publisher('center_converted', geometry_msgs.msg.PointStamped, queue_size=30)
-  rospy.Subscriber("center", geometry_msgs.msg.PointStamped, callback)
-
+  conveter = PointFrameConverter()
   rospy.spin()
