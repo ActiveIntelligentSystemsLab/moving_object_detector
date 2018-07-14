@@ -18,7 +18,7 @@ class PointFrameConverter:
     self._listener = tf2_ros.TransformListener(self._tf_buffer)
 
     self._pub = rospy.Publisher('center_converted', geometry_msgs.msg.PointStamped, queue_size=30)
-    self._sub = rospy.Subscriber("center", geometry_msgs.msg.PointStamped, self.callback)
+    self._sub = rospy.Subscriber('center', geometry_msgs.msg.PointStamped, self.callback)
 
   def callback(self, in_msg):
     while not rospy.is_shutdown():
