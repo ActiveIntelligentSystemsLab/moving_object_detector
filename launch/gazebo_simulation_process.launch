@@ -77,5 +77,11 @@
     </node>
   </group>
 
+  <group ns="moving_object">
+    <node name="odometry_frame_converter" pkg="moving_object_detector" type="odometry_frame_converter">
+      <param name="target_frame" value="stereo_robot/zed_left_camera"/>
+    </node>
+  </group>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/gazebo_simulation.rviz" required="true"/>
 </launch>
