@@ -93,7 +93,6 @@ target_link_libraries(${DISPLAY_MOVING_OBJECTS_2D_NODE}
 
 set(VELOCITY_ESTIMATOR_NODE velocity_estimator_node)
 add_executable(${VELOCITY_ESTIMATOR_NODE}
-  src/flow_3d.cpp
   src/velocity_estimator.cpp
   src/velocity_estimator_node.cpp
   src/process_disparity_image.cpp

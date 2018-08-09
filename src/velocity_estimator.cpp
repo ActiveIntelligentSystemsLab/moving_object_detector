@@ -1,4 +1,3 @@
-#include "flow_3d.h"
 #include "velocity_estimator.h"
 #include "pcl_point_xyz_velocity.h"
 #include "process_disparity_image.h"
@@ -133,14 +132,12 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
         tf2::fromMsg(*camera_transform, tf_now2previous);
         tf2::Vector3 point3d_previous_transformed = tf_now2previous.inverse() * point3d_previous;
         
-        Flow3D flow3d = Flow3D(point3d_previous_transformed, point3d_now, left_previous, left_now);
-        
         pcl::PointXYZVelocity point_with_velocity;
-        point_with_velocity.x = flow3d.end.getX();
-        point_with_velocity.y = flow3d.end.getY();
-        point_with_velocity.z = flow3d.end.getZ();
+        point_with_velocity.x = point3d_now.getX();
+        point_with_velocity.y = point3d_now.getY();
+        point_with_velocity.z = point3d_now.getZ();
         
-        tf2::Vector3 flow3d_vector = flow3d.distanceVector();
+        tf2::Vector3 flow3d_vector = point3d_now - point3d_previous;
         point_with_velocity.vx = flow3d_vector.getX() / time_between_frames.toSec();
         point_with_velocity.vy = flow3d_vector.getY() / time_between_frames.toSec();
         point_with_velocity.vz = flow3d_vector.getZ() / time_between_frames.toSec();
