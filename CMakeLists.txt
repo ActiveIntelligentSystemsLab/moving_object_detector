@@ -57,8 +57,8 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${openCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
   ${PCL_LIBRARY_DIRS}
 )
 
@@ -89,7 +89,7 @@ add_executable(${DISPLAY_MOVING_OBJECTS_2D_NODE} src/${DISPLAY_MOVING_OBJECTS_2D
 add_dependencies(${DISPLAY_MOVING_OBJECTS_2D_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${DISPLAY_MOVING_OBJECTS_2D_NODE}
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+  ${OpenCV_LIBS}
 )
 
 set(VELOCITY_ESTIMATOR_NODE velocity_estimator_node)
@@ -101,7 +101,7 @@ add_executable(${VELOCITY_ESTIMATOR_NODE}
 add_dependencies(${VELOCITY_ESTIMATOR_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${VELOCITY_ESTIMATOR_NODE}
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+  ${OpenCV_LIBS}
   ${PCL_COMMON_LIBRARIES}
 )
 
