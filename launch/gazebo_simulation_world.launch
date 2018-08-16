@@ -2,14 +2,5 @@
   <!--
   gazebo_simulation_spawn_robots.launch should be launched after load this world.
   -->
-  <env name="GAZEBO_MODEL_PATH" value="/opt/ros/kinetic/share/osrf_gear/models:/opt/ros/kinetic/share/osrf_gear/models:$(env GAZEBO_MODEL_PATH)"/>
-
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/ariac_factory_mod.world"/>
-    <arg name="paused" value="false"/>
-    <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="true"/>
-    <arg name="headless" value="false"/>
-    <arg name="debug" value="false"/>
-  </include>
+  <include file="$(find gazebo_factory_world)/launch/factory_world.launch"/>
 </launch>
