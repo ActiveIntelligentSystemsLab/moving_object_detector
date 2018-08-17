@@ -26,11 +26,14 @@
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>message_generation</build_depend>
 
+  <exec_depend>gazebo_factory_world</exec_depend>
   <exec_depend>libpcl-all</exec_depend>
+  <exec_depend>mars_rover_description</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>tf2_odometry_msg</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>turtlebot3_stereo_description</exec_depend>
   <exec_depend>viso2_ros</exec_depend>
 
   <export>
