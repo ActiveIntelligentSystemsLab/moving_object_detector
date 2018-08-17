@@ -35,7 +35,4 @@
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>turtlebot3_stereo_description</exec_depend>
   <exec_depend>viso2_ros</exec_depend>
-
-  <export>
-  </export>
 </package>
