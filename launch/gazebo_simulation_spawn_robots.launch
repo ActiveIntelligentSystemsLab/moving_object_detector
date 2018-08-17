@@ -3,12 +3,12 @@
   <arg name="moving_object" default="moving_object"/>
 
   <arg name="stereo_robot_x_pos" default="0.0"/>
-  <arg name="stereo_robot_y_pos" default="0.0"/>
+  <arg name="stereo_robot_y_pos" default="-7.0"/>
   <arg name="stereo_robot_z_pos" default="0.0"/>
   <arg name="stereo_robot_yaw"   default="0.0"/>
 
   <arg name="moving_object_x_pos" default="5.0"/>
-  <arg name="moving_object_y_pos" default="0.0"/>
+  <arg name="moving_object_y_pos" default="-7.0"/>
   <arg name="moving_object_z_pos" default="0.0"/>
   <arg name="moving_object_yaw"   default="0.0"/>
 
