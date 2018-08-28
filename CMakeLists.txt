@@ -31,6 +31,7 @@ find_package(PCL REQUIRED
 
 add_message_files(
   FILES
+  ExpResult.msg
   MovingObject.msg
   MovingObjectArray.msg
   Size3D.msg
@@ -117,6 +118,7 @@ catkin_install_python(
   PROGRAMS 
     nodes/point_frame_converter
     nodes/odometry_frame_converter
+    nodes/simulation_exp_result_calc
   DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
