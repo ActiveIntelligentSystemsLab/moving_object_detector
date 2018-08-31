@@ -17,9 +17,7 @@ class SimulationExpResultCalc:
     def __init__(self):
         rospy.init_node('simulation_exp_result_calc')
 
-        self._pub = rospy.Publisher('center_converted', geometry_msgs.msg.PointStamped, queue_size=30)
-        self._pub = rospy.Publisher('center', geometry_msgs.msg.PointStamped, queue_size=30)
-        self._pub = rospy.Publisher('center_converted', geometry_msgs.msg.PointStamped, queue_size=30)
+        self._pub = rospy.Publisher('exp_result', ExpResult)
         self._truth_odom_sub = message_filters.Subscriber('odom', Odometry)
         self._truth_center_sub = message_filters.Subscriber('center', PointStamped)
         self._estimated_sub = message_filters.Subscriber('moving_objects', MovingObjectArray)
@@ -37,12 +35,11 @@ class SimulationExpResultCalc:
         truth_pos = ros_numpy.numpify
         vel_truth = ros_numpy.numpify(truth_odom.twist.twist.linear)
 
-
         if len(est_obj_arr.moving_object_array) <= 0:
             msg.detected = False
         else:
             msg.detected = True
-            for est_obj in est_moving_objs:
+            for est_obj in est_obj_arr.moving_object_array:
                 est_pos = ros_numpy.numpify(est_obj.center)
                 pos_err = numpy.linalg.norm(est_pos - truth_pos)
                 if 'min_pos_err' in locals(): 
@@ -52,32 +49,15 @@ class SimulationExpResultCalc:
                     min_pos_err = pos_err
 
                 est_vel = ros_numpy.numpify(est_obj.velocity)
-                vel_err = numpy.linalg.norm(est_vel - vel)
+                vel_err = numpy.linalg.norm(est_vel - vel_truth)
                 if 'min_vel_err' in locals(): 
                     if vel_err < min_vel_err:
                         min_vel_err = vel_err
                 else:
                     min_vel_err = vel_err
             
-        vel_estimated = ros_numpy.numpify(estimated.)
-        vel_err = truth_odom.twist.twist
+        self._pub.publish(msg)
       
-
 if __name__ == '__main__':
-    conveter = PointFrameConverter()
+    result_calc = SimulationExpResultCalc()
     rospy.spin()
-
-
-
-import message_filters
-from sensor_msgs.msg import Image, CameraInfo
-
-def callback(image, camera_info):
-  # Solve all of perception here...
-
-image_sub = message_filters.Subscriber('image', Image)
-info_sub = message_filters.Subscriber('camera_info', CameraInfo)
-
-ts = message_filters.TimeSynchronizer([image_sub, info_sub], 10)
-ts.registerCallback(callback)
-rospy.spin()
