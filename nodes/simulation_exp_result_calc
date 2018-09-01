@@ -3,7 +3,7 @@
 
 # from ROS packages
 import message_filters
-from geometry_msgs.msg import PointStamed
+from geometry_msgs.msg import PointStamped
 from nav_msgs.msg import Odometry
 from moving_object_detector.msg import MovingObjectArray
 from moving_object_detector.msg import ExpResult
