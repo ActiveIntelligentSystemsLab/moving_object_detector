@@ -46,7 +46,7 @@ class SimulationExpResultCalc:
             for est_obj in est_obj_arr.moving_object_array:
                 est_pos = ros_numpy.numpify(est_obj.center)
                 pos_err = numpy.linalg.norm(est_pos - truth_pos)
-                if 'min_pos_err' != None:
+                if min_pos_err != None:
                     if pos_err < min_pos_err:
                         min_pos_err = pos_err
                 else:
@@ -54,17 +54,17 @@ class SimulationExpResultCalc:
 
                 est_vel = ros_numpy.numpify(est_obj.velocity)
                 vel_err = numpy.linalg.norm(est_vel - vel_truth)
-                if 'min_vel_err' != None: 
+                if min_vel_err != None: 
                     if vel_err < min_vel_err:
                         min_vel_err = vel_err
                 else:
                     min_vel_err = vel_err
         
-        if 'min_pos_err' == None:
+        if min_pos_err == None:
             msg.pos_err = -1.0
         else:
             msg.pos_err = min_pos_err
-        if 'min_vel_err' == None: 
+        if min_vel_err == None: 
             msg.vel_err = -1.0
         else:
             msg.vel_err = min_vel_err
