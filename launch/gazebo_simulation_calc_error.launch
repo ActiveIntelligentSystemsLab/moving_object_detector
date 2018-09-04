@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+  <param name="use_sim_time" type="bool" value="true"/>
+
+  <arg name="output_bag" value="/home/aisl/Datasets/simulation_exp_static_camera/output_2018-07-25-17-31-09.bag"/>
+
+  <node name="bag_player" pkg="rosbag" type="play" args="--clock $(arg output_bag)"/>
+  <node name="err_calc" pkg="moving_object_detector" type="simulation_exp_result_calc">
+    <remap from="odom" to="moving_object/odom_converted"/>
+    <remap from="center" to="moving_object/center_converted"/>
+  </node>
+</launch>
