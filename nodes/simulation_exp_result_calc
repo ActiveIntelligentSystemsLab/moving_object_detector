@@ -55,7 +55,10 @@ class SimulationExpResultCalc:
                         min_vel_err = vel_err
                 else:
                     min_vel_err = vel_err
-            
+        
+        msg.pos_err = min_pos_err
+        msg.vel_err = min_vel_err
+        
         self._pub.publish(msg)
       
 if __name__ == '__main__':
