@@ -32,7 +32,7 @@ class SimulationExpResultCalc:
 
         # Find nearest object to truth value
 
-        truth_pos = ros_numpy.numpify
+        truth_pos = ros_numpy.numpify(truth_pos.point)
         vel_truth = ros_numpy.numpify(truth_odom.twist.twist.linear)
 
         if len(est_obj_arr.moving_object_array) <= 0:
