@@ -17,7 +17,7 @@ class SimulationExpResultCalc:
     def __init__(self):
         rospy.init_node('simulation_exp_result_calc')
 
-        self._pub = rospy.Publisher('exp_result', ExpResult)
+        self._pub = rospy.Publisher('exp_result', ExpResult, queue_size=30)
         self._truth_odom_sub = message_filters.Subscriber('odom', Odometry)
         self._truth_center_sub = message_filters.Subscriber('center', PointStamped)
         self._estimated_sub = message_filters.Subscriber('moving_objects', MovingObjectArray)
