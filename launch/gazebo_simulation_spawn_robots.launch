@@ -11,6 +11,8 @@
   <arg name="moving_object_y_pos" default="-7.0"/>
   <arg name="moving_object_z_pos" default="0.0"/>
   <arg name="moving_object_yaw"   default="0.0"/>
+  
+  <node name="xbox_con" pkg="joy" type="joy_node" />
 
   <group ns = "$(arg stereo_robot)">
     <param name="robot_description" command="$(find xacro)/xacro $(find turtlebot3_stereo_description)/urdf/turtlebot3_burger_stereo.urdf.xacro" />
@@ -21,6 +23,12 @@
     </node>
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg stereo_robot) -x $(arg stereo_robot_x_pos) -y $(arg stereo_robot_y_pos) -z $(arg stereo_robot_z_pos) -Y $(arg stereo_robot_yaw) -param robot_description" />
+    
+    <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
+      <remap from="joy" value="/joy"/>
+      <param name="scale_linear" value="1.0" />
+      <param name="scale_angular" value="2.0" />
+    </node>
   </group>
 
   <group ns = "$(arg moving_object)">
@@ -33,8 +41,8 @@
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg moving_object) -x $(arg moving_object_x_pos) -y $(arg moving_object_y_pos) -z $(arg moving_object_z_pos) -Y $(arg moving_object_yaw) -param robot_description" />
 
-    <node name="xbox_con" pkg="joy" type="joy_node" />
     <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
+      <remap from="joy" value="/joy"/>
       <param name="scale_linear" value="1.0" />
       <param name="scale_angular" value="2.0" />
     </node>
