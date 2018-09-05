@@ -37,7 +37,6 @@ class SimulationExpResultCalc:
         vel_truth = ros_numpy.numpify(truth_odom.twist.twist.linear)
 
         min_pos_err = None
-        min_vel_err = None
 
         if len(est_obj_arr.moving_object_array) <= 0:
             msg.detected = False
@@ -50,25 +49,20 @@ class SimulationExpResultCalc:
                 if min_pos_err != None:
                     if pos_err < min_pos_err:
                         min_pos_err = pos_err
+                        est_vel = ros_numpy.numpify(est_obj.velocity)
+                        vel_err = numpy.linalg.norm(est_vel - vel_truth)
                 else:
                     min_pos_err = pos_err
+                    est_vel = ros_numpy.numpify(est_obj.velocity)
+                    vel_err = numpy.linalg.norm(est_vel - vel_truth)
 
-                est_vel = ros_numpy.numpify(est_obj.velocity)
-                vel_err = numpy.linalg.norm(est_vel - vel_truth)
-                if min_vel_err != None: 
-                    if vel_err < min_vel_err:
-                        min_vel_err = vel_err
-                else:
-                    min_vel_err = vel_err
         
         if min_pos_err == None:
             msg.pos_err = -1.0
-        else:
-            msg.pos_err = min_pos_err
-        if min_vel_err == None: 
             msg.vel_err = -1.0
         else:
-            msg.vel_err = min_vel_err
+            msg.pos_err = min_pos_err
+            msg.vel_err = vel_err
 
         self._pub.publish(msg)
       
