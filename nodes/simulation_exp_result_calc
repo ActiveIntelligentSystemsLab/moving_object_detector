@@ -27,7 +27,8 @@ class SimulationExpResultCalc:
 
     def callback(self, truth_pos, truth_odom, est_obj_arr):
         msg = ExpResult()
-        msg.truth_stamp = truth_pos.header.stamp
+        msg.odom_stamp = truth_pos.header.stamp
+        msg.center_stamp = truth_odom.header.stamp
         msg.estimated_stamp = est_obj_arr.header.stamp
 
         # Find nearest object to truth value
