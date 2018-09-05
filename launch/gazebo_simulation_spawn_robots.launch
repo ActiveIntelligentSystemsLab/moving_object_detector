@@ -26,6 +26,11 @@
     
     <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
       <remap from="joy" value="/joy"/>
+      
+      <!-- Use left stick in XBox wired controller -->
+      <param name="axis_linear" value="1" />
+      <param name="axis_angular" value="0" />
+      
       <param name="scale_linear" value="1.0" />
       <param name="scale_angular" value="2.0" />
     </node>
@@ -43,6 +48,11 @@
 
     <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
       <remap from="joy" value="/joy"/>
+      
+      <!-- Use right stick in XBox wired controller -->
+      <param name="axis_linear" value="4" />
+      <param name="axis_angular" value="3" />
+      
       <param name="scale_linear" value="1.0" />
       <param name="scale_angular" value="2.0" />
     </node>
