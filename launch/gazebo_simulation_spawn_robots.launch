@@ -1,16 +1,18 @@
 <launch>
   <arg name="stereo_robot"  default="stereo_robot"/>
   <arg name="moving_object" default="moving_object"/>
+  
+  <arg name="PI" value="3.14159265359"/>
 
-  <arg name="stereo_robot_x_pos" default="0.0"/>
-  <arg name="stereo_robot_y_pos" default="-7.0"/>
+  <arg name="stereo_robot_x_pos" default="17.0"/>
+  <arg name="stereo_robot_y_pos" default="6.0"/>
   <arg name="stereo_robot_z_pos" default="0.0"/>
-  <arg name="stereo_robot_yaw"   default="0.0"/>
+  <arg name="stereo_robot_yaw"   default="$(arg PI)"/>
 
-  <arg name="moving_object_x_pos" default="5.0"/>
-  <arg name="moving_object_y_pos" default="-7.0"/>
+  <arg name="moving_object_x_pos" default="15.0"/>
+  <arg name="moving_object_y_pos" default="6.0"/>
   <arg name="moving_object_z_pos" default="0.0"/>
-  <arg name="moving_object_yaw"   default="0.0"/>
+  <arg name="moving_object_yaw"   default="$(arg PI)"/>
   
   <node name="xbox_con" pkg="joy" type="joy_node" />
 
