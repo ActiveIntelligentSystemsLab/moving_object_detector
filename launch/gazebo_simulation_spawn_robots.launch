@@ -33,8 +33,8 @@
       <param name="axis_linear" value="1" />
       <param name="axis_angular" value="0" />
       
-      <param name="scale_linear" value="1.0" />
-      <param name="scale_angular" value="2.0" />
+      <param name="scale_linear" value="0.7" />
+      <param name="scale_angular" value="0.5" />
     </node>
   </group>
 
@@ -55,8 +55,8 @@
       <param name="axis_linear" value="4" />
       <param name="axis_angular" value="3" />
       
-      <param name="scale_linear" value="1.0" />
-      <param name="scale_angular" value="2.0" />
+      <param name="scale_linear" value="0.7" />
+      <param name="scale_angular" value="0.5" />
     </node>
   </group>
 
