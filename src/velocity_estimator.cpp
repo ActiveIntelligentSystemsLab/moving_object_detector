@@ -137,7 +137,7 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
         point_with_velocity.y = point3d_now.getY();
         point_with_velocity.z = point3d_now.getZ();
         
-        tf2::Vector3 flow3d_vector = point3d_now - point3d_previous;
+        tf2::Vector3 flow3d_vector = point3d_now - point3d_previous_transformed;
         point_with_velocity.vx = flow3d_vector.getX() / time_between_frames.toSec();
         point_with_velocity.vy = flow3d_vector.getY() / time_between_frames.toSec();
         point_with_velocity.vz = flow3d_vector.getZ() / time_between_frames.toSec();
