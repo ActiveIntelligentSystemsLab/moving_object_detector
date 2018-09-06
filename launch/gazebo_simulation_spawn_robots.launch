@@ -25,7 +25,7 @@
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg stereo_robot) -x $(arg stereo_robot_x_pos) -y $(arg stereo_robot_y_pos) -z $(arg stereo_robot_z_pos) -Y $(arg stereo_robot_yaw) -param robot_description" />
     
     <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
-      <remap from="joy" value="/joy"/>
+      <remap from="joy" to="/joy"/>
       
       <!-- Use left stick in XBox wired controller -->
       <param name="axis_linear" value="1" />
@@ -47,7 +47,7 @@
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg moving_object) -x $(arg moving_object_x_pos) -y $(arg moving_object_y_pos) -z $(arg moving_object_z_pos) -Y $(arg moving_object_yaw) -param robot_description" />
 
     <node name="teleop_twist_joy" pkg="teleop_twist_joy" type="teleop_node" >
-      <remap from="joy" value="/joy"/>
+      <remap from="joy" to="/joy"/>
       
       <!-- Use right stick in XBox wired controller -->
       <param name="axis_linear" value="4" />
