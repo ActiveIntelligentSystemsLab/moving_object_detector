@@ -60,7 +60,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${PCL_LIBRARY_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
