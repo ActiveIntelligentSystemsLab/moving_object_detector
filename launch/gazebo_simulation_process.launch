@@ -30,6 +30,8 @@
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="/viso2/input"/>
     <remap from="image" to="image_raw"/>
+    
+    <param name="base_link_frame_id" value="stereo_robot/camera_link"/>
   </node>
 
   <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
