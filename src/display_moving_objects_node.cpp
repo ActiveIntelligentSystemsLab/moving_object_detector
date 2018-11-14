@@ -57,7 +57,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     velocity_arrow.points.push_back(arrow_start);
     velocity_arrow.points.push_back(arrow_end);
     double shaft_diameter = 0.1;
-    double head_diameter = 0.15;
+    double head_diameter = 0.2;
     double head_length = 0.0; // Use default value
     velocity_arrow.scale.x = shaft_diameter;
     velocity_arrow.scale.y = head_diameter;
