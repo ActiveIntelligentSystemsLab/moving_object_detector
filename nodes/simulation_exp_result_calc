@@ -9,6 +9,8 @@ from moving_object_detector.msg import MovingObjectArray
 from moving_object_detector.msg import ExpResult
 import ros_numpy
 import rospy
+import tf2_geometry_msgs
+import tf2_ros
 
 # from non-ROS
 import numpy
@@ -16,6 +18,9 @@ import numpy
 class SimulationExpResultCalc:
     def __init__(self):
         rospy.init_node('simulation_exp_result_calc')
+        
+        self._tf_buffer = tf2_ros.Buffer()
+        self._listener = tf2_ros.TransformListener(self._tf_buffer)
 
         self._pub = rospy.Publisher('exp_result', ExpResult, queue_size=30)
         self._truth_odom_sub = message_filters.Subscriber('odom', Odometry)
@@ -30,41 +35,64 @@ class SimulationExpResultCalc:
         msg.odom_stamp = truth_pos.header.stamp
         msg.center_stamp = truth_odom.header.stamp
         msg.estimated_stamp = est_obj_arr.header.stamp
-
-        # Find nearest object to truth value
-
-        truth_pos = ros_numpy.numpify(truth_pos.point)
-        vel_truth = ros_numpy.numpify(truth_odom.twist.twist.linear)
-
-        min_pos_err = None
-
+        
         if len(est_obj_arr.moving_object_array) <= 0:
             msg.detected = False
-        else:
-            msg.detected = True
-
-            for est_obj in est_obj_arr.moving_object_array:
-                est_pos = ros_numpy.numpify(est_obj.center)
-                pos_err = numpy.linalg.norm(est_pos - truth_pos)
-                if min_pos_err != None:
-                    if pos_err < min_pos_err:
-                        min_pos_err = pos_err
-                        est_vel = ros_numpy.numpify(est_obj.velocity)
-                        vel_err = numpy.linalg.norm(est_vel - vel_truth)
-                else:
-                    min_pos_err = pos_err
-                    est_vel = ros_numpy.numpify(est_obj.velocity)
-                    vel_err = numpy.linalg.norm(est_vel - vel_truth)
-
-        
-        if min_pos_err == None:
             msg.pos_err = -1.0
             msg.vel_err = -1.0
         else:
-            msg.pos_err = min_pos_err
-            msg.vel_err = vel_err
+            msg.detected = True
+            
+            truth_vel = self.odometry_to_velocity(truth_odom)
+            
+            is_transformed = self.transform_truth_values(truth_pos, truth_vel, est_obj_arr.header.frame_id)
+            if is_transformed == False:
+                rospy.loginfo("TF is not found")
+                return
+            
+            self.calculate_error(truth_pos, truth_vel, est_obj_arr, msg)
 
         self._pub.publish(msg)
+        
+    def odometry_to_velocity(self, odometry):
+        velocity = PointStamped()
+        velocity.header.stamp = odometry.header.stamp
+        velocity.header.frame_id = odometry.child_frame_id
+        velocity.point.x = odometry.twist.twist.linear.x
+        velocity.point.y = odometry.twist.twist.linear.y
+        velocity.point.z = odometry.twist.twist.linear.z
+        return odometry
+    
+    def transform_truth_values(self, position, velocity, target_frame):
+        try:
+            position = self._tf_buffer.transform(position, target_frame)
+            velocity = self._tf_buffer.transform(velocity, target_frame)
+        except(tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            return False
+        
+        return True
+    
+    def calculate_error(self, truth_pos, truth_vel, est_obj_arr, exp_result):
+        truth_pos = ros_numpy.numpify(truth_pos.point)
+        truth_vel = ros_numpy.numpify(truth_vel.point)
+        
+        min_pos_err = None
+        for est_obj in est_obj_arr.moving_object_array:
+            est_pos = ros_numpy.numpify(est_obj.center)
+            pos_err = numpy.linalg.norm(est_pos - truth_pos)
+            if min_pos_err != None:
+                if pos_err < min_pos_err:
+                    min_pos_err = pos_err
+                    min_est_vel = ros_numpy.numpify(est_obj.velocity)
+                    vel_err = numpy.linalg.norm(min_est_vel - truth_vel)
+            else:
+                min_pos_err = pos_err
+                min_est_vel = ros_numpy.numpify(est_obj.velocity)
+                vel_err = numpy.linalg.norm(min_est_vel - truth_vel)
+                
+        exp_result.pos_err = min_pos_err
+        exp_result.vel_err = vel_err
+        
       
 if __name__ == '__main__':
     result_calc = SimulationExpResultCalc()
