@@ -66,6 +66,11 @@
   <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
+  
+  <node name="odometry_to_marker" pkg="odometry_to_marker" type="odometry_to_marker">
+    <remap from="odometry" to="moving_object/odom"/>
+    <remap from="marker" to="moving_object/velocity_marker"/>
+  </node>
 
   <group ns="moving_object">
     <node name="odometry_frame_converter" pkg="moving_object_detector" type="odometry_frame_converter">
