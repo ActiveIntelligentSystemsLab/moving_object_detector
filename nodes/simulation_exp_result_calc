@@ -61,7 +61,7 @@ class SimulationExpResultCalc:
         velocity.point.x = odometry.twist.twist.linear.x
         velocity.point.y = odometry.twist.twist.linear.y
         velocity.point.z = odometry.twist.twist.linear.z
-        return odometry
+        return velocity
     
     def transform_truth_values(self, position, velocity, target_frame):
         try:
