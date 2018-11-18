@@ -116,10 +116,7 @@ target_link_libraries(${VELOCITY2COLOR_NODE}
 
 catkin_install_python(
   PROGRAMS 
-    nodes/point_frame_converter
-    nodes/odometry_frame_converter
     nodes/simulation_exp_result_calc
-    nodes/transform_truth_odom
   DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

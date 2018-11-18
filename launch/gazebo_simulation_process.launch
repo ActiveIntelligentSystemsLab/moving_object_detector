@@ -71,13 +71,4 @@
     <remap from="odometry" to="moving_object/odom"/>
     <remap from="marker" to="moving_object/velocity_marker"/>
   </node>
-
-  <group ns="moving_object">
-    <node name="odometry_frame_converter" pkg="moving_object_detector" type="odometry_frame_converter">
-      <param name="target_frame" value="stereo_robot/zed_left_camera"/>
-    </node>
-    <node name="point_frame_converter" pkg="moving_object_detector" type="point_frame_converter">
-      <param name="target_frame" value="stereo_robot/zed_left_camera"/>
-    </node>
-  </group>
 </launch>
