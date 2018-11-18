@@ -61,12 +61,13 @@
   </node>
 
   <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
+  
+  <!-- Nodes for visualization -->
   <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
   <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
   <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
-  
   <node name="odometry_to_marker" pkg="odometry_to_marker" type="odometry_to_marker">
     <remap from="odometry" to="moving_object/odom"/>
     <remap from="marker" to="moving_object/velocity_marker"/>
