@@ -71,4 +71,9 @@
     <remap from="odometry" to="moving_object/odom"/>
     <remap from="marker" to="moving_object/velocity_marker"/>
   </node>
+  
+  <node name="result_calculator" pkg="moving_object_detector" type="simulation_exp_result_calc">
+    <remap from="odom" to="moving_object/odom"/>
+    <remap from="center" to="moving_object/center"/>
+  </node>
 </launch>
