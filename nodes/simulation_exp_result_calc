@@ -4,6 +4,7 @@
 # from ROS packages
 import message_filters
 from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Vector3Stamped
 from nav_msgs.msg import Odometry
 from moving_object_detector.msg import MovingObjectArray
 from moving_object_detector.msg import ExpResult
@@ -56,17 +57,15 @@ class SimulationExpResultCalc:
         self._pub.publish(msg)
         
     def odometry_to_velocity(self, odometry):
-        velocity = PointStamped()
+        velocity = Vector3Stamped()
         velocity.header.stamp = odometry.header.stamp
         velocity.header.frame_id = odometry.child_frame_id
-        velocity.point.x = odometry.twist.twist.linear.x
-        velocity.point.y = odometry.twist.twist.linear.y
-        velocity.point.z = odometry.twist.twist.linear.z
+        velocity.vector = odometry.twist.twist.linear
         return velocity
     
     def calculate_error(self, truth_pos, truth_vel, est_obj_arr, exp_result):
         truth_pos = ros_numpy.numpify(truth_pos.point)
-        truth_vel = ros_numpy.numpify(truth_vel.point)
+        truth_vel = ros_numpy.numpify(truth_vel.vector)
         
         min_pos_err = None
         for est_obj in est_obj_arr.moving_object_array:
