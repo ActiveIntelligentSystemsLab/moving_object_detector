@@ -73,8 +73,8 @@ class SimulationExpResultCalc:
             position_error = numpy.linalg.norm(est_pos - truth_pos)
             if min_pos_err == None or position_error < min_pos_err:
                 min_pos_err = position_error
-                min_est_vel = ros_numpy.numpify(est_obj.velocity)
-                velocity_error = numpy.linalg.norm(min_est_vel - truth_vel)
+                est_vel = ros_numpy.numpify(est_obj.velocity)
+                velocity_error = numpy.linalg.norm(est_vel - truth_vel)
                 
         exp_result.position_error = min_pos_err
         exp_result.velocity_error = velocity_error
