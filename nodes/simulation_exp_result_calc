@@ -32,17 +32,17 @@ class SimulationExpResultCalc:
         self._sync.registerCallback(self.callback)
 
     def callback(self, truth_pos, truth_odom, est_obj_arr):
-        msg = ExpResult()
-        msg.odom_stamp = truth_pos.header.stamp
-        msg.center_stamp = truth_odom.header.stamp
-        msg.estimated_stamp = est_obj_arr.header.stamp
+        result = ExpResult()
+        result.odom_stamp = truth_pos.header.stamp
+        result.center_stamp = truth_odom.header.stamp
+        result.estimated_stamp = est_obj_arr.header.stamp
         
         if len(est_obj_arr.moving_object_array) <= 0:
-            msg.detected = False
-            msg.position_error = -1.0
-            msg.velocity_error = -1.0
+            result.detected = False
+            result.position_error = -1.0
+            result.velocity_error = -1.0
         else:
-            msg.detected = True
+            result.detected = True
             
             truth_vel = self.odometry_to_velocity(truth_odom)
             try:
@@ -52,9 +52,9 @@ class SimulationExpResultCalc:
                 rospy.loginfo("TF is not found")
                 return
             
-            self.calculate_error(truth_pos, truth_vel, est_obj_arr, msg)
+            self.calculate_error(truth_pos, truth_vel, est_obj_arr, result)
 
-        self._pub.publish(msg)
+        self._pub.publish(result)
         
     def odometry_to_velocity(self, odometry):
         velocity = Vector3Stamped()
