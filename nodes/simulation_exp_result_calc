@@ -70,14 +70,14 @@ class SimulationExpResultCalc:
         min_pos_err = None
         for est_obj in est_obj_arr.moving_object_array:
             est_pos = ros_numpy.numpify(est_obj.center)
-            position_error = numpy.linalg.norm(est_pos - truth_pos)
-            if min_pos_err == None or position_error < min_pos_err:
-                min_pos_err = position_error
+            pos_err = numpy.linalg.norm(est_pos - truth_pos)
+            if min_pos_err == None or pos_err < min_pos_err:
+                min_pos_err = pos_err
                 est_vel = ros_numpy.numpify(est_obj.velocity)
-                velocity_error = numpy.linalg.norm(est_vel - truth_vel)
+                vel_err = numpy.linalg.norm(est_vel - truth_vel)
                 
         exp_result.position_error = min_pos_err
-        exp_result.velocity_error = velocity_error
+        exp_result.velocity_error = vel_err
         
       
 if __name__ == '__main__':
