@@ -3,7 +3,7 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
-  <node name="bag_recorder" pkg="rosbag" type="record" args="/moving_objects /moving_object/center_converted /moving_object/odom_converted"/>
+  <node name="bag_recorder" pkg="rosbag" type="record" args="exp_result"/>
 
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
 
