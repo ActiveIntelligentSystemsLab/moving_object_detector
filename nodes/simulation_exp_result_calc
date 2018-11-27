@@ -4,6 +4,7 @@
 # from ROS packages
 import message_filters
 from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Vector3Stamped
 from nav_msgs.msg import Odometry
 from moving_object_detector.msg import MovingObjectArray
@@ -39,8 +40,6 @@ class SimulationExpResultCalc:
         
         if len(est_obj_arr.moving_object_array) <= 0:
             result.detected = False
-            result.position_error = -1.0
-            result.velocity_error = -1.0
         else:
             result.detected = True
             
@@ -70,16 +69,17 @@ class SimulationExpResultCalc:
         min_pos_err = None
         for est_obj in est_obj_arr.moving_object_array:
             est_pos = ros_numpy.numpify(est_obj.center)
-            pos_err = numpy.linalg.norm(est_pos - truth_pos)
-            if min_pos_err == None or pos_err < min_pos_err:
+            pos_err = est_pos - truth_pos
+            if min_pos_err == None or numpy.linalg.norm(pos_err) < numpy.linalg.norm(min_pos_err):
                 min_pos_err = pos_err
                 est_vel = ros_numpy.numpify(est_obj.velocity)
-                vel_err = numpy.linalg.norm(est_vel - truth_vel)
-                
-        exp_result.position_error = min_pos_err
-        exp_result.velocity_error = vel_err
+                vel_err = est_vel - truth_vel
         
-      
+        exp_result.velcotiy_magnitude_error = numpy.linalg.norm(truth_vel) - numpy.linalg.norm(est_vel)
+        exp_result.velocity_angle_error = numpy.math.arccos(numpy.dot(est_vel, truth_vel) / (numpy.linalg.norm(est_vel) * numpy.linalg.norm(truth_vel)))
+        exp_result.velocity_error = ros_numpy.msgify(Vector3, vel_err)
+        exp_result.position_error = ros_numpy.msgify(Vector3, min_pos_err)
+
 if __name__ == '__main__':
     result_calc = SimulationExpResultCalc()
     rospy.spin()

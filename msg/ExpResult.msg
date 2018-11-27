@@ -3,8 +3,12 @@ time truth_odometory_stamp
 time truth_center_stamp
 time estimated_stamp
 
-float64 velocity_error
-float64 position_error
+geometry_msgs/Vector3 velocity_error
+# ベクトルの大きさの差
+float64 velocity_magnitude_error
+float64 velocity_angle_error
+
+geometry_msgs/Vector3 position_error
 
 # 移動物体が1つ以上検出されていればTrue
 bool detected
