@@ -34,8 +34,8 @@ class SimulationExpResultCalc:
 
     def callback(self, truth_pos, truth_odom, est_obj_arr):
         result = ExpResult()
-        result.odom_stamp = truth_pos.header.stamp
-        result.center_stamp = truth_odom.header.stamp
+        result.truth_center_stamp = truth_pos.header.stamp
+        result.truth_odometory_stamp = truth_odom.header.stamp
         result.estimated_stamp = est_obj_arr.header.stamp
         
         if len(est_obj_arr.moving_object_array) <= 0:
