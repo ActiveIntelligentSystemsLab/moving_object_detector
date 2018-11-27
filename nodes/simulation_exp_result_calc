@@ -76,7 +76,7 @@ class SimulationExpResultCalc:
                 vel_err = est_vel - truth_vel
         
         exp_result.velocity_magnitude_error = numpy.linalg.norm(truth_vel) - numpy.linalg.norm(est_vel)
-        exp_result.velocity_angle_error = numpy.math.arccos(numpy.dot(est_vel, truth_vel) / (numpy.linalg.norm(est_vel) * numpy.linalg.norm(truth_vel)))
+        exp_result.velocity_angle_error = numpy.arccos(numpy.dot(est_vel, truth_vel) / (numpy.linalg.norm(est_vel) * numpy.linalg.norm(truth_vel)))
         exp_result.velocity_error = ros_numpy.msgify(Vector3, vel_err)
         exp_result.position_error = ros_numpy.msgify(Vector3, min_pos_err)
 
