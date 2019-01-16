@@ -3,10 +3,13 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
+  <!--
   <node name="bag_recorder" pkg="rosbag" type="record" args="exp_result"/>
+  -->
 
   <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
 
+  <!--
   <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
     <remap from="camera" to="synchronized/left"/>
     <remap from="synchronized/left/image_raw" to="synchronized/left/image_rect_color"/>
@@ -26,10 +29,11 @@
     <param name="height" value="360"/>
     <param name="y_offset" value="180"/>
   </node>
+  -->
 
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
-    <remap from="stereo" to="/viso2/input"/>
-    <remap from="image" to="image_raw"/>
+    <remap from="stereo" to="synchronized"/>
+    <remap from="image" to="image_rect_color"/>
     
     <param name="base_link_frame_id" value="stereo_robot/camera_link"/>
     <param name="publish_tf" value="false"/>
@@ -56,13 +60,19 @@
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/elas/disparity"/>
-
-    <param name="image_transport" value="compressed"/>
+  </node>
+  
+  <node name="elas" pkg="elas_ros" type="elas_ros">
+    <remap from="stereo" to="synchronized"/>
+    <remap from="image" to="/image_rect_color"/>
   </node>
 
+  <!--
   <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
+  -->
   
   <!-- Nodes for visualization -->
+  <!--
   <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
   <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
   <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
@@ -77,4 +87,5 @@
     <remap from="odom" to="moving_object/odom"/>
     <remap from="center" to="moving_object/center"/>
   </node>
+  -->
 </launch>
