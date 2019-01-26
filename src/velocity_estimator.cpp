@@ -33,7 +33,7 @@ VelocityEstimator::VelocityEstimator() {
   disparity_image_sub_.subscribe(node_handle_, "disparity_image", 20);
   left_camera_info_sub_.subscribe(node_handle_, "left_camera_info", 1);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dis_flow::FlowImage, dis_flow::FlowImage, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
 
   input_publish_client_ = node_handle_.serviceClient<moving_object_detector::InputSynchronizerPublish>("input_synchronizer_publish");
@@ -59,7 +59,7 @@ void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorC
   matching_tolerance_ = config.matching_tolerance;
 }
 
-void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
   moving_object_detector::InputSynchronizerPublish publish_service;
@@ -74,8 +74,8 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   } else {
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
-    cv::Mat flow_map_left = cv_bridge::toCvShare(optical_flow_left)->image;
-    cv::Mat flow_map_right = cv_bridge::toCvShare(optical_flow_right)->image;
+    cv::Mat flow_map_left = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
+    cv::Mat flow_map_right = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
     
     ProcessDisparityImage disparity_processor(disparity_image, left_camera_info);
     ProcessDisparityImage disparity_processor_previous(disparity_image_previous_, left_camera_info);

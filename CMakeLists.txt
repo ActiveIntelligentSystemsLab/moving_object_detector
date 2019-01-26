@@ -5,6 +5,7 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
+  dis_flow
   dynamic_reconfigure
   geometry_msgs
   image_geometry

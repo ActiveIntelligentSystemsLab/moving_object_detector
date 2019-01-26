@@ -9,6 +9,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>cv_bridge</depend>
+  <depend>dis_flow</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>
