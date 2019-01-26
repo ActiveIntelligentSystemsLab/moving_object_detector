@@ -35,6 +35,8 @@ private:
   
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
+
+  ros::ServiceClient input_publish_client_;
   
   int downsample_scale_;
   double matching_tolerance_;
@@ -46,39 +48,6 @@ private:
   
   void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
-  
-  // 同期した各入力データをsubscribeし，optical flowノード，VISO2ノード，rectifyノードにタイミング良くpublishするためのクラス
-  class InputSynchronizer {
-  private:
-    std::shared_ptr<image_transport::ImageTransport> image_transport_;
-    
-    image_transport::CameraPublisher left_rect_image_pub_;
-    image_transport::CameraPublisher right_rect_image_pub_;
-    
-    image_transport::SubscriberFilter left_rect_image_sub_;
-    message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
-    image_transport::SubscriberFilter right_rect_image_sub_;
-    message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
-    
-    typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> DataTimeSynchronizer;
-    std::shared_ptr<DataTimeSynchronizer> time_sync_;
-    
-    sensor_msgs::CameraInfo left_camera_info_;
-    sensor_msgs::Image left_rect_image_;
-    sensor_msgs::CameraInfo left_rect_info_;
-    sensor_msgs::Image right_rect_image_;
-    sensor_msgs::CameraInfo right_rect_info_;
-    
-    ros::Time last_publish_time_;
-    
-    void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
-    
-  public:
-    InputSynchronizer(VelocityEstimator& outer_instance);
-    void publish();
-  };
-  
-  std::shared_ptr<InputSynchronizer> input_synchronizer_;
 };
 
 #endif

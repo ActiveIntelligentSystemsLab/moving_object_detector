@@ -5,6 +5,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/camera_common.h>
+#include <moving_object_detector/InputSynchronizerPublish.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -36,8 +37,14 @@ VelocityEstimator::VelocityEstimator() {
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
-  
-  input_synchronizer_ = std::make_shared<InputSynchronizer>(*this);
+
+  input_publish_client_ = node_handle_.serviceClient<moving_object_detector::InputSynchronizerPublish>("input_synchronizer_publish");
+
+  // dataCBをコールバックさせるため，2フレーム分の入力データを送る
+  moving_object_detector::InputSynchronizerPublish publish_service;
+  input_publish_client_.call(publish_service);
+  ros::Duration(0.5).sleep();
+  input_publish_client_.call(publish_service);
 }
 
 void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level)
@@ -51,7 +58,8 @@ void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorC
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const sensor_msgs::ImageConstPtr& optical_flow_left, const sensor_msgs::ImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
-  input_synchronizer_->publish();
+  moving_object_detector::InputSynchronizerPublish publish_service;
+  input_publish_client_.call(publish_service);
   
   ros::Time start_process = ros::Time::now();
 
@@ -157,52 +165,4 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   
   ros::Duration process_time = ros::Time::now() - start_process;
   ROS_INFO("process time: %f", process_time.toSec());
-}
-
-VelocityEstimator::InputSynchronizer::InputSynchronizer(VelocityEstimator& outer_instance)
-{
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(outer_instance.node_handle_);
-  
-  std::string publish_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_left_rect_image");
-  std::string publish_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_output_right_rect_image");
-  
-  left_rect_image_pub_ = image_transport_->advertiseCamera(publish_left_rect_image_topic, 1);
-  right_rect_image_pub_ = image_transport_->advertiseCamera(publish_right_rect_image_topic, 1);
-  
-  std::string subscribe_left_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_left_rect_image");
-  std::string subscribe_right_rect_image_topic = outer_instance.node_handle_.resolveName("synchronizer_input_right_rect_image");
-  
-  left_rect_image_sub_.subscribe(*image_transport_, subscribe_left_rect_image_topic, 10);
-  left_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_left_rect_image_topic), 10);
-  right_rect_image_sub_.subscribe(*image_transport_, subscribe_right_rect_image_topic, 10);
-  right_rect_info_sub_.subscribe(outer_instance.node_handle_, image_transport::getCameraInfoTopic(subscribe_right_rect_image_topic), 10);
-  time_sync_ = std::make_shared<DataTimeSynchronizer>(left_rect_image_sub_, left_rect_info_sub_, right_rect_image_sub_, right_rect_info_sub_, 10);
-  time_sync_->registerCallback(boost::bind(&VelocityEstimator::InputSynchronizer::dataCallBack, this, _1, _2, _3, _4));
-}
-
-void VelocityEstimator::InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
-{
-  static int count = 0;
-  
-  left_rect_image_ = *left_rect_image;
-  left_rect_info_ = *left_rect_info;
-  right_rect_image_ = *right_rect_image;
-  right_rect_info_ = *right_rect_info;
-  
-  // VelocityEstimator内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
-  if (count < 2) {
-    publish();
-    count++;
-  }
-  else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
-    publish();
-  }
-}
-
-void VelocityEstimator::InputSynchronizer::publish()
-{
-  left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
-  right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
-  
-  last_publish_time_ = ros::Time::now();
 }
