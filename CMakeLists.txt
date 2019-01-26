@@ -102,7 +102,6 @@ target_link_libraries(velocity_estimator_node
   ${PCL_COMMON_LIBRARIES}
 )
 
-set(VELOCITY2COLOR_NODE velocity2color_node)
 add_executable(velocity2color_node src/velocity2color_node.cpp)
 add_dependencies(velocity2color_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(velocity2color_node
