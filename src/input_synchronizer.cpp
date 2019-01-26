@@ -31,15 +31,6 @@ void InputSynchronizer::dataCallBack(const sensor_msgs::ImageConstPtr& left_rect
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
   right_rect_info_ = *right_rect_info;
-  
-  // VelocityEstimator内でinput_synchronizer->publish()を行わない限り処理は開始しないので，初期2フレーム分のデータを送信する
-  if (count < 2) {
-    publish();
-    count++;
-  }
-  else if ((ros::Time::now() - last_publish_time_).toSec() > 0.5) { // publishが途中で停止した場合には復帰
-    publish();
-  }
 }
 
 bool InputSynchronizer::publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response)
@@ -52,6 +43,4 @@ void InputSynchronizer::publish()
 {
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
-  
-  last_publish_time_ = ros::Time::now();
 }

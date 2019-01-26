@@ -34,9 +34,7 @@ private:
   sensor_msgs::CameraInfo left_rect_info_;
   sensor_msgs::Image right_rect_image_;
   sensor_msgs::CameraInfo right_rect_info_;
-  
-  ros::Time last_publish_time_;
-  
+    
   void publish();
   
   void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
