@@ -65,51 +65,47 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-set(CLUSTERER_NODE clusterer_node)
-add_executable(${CLUSTERER_NODE} 
+add_executable(clusterer_node 
   src/clusterer.cpp
-  src/${CLUSTERER_NODE}.cpp
+  src/clusterer_node.cpp
 )
-add_dependencies(${CLUSTERER_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${CLUSTERER_NODE}
+add_dependencies(clusterer_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(clusterer_node
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
   ${PCL_SEARCH_LIBRARIES}
   ${PCL_SEGMENTATION_LIBRARIES}
 )
 
-set(DISPLAY_MOVING_OBJECTS_NODE display_moving_objects_node)
-add_executable(${DISPLAY_MOVING_OBJECTS_NODE} src/${DISPLAY_MOVING_OBJECTS_NODE}.cpp)
-add_dependencies(${DISPLAY_MOVING_OBJECTS_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${DISPLAY_MOVING_OBJECTS_NODE}
+add_executable(display_moving_objects_node src/display_moving_objects_node.cpp)
+add_dependencies(display_moving_objects_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(display_moving_objects_node
   ${catkin_LIBRARIES}
 )
 
-set(DISPLAY_MOVING_OBJECTS_2D_NODE display_moving_objects_2d_node)
-add_executable(${DISPLAY_MOVING_OBJECTS_2D_NODE} src/${DISPLAY_MOVING_OBJECTS_2D_NODE}.cpp)
-add_dependencies(${DISPLAY_MOVING_OBJECTS_2D_NODE} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${DISPLAY_MOVING_OBJECTS_2D_NODE}
+add_executable(display_moving_objects_2d_node src/display_moving_objects_2d_node.cpp)
+add_dependencies(display_moving_objects_2d_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(display_moving_objects_2d_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
 )
 
-set(VELOCITY_ESTIMATOR_NODE velocity_estimator_node)
-add_executable(${VELOCITY_ESTIMATOR_NODE}
+add_executable(velocity_estimator_node
   src/velocity_estimator.cpp
   src/velocity_estimator_node.cpp
   src/process_disparity_image.cpp
 )
-add_dependencies(${VELOCITY_ESTIMATOR_NODE} ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${VELOCITY_ESTIMATOR_NODE}
+add_dependencies(velocity_estimator_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(velocity_estimator_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_COMMON_LIBRARIES}
 )
 
 set(VELOCITY2COLOR_NODE velocity2color_node)
-add_executable(${VELOCITY2COLOR_NODE} src/${VELOCITY2COLOR_NODE}.cpp)
-add_dependencies(${VELOCITY2COLOR_NODE} ${PROJECT_NAME}_gencfg)
-target_link_libraries(${VELOCITY2COLOR_NODE}
+add_executable(velocity2color_node src/velocity2color_node.cpp)
+add_dependencies(velocity2color_node ${PROJECT_NAME}_gencfg)
+target_link_libraries(velocity2color_node
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
 )
