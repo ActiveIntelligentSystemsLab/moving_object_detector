@@ -49,17 +49,20 @@
     <param name="debug_view" value="false"/>
   </node>
 
-  <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
+  <node name="input_synchronizer" pkg="moving_object_detector" type="input_synchronizer_node">
     <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
     <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
 
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
+  </node>
 
+  <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/elas/disparity"/>
+    <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
   
   <node name="elas" pkg="elas_ros" type="elas_ros">
