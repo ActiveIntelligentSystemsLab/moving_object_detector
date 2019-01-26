@@ -36,6 +36,12 @@ add_message_files(
   MovingObjectArray.msg
   Size3D.msg
 )
+
+add_service_files(
+  FILES
+  InputSynchronizerPublish.srv
+)
+
 generate_messages(
   DEPENDENCIES
   geometry_msgs
@@ -88,6 +94,15 @@ add_dependencies(display_moving_objects_2d_node ${${PROJECT_NAME}_EXPORTED_TARGE
 target_link_libraries(display_moving_objects_2d_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
+)
+
+add_executable(input_synchronizer_node 
+  src/input_synchronizer.cpp
+  src/input_synchronizer_node.cpp
+)
+target_link_libraries(input_synchronizer_node
+  ${catkin_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
 )
 
 add_executable(velocity_estimator_node
