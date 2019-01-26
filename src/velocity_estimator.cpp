@@ -40,6 +40,12 @@ VelocityEstimator::VelocityEstimator() {
 
   input_publish_client_ = node_handle_.serviceClient<moving_object_detector::InputSynchronizerPublish>("input_synchronizer_publish");
 
+  while (!input_publish_client_.exists())
+  {
+    ROS_INFO("Waiting InputSynchronizer publish service");
+    ros::Duration(1.0).sleep();
+  }
+
   // dataCBをコールバックさせるため，2フレーム分の入力データを送る
   moving_object_detector::InputSynchronizerPublish publish_service;
   input_publish_client_.call(publish_service);
