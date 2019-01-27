@@ -90,7 +90,7 @@ void ProcessDisparityImage::toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcl
     {
       pcl::PointXYZ point;
       if (getPoint3D(u, v, point))
-        pointcloud.at(v, u) = point;
+        pointcloud.at(u, v) = point;
     }
   }
 }
