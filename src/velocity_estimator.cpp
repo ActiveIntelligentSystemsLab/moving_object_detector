@@ -44,11 +44,9 @@ void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorC
 
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
-  ros::Time start_process = ros::Time::now();
-
-  pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
-    
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
+    ros::Time start_process = ros::Time::now();
+
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
     cv::Mat flow_map_left = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
@@ -59,6 +57,8 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
 
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
     
+    pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
+
     for (int left_now_y = 0; left_now_y < flow_map_left.rows; left_now_y += downsample_scale_) 
     {
       for (int left_now_x = 0; left_now_x < flow_map_left.cols; left_now_x += downsample_scale_)
@@ -140,10 +140,10 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     pc_with_velocity_msg.header.frame_id = left_camera_info->header.frame_id;
     pc_with_velocity_msg.header.stamp = left_camera_info->header.stamp;
     pc_with_velocity_pub_.publish(pc_with_velocity_msg);
+
+    ros::Duration process_time = ros::Time::now() - start_process;
+    ROS_INFO("process time: %f", process_time.toSec());
   }
   disparity_image_previous_ = disparity_image;
   time_stamp_previous_ = camera_transform->header.stamp;
-  
-  ros::Duration process_time = ros::Time::now() - start_process;
-  ROS_INFO("process time: %f", process_time.toSec());
 }
