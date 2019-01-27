@@ -1,12 +1,16 @@
 #ifndef __HEADER_MOVING_OBJECT_DETECTOR__
 #define __HEADER_MOVING_OBJECT_DETECTOR__
 
+#include "process_disparity_image.h"
+
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -45,6 +49,11 @@ private:
       
   void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, tf2::Transform transform);
+  void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform);
+  bool isValid(const pcl::PointXYZ &point);
+  bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
+  bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, ProcessDisparityImage &disparity_processor);
 };
 
 #endif
