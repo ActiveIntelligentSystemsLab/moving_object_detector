@@ -23,6 +23,25 @@ bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
   return true;
 }
 
+bool ProcessDisparityImage::getPoint3D(int u, int v, pcl::PointXYZ &point3d)
+{
+  float disparity;
+  if (!getDisparity(u, v, disparity))
+    return false;
+  if (disparity == 0.0)
+    return false;
+
+  float focal_length = _disparity_msg->f;
+  float baseline = _disparity_msg->T;
+  
+  point3d.z = focal_length * baseline / disparity;
+  cv::Point3d direction_vector = _left_camera_model.projectPixelTo3dRay(cv::Point2d(u, v));
+  point3d.x = direction_vector.x * point3d.z;
+  point3d.y = direction_vector.y * point3d.z;
+
+  return true;
+}
+
 bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
 {
   float disparity;
@@ -55,4 +74,23 @@ int ProcessDisparityImage::getWidth()
 int ProcessDisparityImage::getHeight()
 {
   return _disparity_map.rows;
+}
+
+void ProcessDisparityImage::toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcloud)
+{
+  float nan = std::nan("");
+  pcl::PointXYZ default_value(nan, nan, nan);
+  // 画像座標との対応関係を残すため，organizedなpointcloudを構築する
+  pointcloud = pcl::PointCloud<pcl::PointXYZ>(getWidth(), getHeight(), default_value);
+  pointcloud.is_dense = false;
+  
+  for (int u = 0; u < getWidth(); u++)
+  {
+    for (int v = 0; v < getHeight(); v++)
+    {
+      pcl::PointXYZ point;
+      if (getPoint3D(u, v, point))
+        pointcloud.at(v, u) = point;
+    }
+  }
 }
