@@ -9,6 +9,12 @@
 #include <moving_object_detector/InputSynchronizerPublish.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
+#include <viso2_ros/VisoInfo.h>
+#include <dis_flow/FlowImage.h>
+#include <stereo_msgs/DisparityImage.h>
+
+// visual odometry, stereo matching, optical flowへの入力を与えるノード
+// visual odometry, stereo matching, optical flowの処理が終了するたびに，タイムスタンプを同期させたステレオ画像とcamera infoを1セットpublishする
 
 class InputSynchronizer {
 private:
@@ -18,16 +24,29 @@ private:
   
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
+  // Publisher for synchronized stereo images and camera infos
   image_transport::CameraPublisher left_rect_image_pub_;
   image_transport::CameraPublisher right_rect_image_pub_;
   
+  // Subscribers for unsynchronized stereo images and camera infos
   image_transport::SubscriberFilter left_rect_image_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> left_rect_info_sub_;
   image_transport::SubscriberFilter right_rect_image_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> right_rect_info_sub_;
   
-  typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> DataTimeSynchronizer;
-  std::shared_ptr<DataTimeSynchronizer> time_sync_;
+  // TImeSynchronizer for stereo images and camera info
+  typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> StereoSynchronizer;
+  std::shared_ptr<StereoSynchronizer> stereo_time_sync_;
+
+  // Subscriber to check stereo matching, optical flow and visual odometry is completed
+  message_filters::Subscriber<viso2_ros::VisoInfo> viso2_info_sub_;
+  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_left_sub_;
+  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_right_sub_;
+  message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
+
+  // TimeSynchronizer to check stereo matching, optical flow and visual odometry is completed
+  typedef message_filters::TimeSynchronizer<viso2_ros::VisoInfo, dis_flow::FlowImage, dis_flow::FlowImage, stereo_msgs::DisparityImage> ProcessedDataSynchronizer;
+  std::shared_ptr<ProcessedDataSynchronizer> processed_data_time_sync_;
   
   sensor_msgs::CameraInfo left_camera_info_;
   sensor_msgs::Image left_rect_image_;
@@ -35,9 +54,10 @@ private:
   sensor_msgs::Image right_rect_image_;
   sensor_msgs::CameraInfo right_rect_info_;
     
-  void publish();
+  void publishSynchronizedStereo();
   
-  void dataCallBack(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
+  void stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
+  void processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const dis_flow::FlowImageConstPtr& left_flow, const dis_flow::FlowImageConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity);
   bool publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response);
   
 public:

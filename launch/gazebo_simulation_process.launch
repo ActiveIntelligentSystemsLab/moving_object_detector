@@ -55,6 +55,11 @@
 
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
+
+    <remap from="viso2_info" to="/viso2/info"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="disparity_image" to="/elas/disparity"/>
   </node>
 
   <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">

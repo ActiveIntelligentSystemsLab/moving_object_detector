@@ -5,7 +5,6 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/camera_common.h>
-#include <moving_object_detector/InputSynchronizerPublish.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -19,9 +18,7 @@
 #include <limits>
 #include <vector>
 
-VelocityEstimator::VelocityEstimator() {
-  first_run_ = true;
-  
+VelocityEstimator::VelocityEstimator() {  
   reconfigure_func_ = boost::bind(&VelocityEstimator::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
@@ -35,20 +32,6 @@ VelocityEstimator::VelocityEstimator() {
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dis_flow::FlowImage, dis_flow::FlowImage, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
-
-  input_publish_client_ = node_handle_.serviceClient<moving_object_detector::InputSynchronizerPublish>("input_synchronizer_publish");
-
-  while (!input_publish_client_.exists())
-  {
-    ROS_INFO("Waiting InputSynchronizer publish service");
-    ros::Duration(1.0).sleep();
-  }
-
-  // dataCBをコールバックさせるため，2フレーム分の入力データを送る
-  moving_object_detector::InputSynchronizerPublish publish_service;
-  input_publish_client_.call(publish_service);
-  ros::Duration(0.5).sleep();
-  input_publish_client_.call(publish_service);
 }
 
 void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level)
@@ -61,17 +44,11 @@ void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorC
 
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
-  // 次の入力データをVISO2とflowノードに送信し，移動物体検出を行っている間に処理させる
-  moving_object_detector::InputSynchronizerPublish publish_service;
-  input_publish_client_.call(publish_service);
-  
   ros::Time start_process = ros::Time::now();
 
   pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     
-  if (first_run_) {
-    first_run_ = false;
-  } else {
+  if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     // flow_mapの(x, y)には(dx,dy)が格納されている
     // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
     cv::Mat flow_map_left = cv_bridge::toCvCopy(optical_flow_left->flow)->image;

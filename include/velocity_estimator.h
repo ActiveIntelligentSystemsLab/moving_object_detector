@@ -36,17 +36,13 @@ private:
   
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
-
-  ros::ServiceClient input_publish_client_;
   
   int downsample_scale_;
   double matching_tolerance_;
 
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   ros::Time time_stamp_previous_;
-    
-  bool first_run_;
-  
+      
   void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
 };
