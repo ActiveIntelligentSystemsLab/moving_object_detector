@@ -183,21 +183,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   clustering(clusters);
 
   publishClusters(clusters);
-  
-  moving_object_detector::MovingObjectArray moving_objects_msg;
-  moving_objects_msg.header = input_header_;
-
-  for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
-  {
-    if (cluster_it->indices.size() <= cluster_size_th_)
-      continue;
-
-    moving_object_detector::MovingObject moving_object;
-    cluster2MovingObject(*cluster_it, moving_object);
-    moving_objects_msg.moving_object_array.push_back(moving_object);
-  }
-  
-  dynamic_objects_pub_.publish(moving_objects_msg);
+  publishMovingObjects(clusters);
 
   ros::Duration process_time = ros::Time::now() - start;
   ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
@@ -264,6 +250,24 @@ void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
   }
 
   clusters_pub_.publish(clusters_msg);
+}
+
+void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
+{
+  moving_object_detector::MovingObjectArray moving_objects_msg;
+  moving_objects_msg.header = input_header_;
+
+  for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
+  {
+    if (cluster_it->indices.size() <= cluster_size_th_)
+      continue;
+
+    moving_object_detector::MovingObject moving_object;
+    cluster2MovingObject(*cluster_it, moving_object);
+    moving_objects_msg.moving_object_array.push_back(moving_object);
+  }
+
+  dynamic_objects_pub_.publish(moving_objects_msg);
 }
 
 void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) 
