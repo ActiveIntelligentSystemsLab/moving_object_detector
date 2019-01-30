@@ -15,6 +15,17 @@
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <visualization_msgs/Marker.h>
+
+#include <utility>
+#include <vector>
+
+struct Point2d {
+  int u;
+  int v;
+  Point2d() : u(0), v(0){}
+  Point2d(int u, int v) : u(u), v(v){}
+};
 
 class Clusterer {
 public:
@@ -24,6 +35,7 @@ private:
   ros::NodeHandle node_handle_;
   
   ros::Publisher dynamic_objects_pub_;
+  ros::Publisher clusters_pub_;
   ros::Subscriber velocity_pc_sub_;
   
   dynamic_reconfigure::Server<moving_object_detector::ClustererConfig> reconfigure_server_;
@@ -31,21 +43,34 @@ private:
   
   // thresholds
   int cluster_size_th_;
+  double depth_diff_th_;
   double dynamic_speed_th_;
-  double position_diff_th_;
-  // Used in conditionFunction() which is static function
-  static double direction_diff_th_;
-  static double speed_diff_th_;
-  
-  void cluster2movingObject(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, moving_object_detector::MovingObject& output_moving_object);
-  void clustering(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &input_pc, pcl::IndicesClusters &output_indices);
-  void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
-  void indices2cloud(pcl::PointIndices &input_indices, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &input_pc, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &output_pc);
-  void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
-  void removeStaticPoints(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &velocity_pc);
 
-  // Before PCL 1.8, ConditionalEuclideanClustering.segment() has only raw function pointer as argument.
-  static bool conditionFunction(const pcl::PointXYZVelocity& point1, const pcl::PointXYZVelocity& point2, float squared_distance);
+  pcl::PointCloud<pcl::PointXYZVelocity>::Ptr input_pointcloud_;
+  std_msgs::Header input_header_;
+
+  std::vector<int> cluster_map_;
+  int max_cluster_number_;
+  const int NOT_BELONGED_ = -1; // cluster_map_用，クラスタに未所属の点
+  // 番号は違っても実際は同じクラスターどうしの対応づけ
+  // indexがより大きい番号のクラスタで，valueがそれに対応する小さい番号のクラスタ
+  std::vector<int> look_up_table_; 
+  
+  void arrangeLookUpTable();  
+  void cluster2Marker(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, visualization_msgs::Marker& marker, int marker_id);
+  void cluster2movingObject(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, moving_object_detector::MovingObject& output_moving_object);
+  void clustering(pcl::IndicesClusters &output_indices);
+  int& clusterNumber(const Point2d &point);
+  void comparePoints(const Point2d &interest_point, const Point2d &compared_point);
+  void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
+  float depthDiff(const Point2d &point1, const Point2d &point2);
+  void indices2cloud(pcl::PointIndices &input_indices, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &output_pc);
+  bool isDynamic(const Point2d &point);
+  bool isInRange(const Point2d &point);
+  int lookUp(int cluster);
+  const pcl::PointXYZVelocity& point3dAt(const Point2d& point);
+  void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
+  void updateLookUpTable(int early_cluster, int late_cluster);
 };
 
 #endif
