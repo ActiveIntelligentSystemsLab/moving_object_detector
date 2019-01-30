@@ -81,7 +81,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
   }
 }
 
-void Clusterer::cluster2Marker(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, visualization_msgs::Marker& marker, int marker_id)
+void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id)
 {
   marker.header = input_header_;
   marker.id = marker_id;
@@ -93,13 +93,14 @@ void Clusterer::cluster2Marker(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& inpu
   marker.color.a = 1.0;
   marker.color.r = 1.0;
 
-  marker.points.resize(input_cluster->size());
-  for (int i = 0; i < input_cluster->size(); i++)
+  marker.points.resize(cluster_indices.indices.size());
+  for (int i = 0; i < cluster_indices.indices.size(); i++)
   {
     geometry_msgs::Point point;
-    point.x = input_cluster->at(i).x;
-    point.y = input_cluster->at(i).y;
-    point.z = input_cluster->at(i).z;
+    int indice = cluster_indices.indices.at(i);
+    point.x = input_pointcloud_->at(indice).x;
+    point.y = input_pointcloud_->at(indice).y;
+    point.z = input_pointcloud_->at(indice).z;
     marker.points.at(i) = point;
   }
 }
@@ -203,7 +204,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
     moving_objects_msg.moving_object_array.push_back(moving_object);
 
     visualization_msgs::Marker cluster_marker;
-    cluster2Marker(cluster, cluster_marker, marker_id);
+    cluster2Marker(*cluster_it, cluster_marker, marker_id);
     marker_id++;
     clusters_msg.markers.push_back(cluster_marker);
   }
