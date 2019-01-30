@@ -12,6 +12,8 @@
 #include <pcl/PointIndices.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
 
+#include <opencv2/imgproc.hpp>
+
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -55,6 +57,8 @@ private:
   // 番号は違っても実際は同じクラスターどうしの対応づけ
   // indexがより大きい番号のクラスタで，valueがそれに対応する小さい番号のクラスタ
   std::vector<int> look_up_table_; 
+
+  cv::Mat color_set_; // クラスタ別に色分けするための色セット
   
   void arrangeLookUpTable();  
   void cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id);
@@ -64,6 +68,7 @@ private:
   void comparePoints(const Point2d &interest_point, const Point2d &compared_point);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
   float depthDiff(const Point2d &point1, const Point2d &point2);
+  void getColor(int cluster_number, int &r, int &g, int &b);
   bool isDynamic(const Point2d &point);
   bool isInRange(const Point2d &point);
   int lookUp(int cluster);
@@ -71,6 +76,7 @@ private:
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
+  void updateColorSet(int max_cluster_number);
   void updateLookUpTable(int early_cluster, int late_cluster);
 };
 
