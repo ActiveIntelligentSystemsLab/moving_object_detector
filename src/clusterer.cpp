@@ -79,6 +79,16 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
       output_indices.at(true_cluster).indices.push_back(pointcloud_indice);
     }
   }
+
+  // 要素数が少なすぎるクラスタを削除
+  auto cluster_it = output_indices.begin();
+  while(cluster_it != output_indices.end())
+  {
+    if (cluster_it->indices.size() < cluster_size_th_)
+      cluster_it = output_indices.erase(cluster_it);
+    else
+      cluster_it++;
+  }
 }
 
 void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id)
@@ -242,9 +252,6 @@ void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
 
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
-    if (cluster_it->indices.size() <= cluster_size_th_)
-      continue;
-
     visualization_msgs::Marker cluster_marker;
     cluster2Marker(*cluster_it, cluster_marker, marker_id);
     marker_id++;
@@ -261,9 +268,6 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
 
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
-    if (cluster_it->indices.size() <= cluster_size_th_)
-      continue;
-
     moving_object_detector::MovingObject moving_object;
     cluster2MovingObject(*cluster_it, moving_object);
     moving_objects_msg.moving_object_array.push_back(moving_object);
