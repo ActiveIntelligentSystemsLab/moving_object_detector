@@ -62,7 +62,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
 
   arrangeLookUpTable();
 
-  // lookup talbeをindices clustersに変換
+  // lookup tableをindices clustersに変換
   for (interest_point.u = 0; interest_point.u < input_pointcloud_->width; interest_point.u++)
   {
     for (interest_point.v = 0; interest_point.v < input_pointcloud_->height; interest_point.v++)
