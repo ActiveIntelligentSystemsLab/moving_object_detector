@@ -94,7 +94,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
 void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id)
 {
   int r, g, b;
-  getColor(marker_id, r, g, b);
+  color_set_.getColor(marker_id, r, g, b);
   marker.header = input_header_;
   marker.id = marker_id;
   marker.type = visualization_msgs::Marker::POINTS;
@@ -210,14 +210,6 @@ float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
   return std::abs(point3dAt(point1).z - point3dAt(point2).z);
 }
 
-void Clusterer::getColor(int cluster_number, int &r, int &g, int &b)
-{
-  cv::Vec3b bgr = color_set_.at<cv::Vec3b>(cluster_number);
-  b = bgr[0];
-  g = bgr[1];
-  r = bgr[2];
-}
-
 bool Clusterer::isDynamic(const Point2d &point) {
   pcl::PointXYZVelocity point3d = point3dAt(point);
   Eigen::Vector3f velocity(point3d.vx, point3d.vy, point3d.vz);
@@ -262,7 +254,7 @@ void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
 
   int marker_id = 0;
 
-  updateColorSet(clusters.size() - 1);
+  color_set_.resize(clusters.size());
 
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
@@ -288,15 +280,6 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
   }
 
   dynamic_objects_pub_.publish(moving_objects_msg);
-}
-
-void Clusterer::updateColorSet(int max_cluster_number)
-{
-  cv::Mat input_map(1, max_cluster_number + 1, CV_8UC1);
-  for (int i = 0; i <= max_cluster_number; i++)
-    input_map.at<uchar>(i) = i * 255 / max_cluster_number;
-  
-  cv::applyColorMap(input_map, color_set_, cv::ColormapTypes::COLORMAP_HSV);
 }
 
 void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) 
