@@ -22,12 +22,6 @@ Clusterer::Clusterer()
   clusters_pub_ = node_handle_.advertise<visualization_msgs::MarkerArray>("clusters", 1);
 }
 
-void Clusterer::arrangeLookUpTable()
-{
-  for (int i = 1; i < look_up_table_.size(); i++)
-    look_up_table_.at(i) = lookUp(i);
-}
-
 int& Clusterer::clusterNumber(const Point2d &point)
 {
   return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
@@ -39,8 +33,9 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
     cluster_map_.resize(input_pointcloud_->size());
   std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
 
-  look_up_table_.clear();
   max_cluster_number_ = -1;
+
+  lookup_table_.clear();
 
   Point2d interest_point;
   // ラスタスキャン
@@ -60,7 +55,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
     }
   }
 
-  arrangeLookUpTable();
+  lookup_table_.arrange();
 
   // lookup tableをindices clustersに変換
   for (interest_point.u = 0; interest_point.u < input_pointcloud_->width; interest_point.u++)
@@ -71,7 +66,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
       if (temporary_cluster == NOT_BELONGED_)
         continue;
 
-      int true_cluster = look_up_table_.at(temporary_cluster);
+      int true_cluster = lookup_table_.lookup(temporary_cluster);
       if (output_indices.size() < true_cluster + 1)
         output_indices.resize(true_cluster + 1);
       
@@ -164,7 +159,7 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &neig
   if (interest_point_cluster == NOT_BELONGED_ && neighbor_point_cluster == NOT_BELONGED_)
   {
     max_cluster_number_++;
-    look_up_table_.push_back(max_cluster_number_);
+    lookup_table_.resize(max_cluster_number_ + 1);
 
     interest_point_cluster = max_cluster_number_;
     neighbor_point_cluster = max_cluster_number_;
@@ -179,8 +174,10 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &neig
   }
   else if (interest_point_cluster != NOT_BELONGED_ && neighbor_point_cluster != NOT_BELONGED_)
   {
+    int source_cluster = std::max(interest_point_cluster, neighbor_point_cluster);
+    int destination_cluster = std::min(interest_point_cluster, neighbor_point_cluster);
     // 2つのクラスタが合わさって同一のクラスタを構成することを記録しておく
-    updateLookUpTable(interest_point_cluster, neighbor_point_cluster);
+    lookup_table_.update(source_cluster, destination_cluster);
   }
 }
 
@@ -228,15 +225,6 @@ bool Clusterer::isInRange(const Point2d &point) {
     return false;
 
   return true;
-}
-
-// lookUpテーブルを再帰的に探索し，最終的に適用されるべきクラスタ番号を返す
-int Clusterer::lookUp(int cluster)
-{
-  if (cluster == look_up_table_.at(cluster))
-    return cluster;
-
-  return lookUp(look_up_table_.at(cluster));
 }
 
 const pcl::PointXYZVelocity &Clusterer::point3dAt(const Point2d &point)
@@ -288,13 +276,4 @@ void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, u
   cluster_size_th_  = config.cluster_size;
   depth_diff_th_ = config.depth_diff;
   dynamic_speed_th_ = config.dynamic_speed;
-}
-
-void Clusterer::updateLookUpTable(int cluster1, int cluster2)
-{
-  int early_cluster = std::min(cluster1, cluster2);
-  int late_cluster = std::max(cluster1, cluster2);
-
-  if (early_cluster < look_up_table_.at(late_cluster))
-    look_up_table_.at(late_cluster) = early_cluster;
 }

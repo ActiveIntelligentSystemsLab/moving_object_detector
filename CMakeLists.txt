@@ -76,6 +76,7 @@ add_executable(clusterer_node
   src/clusterer.cpp
   src/clusterer_node.cpp
   src/color_set.cpp
+  src/lookup_table.cpp
 )
 add_dependencies(clusterer_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(clusterer_node

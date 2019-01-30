@@ -13,6 +13,7 @@
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
 
 #include "color_set.h"
+#include "lookup_table.h"
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
@@ -55,12 +56,9 @@ private:
   int max_cluster_number_;
   const int NOT_BELONGED_ = -1; // cluster_map_用，クラスタに未所属の点
   // 番号は違っても実際は同じクラスターどうしの対応づけ
-  // indexがより大きい番号のクラスタで，valueがそれに対応する小さい番号のクラスタ
-  std::vector<int> look_up_table_; 
-
+  LookupTable lookup_table_;
   ColorSet color_set_; // クラスタ別に色分けするための色セット
   
-  void arrangeLookUpTable();  
   void cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id);
   void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
@@ -70,12 +68,10 @@ private:
   float depthDiff(const Point2d &point1, const Point2d &point2);
   bool isDynamic(const Point2d &point);
   bool isInRange(const Point2d &point);
-  int lookUp(int cluster);
   const pcl::PointXYZVelocity& point3dAt(const Point2d& point);
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
-  void updateLookUpTable(int early_cluster, int late_cluster);
 };
 
 #endif
