@@ -80,6 +80,7 @@ add_executable(clusterer_node
 add_dependencies(clusterer_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(clusterer_node
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
   ${PCL_COMMON_LIBRARIES}
   ${PCL_SEARCH_LIBRARIES}
   ${PCL_SEGMENTATION_LIBRARIES}
