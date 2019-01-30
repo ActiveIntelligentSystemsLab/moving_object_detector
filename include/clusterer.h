@@ -58,7 +58,7 @@ private:
   
   void arrangeLookUpTable();  
   void cluster2Marker(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, visualization_msgs::Marker& marker, int marker_id);
-  void cluster2movingObject(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, moving_object_detector::MovingObject& output_moving_object);
+  void cluster2MovingObject(const pcl::PointIndices& cluster, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
   int& clusterNumber(const Point2d &point);
   void comparePoints(const Point2d &interest_point, const Point2d &compared_point);

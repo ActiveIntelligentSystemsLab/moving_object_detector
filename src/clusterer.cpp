@@ -104,30 +104,32 @@ void Clusterer::cluster2Marker(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& inpu
   }
 }
 
-void Clusterer::cluster2movingObject(pcl::PointCloud<pcl::PointXYZVelocity>::Ptr& input_cluster, moving_object_detector::MovingObject& output_moving_object)
+void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object)
 {
+  pcl::PointCloud<pcl::PointXYZVelocity> cluster(*input_pointcloud_, cluster_indices.indices);
+
   Eigen::Vector4f min_point, max_point;
-  pcl::getMinMax3D(*input_cluster, min_point, max_point);
+  pcl::getMinMax3D(cluster, min_point, max_point);
   Eigen::Vector4f bounding_box_size = max_point - min_point;
-  output_moving_object.bounding_box.x = bounding_box_size(0);
-  output_moving_object.bounding_box.y = bounding_box_size(1);
-  output_moving_object.bounding_box.z = bounding_box_size(2);
+  moving_object.bounding_box.x = bounding_box_size(0);
+  moving_object.bounding_box.y = bounding_box_size(1);
+  moving_object.bounding_box.z = bounding_box_size(2);
 
   Eigen::Vector4f center_point = (min_point + max_point) / 2;
-  output_moving_object.center.x = center_point(0);
-  output_moving_object.center.y = center_point(1);
-  output_moving_object.center.z = center_point(2);
+  moving_object.center.x = center_point(0);
+  moving_object.center.y = center_point(1);
+  moving_object.center.z = center_point(2);
 
   Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
-  for (auto& point : *input_cluster)
+  for (auto& point : cluster)
   {
     Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
     velocity_sum += velocity;
   }
-  int cluster_size = input_cluster->points.size();
-  output_moving_object.velocity.x = velocity_sum(0) / cluster_size;
-  output_moving_object.velocity.y = velocity_sum(1) / cluster_size;
-  output_moving_object.velocity.z = velocity_sum(2) / cluster_size;
+  int cluster_size = cluster.points.size();
+  moving_object.velocity.x = velocity_sum(0) / cluster_size;
+  moving_object.velocity.y = velocity_sum(1) / cluster_size;
+  moving_object.velocity.z = velocity_sum(2) / cluster_size;
 }
 
 void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &neighbor_point)
@@ -197,7 +199,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
     indices2cloud(*cluster_it, cluster);
 
     moving_object_detector::MovingObject moving_object;
-    cluster2movingObject(cluster, moving_object);
+    cluster2MovingObject(*cluster_it, moving_object);
     moving_objects_msg.moving_object_array.push_back(moving_object);
 
     visualization_msgs::Marker cluster_marker;
