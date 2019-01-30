@@ -182,8 +182,10 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   pcl::IndicesClusters clusters;
   clustering(clusters);
 
-  publishClusters(clusters);
-  publishMovingObjects(clusters);
+  if (clusters_pub_.getNumSubscribers() > 0)
+    publishClusters(clusters);
+  if (dynamic_objects_pub_.getNumSubscribers() > 0)
+    publishMovingObjects(clusters);
 
   ros::Duration process_time = ros::Time::now() - start;
   ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
