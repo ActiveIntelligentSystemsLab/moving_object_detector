@@ -41,7 +41,6 @@ private:
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
   
-  int downsample_scale_;
   double matching_tolerance_;
 
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;

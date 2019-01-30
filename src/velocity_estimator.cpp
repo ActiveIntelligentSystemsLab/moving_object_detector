@@ -35,9 +35,8 @@ VelocityEstimator::VelocityEstimator() {
 
 void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: downsample_scale = %d, matching_tolerance = %f", config.downsample_scale, config.matching_tolerance);
+  ROS_INFO("Reconfigure Request: matching_tolerance = %f", config.matching_tolerance);
   
-  downsample_scale_ = config.downsample_scale;
   matching_tolerance_ = config.matching_tolerance;
 }
 
