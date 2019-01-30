@@ -195,9 +195,6 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   {
     if (cluster_it->indices.size() <= cluster_size_th_)
       continue;
-    
-    pcl::PointCloud<pcl::PointXYZVelocity>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZVelocity>);
-    indices2cloud(*cluster_it, cluster);
 
     moving_object_detector::MovingObject moving_object;
     cluster2MovingObject(*cluster_it, moving_object);
