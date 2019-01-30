@@ -169,6 +169,8 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &neig
 
 void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
 {
+  ros::Time start = ros::Time::now();
+
   input_pointcloud_ = pcl::PointCloud<pcl::PointXYZVelocity>::Ptr(new pcl::PointCloud<pcl::PointXYZVelocity>);
   pcl::fromROSMsg(*input_pc_msg, *input_pointcloud_);
 
@@ -206,6 +208,9 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   
   dynamic_objects_pub_.publish(moving_objects_msg);
   clusters_pub_.publish(clusters_msg);
+
+  ros::Duration process_time = ros::Time::now() - start;
+  ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
 }
 
 float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
