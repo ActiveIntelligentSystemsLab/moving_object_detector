@@ -33,8 +33,6 @@ InputSynchronizer::InputSynchronizer()
 
 void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info)
 {
-  static int count = 0;
-  
   left_rect_image_ = *left_rect_image;
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
