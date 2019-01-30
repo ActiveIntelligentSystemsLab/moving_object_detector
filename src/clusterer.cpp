@@ -238,20 +238,6 @@ bool Clusterer::isInRange(const Point2d &point) {
   return true;
 }
 
-void Clusterer::indices2cloud(pcl::PointIndices &input_indices, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &output_pc)
-{
-  output_pc->resize(input_indices.indices.size());
-  for (int i = 0; i < input_indices.indices.size(); i++)
-  {
-    int indice = input_indices.indices.at(i);
-    output_pc->points.at(i) = input_pointcloud_->points.at(indice);
-  }
-  output_pc->width = output_pc->points.size();
-  output_pc->height = 1;
-  output_pc->is_dense = true;
-}
-
-
 // lookUpテーブルを再帰的に探索し，最終的に適用されるべきクラスタ番号を返す
 int Clusterer::lookUp(int cluster)
 {

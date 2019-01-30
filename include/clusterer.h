@@ -64,7 +64,6 @@ private:
   void comparePoints(const Point2d &interest_point, const Point2d &compared_point);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
   float depthDiff(const Point2d &point1, const Point2d &point2);
-  void indices2cloud(pcl::PointIndices &input_indices, pcl::PointCloud<pcl::PointXYZVelocity>::Ptr &output_pc);
   bool isDynamic(const Point2d &point);
   bool isInRange(const Point2d &point);
   int lookUp(int cluster);
