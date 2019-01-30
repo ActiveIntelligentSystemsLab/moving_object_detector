@@ -68,6 +68,7 @@ private:
   bool isInRange(const Point2d &point);
   int lookUp(int cluster);
   const pcl::PointXYZVelocity& point3dAt(const Point2d& point);
+  void publishClusters(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
   void updateLookUpTable(int early_cluster, int late_cluster);
 };

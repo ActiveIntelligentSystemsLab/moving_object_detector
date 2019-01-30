@@ -181,15 +181,11 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
 
   pcl::IndicesClusters clusters;
   clustering(clusters);
+
+  publishClusters(clusters);
   
   moving_object_detector::MovingObjectArray moving_objects_msg;
   moving_objects_msg.header = input_header_;
-
-  visualization_msgs::MarkerArray clusters_msg;
-  visualization_msgs::Marker delete_marker; // 前フレームのmarkerを全て消すように指示を出すマーカー
-  delete_marker.action = visualization_msgs::Marker::DELETEALL;
-  clusters_msg.markers.push_back(delete_marker);
-  int marker_id = 0;
 
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
@@ -199,15 +195,9 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
     moving_object_detector::MovingObject moving_object;
     cluster2MovingObject(*cluster_it, moving_object);
     moving_objects_msg.moving_object_array.push_back(moving_object);
-
-    visualization_msgs::Marker cluster_marker;
-    cluster2Marker(*cluster_it, cluster_marker, marker_id);
-    marker_id++;
-    clusters_msg.markers.push_back(cluster_marker);
   }
   
   dynamic_objects_pub_.publish(moving_objects_msg);
-  clusters_pub_.publish(clusters_msg);
 
   ros::Duration process_time = ros::Time::now() - start;
   ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
@@ -250,6 +240,30 @@ int Clusterer::lookUp(int cluster)
 const pcl::PointXYZVelocity &Clusterer::point3dAt(const Point2d &point)
 {
   return input_pointcloud_->at(point.u, point.v);
+}
+
+void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
+{
+  visualization_msgs::MarkerArray clusters_msg;
+
+  visualization_msgs::Marker delete_marker; // 前フレームのmarkerを全て消すように指示を出すマーカー
+  delete_marker.action = visualization_msgs::Marker::DELETEALL;
+  clusters_msg.markers.push_back(delete_marker);
+
+  int marker_id = 0;
+
+  for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
+  {
+    if (cluster_it->indices.size() <= cluster_size_th_)
+      continue;
+
+    visualization_msgs::Marker cluster_marker;
+    cluster2Marker(*cluster_it, cluster_marker, marker_id);
+    marker_id++;
+    clusters_msg.markers.push_back(cluster_marker);
+  }
+
+  clusters_pub_.publish(clusters_msg);
 }
 
 void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) 
