@@ -48,6 +48,7 @@ private:
   int cluster_size_th_;
   double depth_diff_th_;
   double dynamic_speed_th_;
+  int neighbor_distance_th_;
 
   pcl::PointCloud<pcl::PointXYZVelocity>::Ptr input_pointcloud_;
   std_msgs::Header input_header_;

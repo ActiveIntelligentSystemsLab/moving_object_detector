@@ -46,12 +46,14 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
       if (!isDynamic(interest_point))
         continue;
 
-      // 4近傍で隣接ピクセルをチェック
-      const Point2d above_point(interest_point.u, interest_point.v - 1);
-      comparePoints(interest_point, above_point);
-
-      const Point2d left_point(interest_point.u - 1, interest_point.v);
-      comparePoints(interest_point, left_point);
+      for (int dv = -neighbor_distance_th_; dv <= 0; dv++)
+      {
+        for (int du = -neighbor_distance_th_; du <= 0; du++)
+        {
+          Point2d compared_point(interest_point.u + du, interest_point.v + dv);
+          comparePoints(interest_point, compared_point);
+        }
+      }
     }
   }
 
@@ -272,8 +274,9 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
 
 void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) 
 {
-  ROS_INFO("Reconfigure Request: cluster_size = %d, dynamic_speed = %f", config.cluster_size, config.dynamic_speed);
+  ROS_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
   cluster_size_th_  = config.cluster_size;
   depth_diff_th_ = config.depth_diff;
   dynamic_speed_th_ = config.dynamic_speed;
+  neighbor_distance_th_ = config.neighbor_distance;
 }
