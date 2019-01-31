@@ -62,11 +62,6 @@ void Clusterer::calculateInitialClusterMap()
   }
 }
 
-int& Clusterer::clusterAt(const Point2d &point)
-{
-  return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
-}
-
 void Clusterer::clustering(pcl::IndicesClusters &output_indices)
 {
   calculateDynamicMap();
@@ -218,11 +213,6 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
 }
 
-float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
-{
-  return std::abs(point3dAt(point1).z - point3dAt(point2).z);
-}
-
 void Clusterer::initClusterMap()
 {
   number_of_clusters_ = 0;
@@ -250,10 +240,6 @@ void Clusterer::integrateConnectedClusters()
   }
 }
 
-bool Clusterer::isDynamic(const Point2d &point) {
-  return dynamic_map_.at(input_pointcloud_->width * point.v + point.u);
-}
-
 bool Clusterer::isInRange(const Point2d &point) {
   if (point.u < 0 || point.u >= input_pointcloud_->width)
     return false;
@@ -262,11 +248,6 @@ bool Clusterer::isInRange(const Point2d &point) {
     return false;
 
   return true;
-}
-
-const pcl::PointXYZVelocity &Clusterer::point3dAt(const Point2d &point)
-{
-  return input_pointcloud_->at(point.u, point.v);
 }
 
 void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)

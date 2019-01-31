@@ -68,15 +68,27 @@ private:
   void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
   void clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters);
-  int& clusterAt(const Point2d &point);
+  inline int& clusterAt(const Point2d &point)
+  {
+    return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
+  };
   void comparePoints(const Point2d &point1, const Point2d &point2);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
-  float depthDiff(const Point2d &point1, const Point2d &point2);
+  inline float depthDiff(const Point2d &point1, const Point2d &point2)
+  {
+    return std::abs(point3dAt(point1).z - point3dAt(point2).z);
+  };
   void initClusterMap();
   void integrateConnectedClusters();
-  bool isDynamic(const Point2d &point);
+  inline bool isDynamic(const Point2d &point)
+  {
+    return dynamic_map_.at(input_pointcloud_->width * point.v + point.u);
+  };
   bool isInRange(const Point2d &point);
-  const pcl::PointXYZVelocity& point3dAt(const Point2d& point);
+  inline const pcl::PointXYZVelocity& point3dAt(const Point2d& point)
+  {
+      return input_pointcloud_->at(point.u, point.v);
+  };
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
