@@ -152,19 +152,19 @@ void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, m
   moving_object.velocity.z = velocity_sum(2) / cluster_size;
 }
 
-void Clusterer::comparePoints(const Point2d &point1, const Point2d &point2)
+void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &compared_point)
 {
-  if (!isInRange(point1) || !isInRange(point2))
+  if (!isInRange(compared_point))
     return;
 
-  if (!isDynamic(point1) || !isDynamic(point2))
+  if (!isDynamic(compared_point))
     return;
 
-  if (depthDiff(point1, point2) > depth_diff_th_)
+  if (depthDiff(interest_point, compared_point) > depth_diff_th_)
     return;
   
-  int &point1_cluster = clusterAt(point1);
-  int &point2_cluster = clusterAt(point2);
+  int &point1_cluster = clusterAt(interest_point);
+  int &point2_cluster = clusterAt(compared_point);
   
   if (point1_cluster == NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
