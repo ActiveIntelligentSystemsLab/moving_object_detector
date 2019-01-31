@@ -40,6 +40,8 @@ void Clusterer::calculateDynamicMap()
 
 void Clusterer::calculateInitialClusterMap()
 {
+  lookup_table_.clear();
+
   Point2d interest_point;
   for (interest_point.v = 0; interest_point.v < input_pointcloud_->height; interest_point.v++)
   {
@@ -60,7 +62,7 @@ void Clusterer::calculateInitialClusterMap()
   }
 }
 
-int& Clusterer::clusterNumber(const Point2d &point)
+int& Clusterer::clusterAt(const Point2d &point)
 {
   return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
 }
@@ -70,33 +72,31 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
   calculateDynamicMap();
   initClusterMap();
 
-  max_cluster_number_ = -1;
-
-  lookup_table_.clear();
   calculateInitialClusterMap();
-  lookup_table_.arrange();
+  integrateConnectedClusters();
+  removeSmallClusters();
 
   clusterMap2IndicesCluster(output_indices);
-  removeSmallClusters(output_indices);
 }
 
 void Clusterer::clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters)
 {
+  if (number_of_clusters_ <= 0)
+    return;
+  
+  indices_clusters.resize(number_of_clusters_);
   Point2d point;
   for (point.u = 0; point.u < input_pointcloud_->width; point.u++)
   {
     for (point.v = 0; point.v < input_pointcloud_->height; point.v++)
     {
-      int temporary_cluster = clusterNumber(point);
-      if (temporary_cluster == NOT_BELONGED_)
+      int cluster_number = clusterAt(point);
+      if (cluster_number == NOT_BELONGED_)
         continue;
-
-      int true_cluster = lookup_table_.lookup(temporary_cluster);
-      if (indices_clusters.size() < true_cluster + 1)
-        indices_clusters.resize(true_cluster + 1);
+      pcl::PointIndices &cluster = indices_clusters.at(cluster_number);
       
       int pointcloud_indice = input_pointcloud_->width * point.v + point.u;
-      indices_clusters.at(true_cluster).indices.push_back(pointcloud_indice);
+      cluster.indices.push_back(pointcloud_indice);
     }
   }
 }
@@ -168,16 +168,17 @@ void Clusterer::comparePoints(const Point2d &point1, const Point2d &point2)
   if (depthDiff(point1, point2) > depth_diff_th_)
     return;
   
-  int &point1_cluster = clusterNumber(point1);
-  int &point2_cluster = clusterNumber(point2);
+  int &point1_cluster = clusterAt(point1);
+  int &point2_cluster = clusterAt(point2);
   
   if (point1_cluster == NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
-    max_cluster_number_++;
-    lookup_table_.resize(max_cluster_number_ + 1);
+    number_of_clusters_++;
+    lookup_table_.resize(number_of_clusters_);
 
-    point1_cluster = max_cluster_number_;
-    point2_cluster = max_cluster_number_;
+    // クラスタ番号は0から始まるので，-1
+    point1_cluster = number_of_clusters_ - 1;
+    point2_cluster = number_of_clusters_ - 1;
   }
   else if (point1_cluster != NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
@@ -224,9 +225,29 @@ float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
 
 void Clusterer::initClusterMap()
 {
+  number_of_clusters_ = 0;
+
   if (cluster_map_.size() != input_pointcloud_->size())
     cluster_map_.resize(input_pointcloud_->size());
   std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
+}
+
+void Clusterer::integrateConnectedClusters()
+{
+  lookup_table_.arrange();
+
+  number_of_clusters_ = 0;
+  for (int i = 0; i < cluster_map_.size(); i++)
+  {
+    int initial_cluster = cluster_map_.at(i);
+    if (initial_cluster == NOT_BELONGED_)
+      continue;
+    
+    int final_cluster = lookup_table_.lookup(initial_cluster);
+    cluster_map_.at(i) = final_cluster;
+    if (final_cluster > number_of_clusters_ - 1)
+      number_of_clusters_ = final_cluster + 1;
+  }
 }
 
 bool Clusterer::isDynamic(const Point2d &point) {
@@ -295,14 +316,43 @@ void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, u
   neighbor_distance_th_ = config.neighbor_distance;
 }
 
-void Clusterer::removeSmallClusters(pcl::IndicesClusters &indices_clusters)
+void Clusterer::removeSmallClusters()
 {
-  auto cluster_it = indices_clusters.begin();
-  while(cluster_it != indices_clusters.end())
+  if (number_of_clusters_ <= 0)
+    return;
+  // 各クラスタの要素数を計算
+  std::vector<size_t> cluster_size(number_of_clusters_, 0);
+  for (int i = 0; i < cluster_map_.size(); i++)
   {
-    if (cluster_it->indices.size() < cluster_size_th_)
-      cluster_it = indices_clusters.erase(cluster_it);
+    int cluster = cluster_map_.at(i);
+    if (cluster == NOT_BELONGED_)
+      continue;
+
+    cluster_size.at(cluster) += 1;
+  }
+
+  // 削除するクラスターの特定
+  // また，クラスタの削除によってクラスタ番号が断続的になるので，連番に修正する
+  std::vector<int> cluster_old2new(number_of_clusters_);
+  for (int i = 0; i < cluster_size.size(); i++)
+  {
+    if (cluster_size.at(i) < cluster_size_th_)
+    {
+      cluster_old2new.at(i) = NOT_BELONGED_;
+      number_of_clusters_--;
+    }
     else
-      cluster_it++;
+    {
+      cluster_old2new.at(i) = i - (cluster_size.size() - number_of_clusters_);
+    }
+  }
+
+  // 所属クラスタの更新
+  for (int i = 0; i < cluster_map_.size(); i++)
+  {
+    int old_cluster = cluster_map_.at(i); 
+    if (old_cluster == NOT_BELONGED_)
+      continue;
+    cluster_map_.at(i) = cluster_old2new.at(old_cluster);
   }
 }
