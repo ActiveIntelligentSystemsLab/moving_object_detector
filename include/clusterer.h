@@ -63,7 +63,7 @@ private:
   void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
   int& clusterNumber(const Point2d &point);
-  void comparePoints(const Point2d &interest_point, const Point2d &compared_point);
+  void comparePoints(const Point2d &point1, const Point2d &point2);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
   float depthDiff(const Point2d &point1, const Point2d &point2);
   bool isDynamic(const Point2d &point);

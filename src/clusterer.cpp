@@ -142,40 +142,40 @@ void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, m
   moving_object.velocity.z = velocity_sum(2) / cluster_size;
 }
 
-void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &neighbor_point)
+void Clusterer::comparePoints(const Point2d &point1, const Point2d &point2)
 {
-  if (!isInRange(neighbor_point))
+  if (!isInRange(point1) || !isInRange(point2))
     return;
 
-  if (!isDynamic(neighbor_point))
+  if (!isDynamic(point1) || !isDynamic(point2))
     return;
 
-  if (depthDiff(interest_point, neighbor_point) > depth_diff_th_)
+  if (depthDiff(point1, point2) > depth_diff_th_)
     return;
   
-  int &interest_point_cluster = clusterNumber(interest_point);
-  int &neighbor_point_cluster = clusterNumber(neighbor_point);
+  int &point1_cluster = clusterNumber(point1);
+  int &point2_cluster = clusterNumber(point2);
   
-  if (interest_point_cluster == NOT_BELONGED_ && neighbor_point_cluster == NOT_BELONGED_)
+  if (point1_cluster == NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
     max_cluster_number_++;
     lookup_table_.resize(max_cluster_number_ + 1);
 
-    interest_point_cluster = max_cluster_number_;
-    neighbor_point_cluster = max_cluster_number_;
+    point1_cluster = max_cluster_number_;
+    point2_cluster = max_cluster_number_;
   }
-  else if (interest_point_cluster != NOT_BELONGED_ && neighbor_point_cluster == NOT_BELONGED_)
+  else if (point1_cluster != NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
-    neighbor_point_cluster = interest_point_cluster;
+    point2_cluster = point1_cluster;
   }
-  else if (interest_point_cluster == NOT_BELONGED_ && neighbor_point_cluster != NOT_BELONGED_)
+  else if (point1_cluster == NOT_BELONGED_ && point2_cluster != NOT_BELONGED_)
   {
-    interest_point_cluster = neighbor_point_cluster;
+    point1_cluster = point2_cluster;
   }
-  else if (interest_point_cluster != NOT_BELONGED_ && neighbor_point_cluster != NOT_BELONGED_)
+  else if (point1_cluster != NOT_BELONGED_ && point2_cluster != NOT_BELONGED_)
   {
-    int source_cluster = std::max(interest_point_cluster, neighbor_point_cluster);
-    int destination_cluster = std::min(interest_point_cluster, neighbor_point_cluster);
+    int source_cluster = std::max(point1_cluster, point2_cluster);
+    int destination_cluster = std::min(point1_cluster, point2_cluster);
     // 2つのクラスタが合わさって同一のクラスタを構成することを記録しておく
     lookup_table_.update(source_cluster, destination_cluster);
   }
