@@ -44,7 +44,9 @@ void Clusterer::calculateDynamicMap()
 
 void Clusterer::calculateInitialClusterMap()
 {
-  lookup_table_.clear();
+  if (lookup_table_.size() != input_pointcloud_->size())
+    lookup_table_.resize(input_pointcloud_->size());
+  lookup_table_.reset();
 
   Point2d interest_point;
   for (interest_point.v = 0; interest_point.v < input_pointcloud_->height; interest_point.v++)
@@ -172,12 +174,9 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &comp
   
   if (point1_cluster == NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
-    number_of_clusters_++;
-    lookup_table_.resize(number_of_clusters_);
-
-    // クラスタ番号は0から始まるので，-1
-    point1_cluster = number_of_clusters_ - 1;
-    point2_cluster = number_of_clusters_ - 1;
+    int new_cluster = lookup_table_.addLabel();
+    point1_cluster = new_cluster;
+    point2_cluster = new_cluster;
   }
   else if (point1_cluster != NOT_BELONGED_ && point2_cluster == NOT_BELONGED_)
   {
@@ -189,10 +188,8 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &comp
   }
   else if (point1_cluster != NOT_BELONGED_ && point2_cluster != NOT_BELONGED_)
   {
-    int source_cluster = std::max(point1_cluster, point2_cluster);
-    int destination_cluster = std::min(point1_cluster, point2_cluster);
-    // 2つのクラスタが合わさって同一のクラスタを構成することを記録しておく
-    lookup_table_.update(source_cluster, destination_cluster);
+    if (point1_cluster != point2_cluster)
+      lookup_table_.link(point1_cluster, point2_cluster);
   }
 }
 
@@ -230,8 +227,6 @@ void Clusterer::initClusterMap()
 
 void Clusterer::integrateConnectedClusters()
 {
-  lookup_table_.arrange();
-
   number_of_clusters_ = 0;
   for (int i = 0; i < cluster_map_.size(); i++)
   {
