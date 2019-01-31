@@ -72,7 +72,7 @@ private:
   {
     return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
   };
-  void comparePoints(const Point2d &point1, const Point2d &point2);
+  void comparePoints(const Point2d &insterest_point, const Point2d &compared_point);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
   inline float depthDiff(const Point2d &point1, const Point2d &point2)
   {
@@ -84,7 +84,12 @@ private:
   {
     return dynamic_map_.at(input_pointcloud_->width * point.v + point.u);
   };
-  bool isInRange(const Point2d &point);
+  inline bool isInRange(const Point2d &point)
+  {
+    if (point.u < 0 || point.u >= input_pointcloud_->width || point.v < 0 || point.v >= input_pointcloud_->height)
+      return false;
+    return true;
+  };
   inline const pcl::PointXYZVelocity& point3dAt(const Point2d& point)
   {
       return input_pointcloud_->at(point.u, point.v);

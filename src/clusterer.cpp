@@ -240,16 +240,6 @@ void Clusterer::integrateConnectedClusters()
   }
 }
 
-bool Clusterer::isInRange(const Point2d &point) {
-  if (point.u < 0 || point.u >= input_pointcloud_->width)
-    return false;
-  
-  if (point.v < 0 || point.v >= input_pointcloud_->height)
-    return false;
-
-  return true;
-}
-
 void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
 {
   visualization_msgs::MarkerArray clusters_msg;
