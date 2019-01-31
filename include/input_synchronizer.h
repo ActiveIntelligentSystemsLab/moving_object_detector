@@ -53,6 +53,10 @@ private:
   sensor_msgs::CameraInfo left_rect_info_;
   sensor_msgs::Image right_rect_image_;
   sensor_msgs::CameraInfo right_rect_info_;
+
+  ros::Duration republish_timeout_;
+  ros::Time last_published_stamp_;
+  bool publish_required_;
     
   void publishSynchronizedStereo();
   

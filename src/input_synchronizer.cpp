@@ -3,6 +3,8 @@
 InputSynchronizer::InputSynchronizer()
 {
   image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle_);
+
+  republish_timeout_ = ros::Duration(1.0);
   
   // 同期済みステレオ画像とcamera infoのpublisherを初期化
   std::string publish_left_rect_image_topic = node_handle_.resolveName("synchronizer_output_left_rect_image");
@@ -37,16 +39,25 @@ void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr&
   left_rect_info_ = *left_rect_info;
   right_rect_image_ = *right_rect_image;
   right_rect_info_ = *right_rect_info;
+
+  ros::Time current_stamp = left_rect_image->header.stamp;
+  if (current_stamp - last_published_stamp_ >= republish_timeout_)
+    publish_required_ = true;
+
+  if (publish_required_) {
+    publishSynchronizedStereo();
+    publish_required_ = false;
+  }
 }
 
 void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const dis_flow::FlowImageConstPtr& left_flow, const dis_flow::FlowImageConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
 {
-  publishSynchronizedStereo();
+  publish_required_ = true;
 }
 
 bool InputSynchronizer::publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response)
 {
-  publishSynchronizedStereo();
+  publish_required_ = true;
   return true;
 }
 
@@ -54,4 +65,6 @@ void InputSynchronizer::publishSynchronizedStereo()
 {
   left_rect_image_pub_.publish(left_rect_image_, left_rect_info_);
   right_rect_image_pub_.publish(right_rect_image_, right_rect_info_);
+
+  last_published_stamp_ = left_rect_image_.header.stamp;
 }
