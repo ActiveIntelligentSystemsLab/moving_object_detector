@@ -63,19 +63,23 @@ private:
   std::vector<bool> dynamic_map_; // 各点が移動点であるかどうかを格納するマップ
   
   void calculateDynamicMap();
+  void calculateInitialClusterMap();
   void cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id);
   void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
+  void clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters);
   int& clusterNumber(const Point2d &point);
   void comparePoints(const Point2d &point1, const Point2d &point2);
   void dataCB(const sensor_msgs::PointCloud2ConstPtr &velocity_pc_msg);
   float depthDiff(const Point2d &point1, const Point2d &point2);
+  void initClusterMap();
   bool isDynamic(const Point2d &point);
   bool isInRange(const Point2d &point);
   const pcl::PointXYZVelocity& point3dAt(const Point2d& point);
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
+  void removeSmallClusters(pcl::IndicesClusters &indices_clusters);
 };
 
 #endif

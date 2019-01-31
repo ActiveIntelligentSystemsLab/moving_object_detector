@@ -38,25 +38,9 @@ void Clusterer::calculateDynamicMap()
   }
 }
 
-int& Clusterer::clusterNumber(const Point2d &point)
+void Clusterer::calculateInitialClusterMap()
 {
-  return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
-}
-
-void Clusterer::clustering(pcl::IndicesClusters &output_indices)
-{
-  if (cluster_map_.size() != input_pointcloud_->size())
-    cluster_map_.resize(input_pointcloud_->size());
-  std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
-
-  calculateDynamicMap();
-
-  max_cluster_number_ = -1;
-
-  lookup_table_.clear();
-
   Point2d interest_point;
-  // ラスタスキャン
   for (interest_point.v = 0; interest_point.v < input_pointcloud_->height; interest_point.v++)
   {
     for (interest_point.u = 0; interest_point.u < input_pointcloud_->width; interest_point.u++)
@@ -74,35 +58,46 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
       }
     }
   }
+}
 
+int& Clusterer::clusterNumber(const Point2d &point)
+{
+  return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
+}
+
+void Clusterer::clustering(pcl::IndicesClusters &output_indices)
+{
+  calculateDynamicMap();
+  initClusterMap();
+
+  max_cluster_number_ = -1;
+
+  lookup_table_.clear();
+  calculateInitialClusterMap();
   lookup_table_.arrange();
 
-  // lookup tableをindices clustersに変換
-  for (interest_point.u = 0; interest_point.u < input_pointcloud_->width; interest_point.u++)
+  clusterMap2IndicesCluster(output_indices);
+  removeSmallClusters(output_indices);
+}
+
+void Clusterer::clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters)
+{
+  Point2d point;
+  for (point.u = 0; point.u < input_pointcloud_->width; point.u++)
   {
-    for (interest_point.v = 0; interest_point.v < input_pointcloud_->height; interest_point.v++)
+    for (point.v = 0; point.v < input_pointcloud_->height; point.v++)
     {
-      int temporary_cluster = clusterNumber(interest_point);
+      int temporary_cluster = clusterNumber(point);
       if (temporary_cluster == NOT_BELONGED_)
         continue;
 
       int true_cluster = lookup_table_.lookup(temporary_cluster);
-      if (output_indices.size() < true_cluster + 1)
-        output_indices.resize(true_cluster + 1);
+      if (indices_clusters.size() < true_cluster + 1)
+        indices_clusters.resize(true_cluster + 1);
       
-      int pointcloud_indice = input_pointcloud_->width * interest_point.v + interest_point.u;
-      output_indices.at(true_cluster).indices.push_back(pointcloud_indice);
+      int pointcloud_indice = input_pointcloud_->width * point.v + point.u;
+      indices_clusters.at(true_cluster).indices.push_back(pointcloud_indice);
     }
-  }
-
-  // 要素数が少なすぎるクラスタを削除
-  auto cluster_it = output_indices.begin();
-  while(cluster_it != output_indices.end())
-  {
-    if (cluster_it->indices.size() < cluster_size_th_)
-      cluster_it = output_indices.erase(cluster_it);
-    else
-      cluster_it++;
   }
 }
 
@@ -227,6 +222,13 @@ float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
   return std::abs(point3dAt(point1).z - point3dAt(point2).z);
 }
 
+void Clusterer::initClusterMap()
+{
+  if (cluster_map_.size() != input_pointcloud_->size())
+    cluster_map_.resize(input_pointcloud_->size());
+  std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
+}
+
 bool Clusterer::isDynamic(const Point2d &point) {
   return dynamic_map_.at(input_pointcloud_->width * point.v + point.u);
 }
@@ -291,4 +293,16 @@ void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, u
   depth_diff_th_ = config.depth_diff;
   dynamic_speed_th_ = config.dynamic_speed;
   neighbor_distance_th_ = config.neighbor_distance;
+}
+
+void Clusterer::removeSmallClusters(pcl::IndicesClusters &indices_clusters)
+{
+  auto cluster_it = indices_clusters.begin();
+  while(cluster_it != indices_clusters.end())
+  {
+    if (cluster_it->indices.size() < cluster_size_th_)
+      cluster_it = indices_clusters.erase(cluster_it);
+    else
+      cluster_it++;
+  }
 }
