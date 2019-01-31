@@ -16,6 +16,7 @@
 #include "lookup_table.h"
 
 #include <dynamic_reconfigure/server.h>
+#include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
@@ -36,9 +37,12 @@ public:
   
 private:
   ros::NodeHandle node_handle_;
+
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
   ros::Publisher dynamic_objects_pub_;
   ros::Publisher clusters_pub_;
+  image_transport::Publisher clusters_image_pub_;
   ros::Subscriber velocity_pc_sub_;
   
   dynamic_reconfigure::Server<moving_object_detector::ClustererConfig> reconfigure_server_;
@@ -95,6 +99,7 @@ private:
       return input_pointcloud_->at(point.u, point.v);
   };
   void publishClusters(const pcl::IndicesClusters &clusters);
+  void publishClustersImage();
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
   void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
   void removeSmallClusters();

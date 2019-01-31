@@ -1,5 +1,6 @@
 #include "clusterer.h"
 
+#include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -16,6 +17,9 @@ Clusterer::Clusterer()
 {
   reconfigure_func_ = boost::bind(&Clusterer::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
+
+  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle_);
+  clusters_image_pub_ = image_transport_->advertise("clusters_image", 1);
   
   velocity_pc_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &Clusterer::dataCB, this);
   dynamic_objects_pub_ = node_handle_.advertise<moving_object_detector::MovingObjectArray>("moving_objects", 1);
@@ -206,6 +210,8 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
 
   if (clusters_pub_.getNumSubscribers() > 0)
     publishClusters(clusters);
+  if (clusters_image_pub_.getNumSubscribers() > 0)
+    publishClustersImage();
   if (dynamic_objects_pub_.getNumSubscribers() > 0)
     publishMovingObjects(clusters);
 
@@ -261,6 +267,38 @@ void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
   }
 
   clusters_pub_.publish(clusters_msg);
+}
+
+void Clusterer::publishClustersImage()
+{
+  cv::Mat clusters_image(input_pointcloud_->height, input_pointcloud_->width, CV_8UC3);
+
+  color_set_.resize(number_of_clusters_);
+
+  for (int i = 0; i < input_pointcloud_->size(); i++)
+  {
+    int b, g, r;
+
+    int cluster = cluster_map_.at(i);
+    if (cluster == NOT_BELONGED_)
+    {
+      b = 0;
+      g = 0;
+      r = 0;
+    }
+    else
+    {
+      color_set_.getColor(cluster, r, g, b);
+    }    
+
+    clusters_image.at<cv::Vec3b>(i) = cv::Vec3b(b, g, r);
+  }
+
+  std_msgs::Header header;
+  header.frame_id = input_header_.frame_id;
+  header.stamp = input_header_.stamp;
+  sensor_msgs::ImagePtr clusters_image_msg = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, clusters_image).toImageMsg();
+  clusters_image_pub_.publish(clusters_image_msg);
 }
 
 void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
