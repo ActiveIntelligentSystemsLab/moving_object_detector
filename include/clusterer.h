@@ -59,7 +59,10 @@ private:
   // 番号は違っても実際は同じクラスターどうしの対応づけ
   LookupTable lookup_table_;
   ColorSet color_set_; // クラスタ別に色分けするための色セット
+
+  std::vector<bool> dynamic_map_; // 各点が移動点であるかどうかを格納するマップ
   
+  void calculateDynamicMap();
   void cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id);
   void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);

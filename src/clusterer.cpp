@@ -22,6 +22,22 @@ Clusterer::Clusterer()
   clusters_pub_ = node_handle_.advertise<visualization_msgs::MarkerArray>("clusters", 1);
 }
 
+void Clusterer::calculateDynamicMap()
+{
+  if (dynamic_map_.size() != input_pointcloud_->size())
+    dynamic_map_.resize(input_pointcloud_->size());
+  std::fill(dynamic_map_.begin(), dynamic_map_.end(), false);
+
+  for (int i = 0; i < input_pointcloud_->size(); i++)
+  {
+    pcl::PointXYZVelocity &point3d = input_pointcloud_->at(i);
+    Eigen::Vector3f velocity(point3d.vx, point3d.vy, point3d.vz);
+
+    if (velocity.norm() >= dynamic_speed_th_)
+      dynamic_map_.at(i) = true;
+  }
+}
+
 int& Clusterer::clusterNumber(const Point2d &point)
 {
   return cluster_map_.at(point.v * input_pointcloud_->width + point.u);
@@ -32,6 +48,8 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
   if (cluster_map_.size() != input_pointcloud_->size())
     cluster_map_.resize(input_pointcloud_->size());
   std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
+
+  calculateDynamicMap();
 
   max_cluster_number_ = -1;
 
@@ -210,13 +228,7 @@ float Clusterer::depthDiff(const Point2d &point1, const Point2d &point2)
 }
 
 bool Clusterer::isDynamic(const Point2d &point) {
-  pcl::PointXYZVelocity point3d = point3dAt(point);
-  Eigen::Vector3f velocity(point3d.vx, point3d.vy, point3d.vz);
-
-  if (velocity.norm() > dynamic_speed_th_)
-    return true;
-  
-  return false;
+  return dynamic_map_.at(input_pointcloud_->width * point.v + point.u);
 }
 
 bool Clusterer::isInRange(const Point2d &point) {
