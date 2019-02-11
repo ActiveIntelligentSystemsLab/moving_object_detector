@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   image_geometry
   image_transport
+  kkl
   message_generation
   pcl_conversions
   roscpp
@@ -61,6 +62,8 @@ catkin_package(
     message_runtime 
     std_msgs 
 )
+# To use gprof
+# set(catkin_LIBRARIES ${catkin_LIBRARIES} -pg)
 
 include_directories(
   include
@@ -86,6 +89,10 @@ target_link_libraries(clusterer_node
   ${PCL_SEARCH_LIBRARIES}
   ${PCL_SEGMENTATION_LIBRARIES}
 )
+# To use gprof
+# target_compile_options(clusterer_node
+#   PUBLIC -pg
+# )
 
 add_executable(display_moving_objects_node src/display_moving_objects_node.cpp)
 add_dependencies(display_moving_objects_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -107,6 +114,15 @@ add_executable(input_synchronizer_node
 target_link_libraries(input_synchronizer_node
   ${catkin_LIBRARIES}
   ${PCL_COMMON_LIBRARIES}
+)
+
+add_executable(moving_objects_tracker_node
+  src/moving_objects_tracker.cpp
+  src/moving_objects_tracker_node.cpp
+)
+add_dependencies(moving_objects_tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(moving_objects_tracker_node
+  ${catkin_LIBRARIES}
 )
 
 add_executable(velocity_estimator_node
