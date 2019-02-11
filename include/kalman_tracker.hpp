@@ -35,14 +35,14 @@ public:
   {
     Eigen::Matrix4d transition = Eigen::Matrix4d::Identity();
     Eigen::Matrix<double, 4, 2> control = Eigen::Matrix<double, 4, 2>::Zero();
-    Eigen::Matrix<double, 2, 4> measurement = Eigen::Matrix<double, 2, 4>::Identity();
+    Eigen::Matrix<double, 4, 4> measurement = Eigen::Matrix<double, 4, 4>::Identity();
 
     // これらのノイズは小出さんの値のまま
     // 後で変える
     Eigen::Matrix4d process_noise = Eigen::Matrix4d::Zero();
     process_noise.topLeftCorner(2, 2) = Eigen::Matrix2d::Identity() * 0.003;
     process_noise.bottomRightCorner(2, 2) = Eigen::Matrix2d::Identity() * 0.01;
-    Eigen::Matrix2d measurement_noise = Eigen::Matrix4d::Identity() * 0.2;
+    Eigen::Matrix4d measurement_noise = Eigen::Matrix4d::Identity() * 0.2;
 
     Eigen::Vector4d mean = Eigen::Vector4d::Zero();
     mean.head<2>() = init_pos;
@@ -83,7 +83,7 @@ public:
    * @param associated   associated detection
    */
   void correct(const ros::Time& time, const Eigen::Vector2d& pos, const Eigen::Vector2d& vel, boost::any associated = boost::any()) {
-    Eigen::Matrix4d observation = Eigen::Vector4d::Zero();
+    Eigen::Vector4d observation = Eigen::Vector4d::Zero();
     observation.head<2>() = pos;
     observation.tail<2>() = vel;
     kalman_filter->correct(observation);
@@ -117,12 +117,20 @@ public:
     return kalman_filter->mean.tail<2>();
   }
 
+  Eigen::Vector4d mean() const {
+    return kalman_filter->mean;
+  }
+
   Eigen::Matrix2d positionCov() const {
     return kalman_filter->cov.block<2, 2>(0, 0);
   }
 
   Eigen::Matrix2d velocityCov() const {
     return kalman_filter->cov.block<2, 2>(2, 2);
+  }
+
+  Eigen::Matrix4d cov() const {
+    return kalman_filter->cov;
   }
 
   void setMeasurementNoiseCov(const Eigen::Matrix4d& cov) {
