@@ -27,7 +27,7 @@ InputSynchronizer::InputSynchronizer()
   optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 1);
   optical_flow_right_sub_.subscribe(node_handle_, "optical_flow_right", 1);
   disparity_image_sub_.subscribe(node_handle_, "disparity_image", 1);
-  processed_data_time_sync_ = std::make_shared<ProcessedDataSynchronizer>(viso2_info_sub_, optical_flow_left_sub_, optical_flow_right_sub_, disparity_image_sub_, 1);
+  processed_data_time_sync_ = std::make_shared<ProcessedDataSynchronizer>(viso2_info_sub_, optical_flow_left_sub_, optical_flow_right_sub_, disparity_image_sub_, 30);
   processed_data_time_sync_->registerCallback(boost::bind(&InputSynchronizer::processedDataSyncCallback, this, _1, _2, _3, _4));
   
   publish_service_ = node_handle_.advertiseService("input_synchronizer_publish", &InputSynchronizer::publishServiceCallback, this);
@@ -42,7 +42,10 @@ void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr&
 
   ros::Time current_stamp = left_rect_image->header.stamp;
   if (current_stamp - last_published_stamp_ >= republish_timeout_)
+  {
+    ROS_INFO("Republish for timeout: last publish at %f and current stamp is %f", last_published_stamp_.toSec(), current_stamp.toSec());
     publish_required_ = true;
+  }
 
   if (publish_required_) {
     publishSynchronizedStereo();
@@ -52,6 +55,7 @@ void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr&
 
 void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const dis_flow::FlowImageConstPtr& left_flow, const dis_flow::FlowImageConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
 {
+  ROS_INFO("recieve output data and require repubish");
   publish_required_ = true;
 }
 
