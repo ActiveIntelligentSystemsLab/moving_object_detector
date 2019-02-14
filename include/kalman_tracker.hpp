@@ -33,6 +33,8 @@ public:
       last_correction_time(time),
       last_associated(associated)
   {
+    correction_count_ = 0;
+
     Eigen::Matrix4d transition = Eigen::Matrix4d::Identity();
     Eigen::Matrix<double, 4, 2> control = Eigen::Matrix<double, 4, 2>::Zero();
     Eigen::Matrix<double, 4, 4> measurement = Eigen::Matrix<double, 4, 4>::Identity();
@@ -90,11 +92,17 @@ public:
 
     last_correction_time = time;
     last_associated = associated;
+
+    correction_count_++;
   }
 
 public:
   long id() const {
     return id_;
+  }
+
+  int correction_count() const {
+    return correction_count_;
   }
 
   ros::Duration age(const ros::Time& time) const {
@@ -152,6 +160,8 @@ private:
   ros::Time last_correction_time;   // time when correction was performed
 
   boost::any last_associated;       // associated detection data
+
+  int correction_count_;
 
   std::unique_ptr<KalmanFilter> kalman_filter;
 };
