@@ -78,19 +78,13 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
       if (object->correction_count() < 5)
         continue;
 
-      if (object->lastAssociated().type() != typeid(moving_object_detector::MovingObjectPtr))
-        ROS_INFO("Type mismatch: now: %s, require: %s, any: %s", object->lastAssociated().type().name(), typeid(moving_object_detector::MovingObjectPtr).name(), boost::any().type().name());
-      else
-      {
-        moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->lastAssociated()));
-        obj_msg.id = object->id();
-        obj_msg.center.position.x = object->position().x();
-        obj_msg.center.position.y = object->position().y();
-        obj_msg.velocity.x = object->velocity().x();
-        obj_msg.velocity.y = object->velocity().y();
-        msg.moving_object_array.push_back(obj_msg); // コード汚すぎない？
-      }
-
+      moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->lastAssociated()));
+      obj_msg.id = object->id();
+      obj_msg.center.position.x = object->position().x();
+      obj_msg.center.position.y = object->position().y();
+      obj_msg.velocity.x = object->velocity().x();
+      obj_msg.velocity.y = object->velocity().y();
+      msg.moving_object_array.push_back(obj_msg); // コード汚すぎない？
     }
     tracked_moving_objects_pub_.publish(msg);
   }

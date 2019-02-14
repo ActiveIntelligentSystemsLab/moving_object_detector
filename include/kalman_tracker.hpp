@@ -73,8 +73,6 @@ public:
 
     kalman_filter->predict(Eigen::Matrix<double, 2, 1>::Zero());
     last_prediction_time = time;
-
-    last_associated = boost::any();
   }
 
   /**
