@@ -301,11 +301,15 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
   moving_object_detector::MovingObjectArray moving_objects_msg;
   moving_objects_msg.header = input_header_;
 
+  int id = 0;
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
     moving_object_detector::MovingObject moving_object;
     cluster2MovingObject(*cluster_it, moving_object);
+    moving_object.id = id;
     moving_objects_msg.moving_object_array.push_back(moving_object);
+    
+    id++;
   }
 
   dynamic_objects_pub_.publish(moving_objects_msg);

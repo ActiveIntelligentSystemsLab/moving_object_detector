@@ -34,11 +34,12 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
   delete_marker.action = visualization_msgs::Marker::DELETEALL;
   pub_msg.markers.push_back(delete_marker);
   
-  int i = 0;
+  int max_id = 0;
+  // 箱の描画
   for (auto& moving_object : moving_objects_msg->moving_object_array) {
     visualization_msgs::Marker bounding_box;
     bounding_box.header = moving_objects_msg->header;
-    bounding_box.id = i;
+    bounding_box.id = moving_object.id;
     bounding_box.type = visualization_msgs::Marker::CUBE;
     bounding_box.action = visualization_msgs::Marker::ADD;
     bounding_box.pose.position = moving_object.center;
@@ -50,11 +51,18 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     bounding_box.color.g = green;
     bounding_box.color.b = blue;
     pub_msg.markers.push_back(bounding_box);
-    i++;
     
+    max_id = std::max(max_id, bounding_box.id);
+  }
+  
+  // 箱側はMovingObjectと同じIDを使うが，矢印側は別IDを使わないといけない
+  max_id++;
+  // 矢印の描画
+  for (auto& moving_object : moving_objects_msg->moving_object_array) {
     visualization_msgs::Marker velocity_arrow;
+    
     velocity_arrow.header = moving_objects_msg->header;
-    velocity_arrow.id = i;
+    velocity_arrow.id = max_id;
     velocity_arrow.type = visualization_msgs::Marker::ARROW;
     velocity_arrow.action = visualization_msgs::Marker::ADD;
     geometry_msgs::Point arrow_start = moving_object.center;
@@ -75,7 +83,8 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     velocity_arrow.color.g = green;
     velocity_arrow.color.b = blue;
     pub_msg.markers.push_back(velocity_arrow);
-    i++;
+    
+    max_id++;
   }
   
   markers_pub.publish(pub_msg);
