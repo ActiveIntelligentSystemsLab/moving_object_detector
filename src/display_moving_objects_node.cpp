@@ -50,8 +50,9 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     bounding_box.color.r = red;
     bounding_box.color.g = green;
     bounding_box.color.b = blue;
+    bounding_box.ns = "bounding_box";
     pub_msg.markers.push_back(bounding_box);
-    
+
     max_id = std::max(max_id, bounding_box.id);
   }
   
@@ -82,6 +83,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     velocity_arrow.color.r = red;
     velocity_arrow.color.g = green;
     velocity_arrow.color.b = blue;
+    velocity_arrow.ns = "velocity_arrow";
     pub_msg.markers.push_back(velocity_arrow);
     
     max_id++;
