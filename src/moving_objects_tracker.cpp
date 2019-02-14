@@ -59,7 +59,7 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
     moving_object_detector::MovingObjectPtr transformed_object(new moving_object_detector::MovingObject);
     tf2::doTransform(moving_object.center, transformed_object->center, to_odom);
     tf2::doTransform(moving_object.velocity, transformed_object->velocity, to_odom);
-    tf2::doTransform(moving_object.bounding_box, transformed_object->bounding_box, to_odom);
+    transformed_object->bounding_box = moving_object.bounding_box;
     transformed.push_back(transformed_object);
   }
 
