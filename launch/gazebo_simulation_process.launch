@@ -60,8 +60,11 @@
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/elas/disparity"/>
+
+    <param name="image_transport" value="compressed"/>
   </node>
 
+  <!-- <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node" launch-prefix="gnome-terminal -x gdb args"> -->
   <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
@@ -75,13 +78,20 @@
     <remap from="image" to="/image_rect_color"/>
   </node>
 
-  <!--
   <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
-  -->
+
+  <node name="moving_object_tracker" pkg="moving_object_detector" type="moving_objects_tracker_node"/>
+  <node name="display_moving_objects_node_track" pkg="moving_object_detector" type="display_moving_objects_node">
+    <remap from="moving_objects" to="tracked_moving_objects"/>
+    <remap from="moving_object_markers" to="tracked_markers"/>
+
+    <param name="red" value="0.0"/>
+    <param name="green" value="1.0"/>
+  </node>
   
   <!-- Nodes for visualization -->
-  <!--
   <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
+  -->
   <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
   <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
@@ -91,6 +101,7 @@
     <remap from="marker" to="moving_object/velocity_marker"/>
   </node>
   
+  <!--
   <node name="result_calculator" pkg="moving_object_detector" type="simulation_exp_result_calc">
     <remap from="odom" to="moving_object/odom"/>
     <remap from="center" to="moving_object/center"/>

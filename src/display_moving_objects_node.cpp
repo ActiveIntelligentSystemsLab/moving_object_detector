@@ -5,11 +5,19 @@
 
 ros::Publisher markers_pub;
 
+double alpha, red, blue, green;
+
 void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_object_msg);
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "display_moving_objects");
   ros::NodeHandle node_handle;
+  ros::NodeHandle private_node_handle("~");
+
+  private_node_handle.param("alpha", alpha, 0.5);
+  private_node_handle.param("red", red, 1.0);
+  private_node_handle.param("blue", blue, 0.0);
+  private_node_handle.param("green", green, 0.0);
   
   markers_pub = node_handle.advertise<visualization_msgs::MarkerArray>("moving_object_markers", 10);
   ros::Subscriber moving_objects_sub = node_handle.subscribe("moving_objects", 10, callback);
@@ -37,10 +45,10 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     bounding_box.scale.x = moving_object.bounding_box.x;
     bounding_box.scale.y = moving_object.bounding_box.y;
     bounding_box.scale.z = moving_object.bounding_box.z;
-    bounding_box.color.a = 0.5;
-    bounding_box.color.r = 1.0;
-    bounding_box.color.g = 0.0;
-    bounding_box.color.b = 0.0;
+    bounding_box.color.a = alpha;
+    bounding_box.color.r = red;
+    bounding_box.color.g = green;
+    bounding_box.color.b = blue;
     pub_msg.markers.push_back(bounding_box);
     i++;
     
@@ -62,10 +70,10 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     velocity_arrow.scale.x = shaft_diameter;
     velocity_arrow.scale.y = head_diameter;
     velocity_arrow.scale.z = head_length;
-    velocity_arrow.color.a = 1.0;
-    velocity_arrow.color.r = 1.0;
-    velocity_arrow.color.g = 0.0;
-    velocity_arrow.color.b = 0.0;
+    velocity_arrow.color.a = alpha;
+    velocity_arrow.color.r = red;
+    velocity_arrow.color.g = green;
+    velocity_arrow.color.b = blue;
     pub_msg.markers.push_back(velocity_arrow);
     i++;
   }
