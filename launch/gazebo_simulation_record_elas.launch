@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-  <param name="use_sim_time" value="true"/>
+  <param name="use_sim_time" value="false"/>
   <node name="bag_play" pkg="rosbag" type="play" args="--clock -r 0.05 /home/aisl/Datasets/simulation_exp_dynamic_camera/input_gazebo.bag" required="true"/>
 
   <group ns="stereo_robot">
