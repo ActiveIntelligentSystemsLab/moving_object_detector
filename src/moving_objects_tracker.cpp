@@ -16,8 +16,8 @@ boost::optional<double> distance(const std::shared_ptr<KalmanTracker>& tracker, 
   // もともと位置だけを使っていたのを適当に位置＋速度の4次元に変更したが，あってるかは知らない
   // パラメータとかは調整するべき
   Eigen::Vector4d x;
-  x[0] = observation->center.x;
-  x[1] = observation->center.y;
+  x[0] = observation->center.position.x;
+  x[1] = observation->center.position.y;
   x[2] = observation->velocity.y;
   x[3] = observation->velocity.y;
 
@@ -103,8 +103,8 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
     associated[assoc.observation] = true;
     auto &moving_object = moving_objects[assoc.observation];
     Eigen::Vector2d pos, vel;
-    pos.x() = moving_object->center.x;
-    pos.y() = moving_object->center.y;
+    pos.x() = moving_object->center.position.x;
+    pos.y() = moving_object->center.position.y;
     vel.x() = moving_object->velocity.x;
     vel.y() = moving_object->velocity.y;
     trackers[assoc.tracker]->correct(time, pos, vel, moving_object);
@@ -117,8 +117,8 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
       bool close_to_tracker = false;
       for(const auto& object : trackers) {
         Eigen::Vector2d pos;
-        pos.x() = moving_objects[i]->center.x;
-        pos.y() = moving_objects[i]->center.y;
+        pos.x() = moving_objects[i]->center.position.x;
+        pos.y() = moving_objects[i]->center.position.y;
         if((object->position() - pos).norm() < object_radius_ * 2.0) { 
           close_to_tracker = true;
           break;
@@ -130,8 +130,8 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
       }
 
       Eigen::Vector2d pos, vel;
-      pos.x() = moving_objects[i]->center.x;
-      pos.y() = moving_objects[i]->center.y;
+      pos.x() = moving_objects[i]->center.position.x;
+      pos.y() = moving_objects[i]->center.position.y;
       vel.x() = moving_objects[i]->velocity.x;
       vel.y() = moving_objects[i]->velocity.y;
       // generate a new track

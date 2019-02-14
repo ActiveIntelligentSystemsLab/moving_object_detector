@@ -142,9 +142,14 @@ void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, m
   moving_object.bounding_box.z = bounding_box_size(2);
 
   Eigen::Vector4f center_point = (min_point + max_point) / 2;
-  moving_object.center.x = center_point(0);
-  moving_object.center.y = center_point(1);
-  moving_object.center.z = center_point(2);
+  moving_object.center.position.x = center_point(0);
+  moving_object.center.position.y = center_point(1);
+  moving_object.center.position.z = center_point(2);
+
+  moving_object.center.orientation.x = 0;
+  moving_object.center.orientation.y = 0;
+  moving_object.center.orientation.z = 0;
+  moving_object.center.orientation.w = 1;
 
   Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
   for (auto& point : cluster)
@@ -308,7 +313,7 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
     cluster2MovingObject(*cluster_it, moving_object);
     moving_object.id = id;
     moving_objects_msg.moving_object_array.push_back(moving_object);
-    
+
     id++;
   }
 

@@ -27,10 +27,10 @@ void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraIn
   camera_model.fromCameraInfo(camera_info);
 
   for (auto& moving_object : moving_object_array->moving_object_array) {
-    cv::Point3d top_left_pt(moving_object.center.x - (moving_object.bounding_box.x / 2), moving_object.center.y - (moving_object.bounding_box.y / 2), moving_object.center.z - (moving_object.bounding_box.z / 2));
+    cv::Point3d top_left_pt(moving_object.center.position.x - (moving_object.bounding_box.x / 2), moving_object.center.position.y - (moving_object.bounding_box.y / 2), moving_object.center.position.z - (moving_object.bounding_box.z / 2));
 
     cv::Point2d top_left_uv = camera_model.project3dToPixel(top_left_pt);
-    cv::Point3d bottom_right_pt(moving_object.center.x + (moving_object.bounding_box.x / 2), moving_object.center.y + (moving_object.bounding_box.y / 2), moving_object.center.z + (moving_object.bounding_box.z / 2));
+    cv::Point3d bottom_right_pt(moving_object.center.position.x + (moving_object.bounding_box.x / 2), moving_object.center.position.y + (moving_object.bounding_box.y / 2), moving_object.center.position.z + (moving_object.bounding_box.z / 2));
     cv::Point2d bottom_right_uv = camera_model.project3dToPixel(bottom_right_pt);
 
     cv::rectangle(cv_image, top_left_uv, bottom_right_uv, CV_RGB(255, 0, 0), 2);

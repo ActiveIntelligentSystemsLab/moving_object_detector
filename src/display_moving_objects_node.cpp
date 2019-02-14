@@ -42,7 +42,7 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     bounding_box.id = moving_object.id;
     bounding_box.type = visualization_msgs::Marker::CUBE;
     bounding_box.action = visualization_msgs::Marker::ADD;
-    bounding_box.pose.position = moving_object.center;
+    bounding_box.pose = moving_object.center;
     bounding_box.scale.x = moving_object.bounding_box.x;
     bounding_box.scale.y = moving_object.bounding_box.y;
     bounding_box.scale.z = moving_object.bounding_box.z;
@@ -66,11 +66,11 @@ void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_ob
     velocity_arrow.id = max_id;
     velocity_arrow.type = visualization_msgs::Marker::ARROW;
     velocity_arrow.action = visualization_msgs::Marker::ADD;
-    geometry_msgs::Point arrow_start = moving_object.center;
+    geometry_msgs::Point arrow_start = moving_object.center.position;
     geometry_msgs::Point arrow_end;
-    arrow_end.x = moving_object.center.x + moving_object.velocity.x;
-    arrow_end.y = moving_object.center.y + moving_object.velocity.y;
-    arrow_end.z = moving_object.center.z + moving_object.velocity.z;
+    arrow_end.x = moving_object.center.position.x + moving_object.velocity.x;
+    arrow_end.y = moving_object.center.position.y + moving_object.velocity.y;
+    arrow_end.z = moving_object.center.position.z + moving_object.velocity.z;
     velocity_arrow.points.push_back(arrow_start);
     velocity_arrow.points.push_back(arrow_end);
     double shaft_diameter = 0.1;
