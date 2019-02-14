@@ -143,8 +143,6 @@ public:
           kalman_filter->cov,
           p);
   }
-  // privateなやつをpublicにかえてしまった，よろしくないので修正するべき
-  boost::any last_associated;       // associated detection data
 
 private:
   long id_;
@@ -153,6 +151,7 @@ private:
   ros::Time last_prediction_time;   // tiem when prediction was performed
   ros::Time last_correction_time;   // time when correction was performed
 
+  boost::any last_associated;       // associated detection data
 
   std::unique_ptr<KalmanFilter> kalman_filter;
 };

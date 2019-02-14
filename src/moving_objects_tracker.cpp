@@ -75,11 +75,11 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
     msg.moving_object_array.reserve(trackers.size());
     for (auto &object : trackers)
     {
-      if (object->last_associated.type() != typeid(moving_object_detector::MovingObjectPtr))
-        ROS_INFO("Type mismatch: now: %s, require: %s", object->last_associated.type().name(), typeid(moving_object_detector::MovingObjectPtr).name());
+      if (object->lastAssociated().type() != typeid(moving_object_detector::MovingObjectPtr))
+        ROS_INFO("Type mismatch: now: %s, require: %s", object->lastAssociated().type().name(), typeid(moving_object_detector::MovingObjectPtr).name());
       else
       {
-        moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->last_associated));
+        moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->lastAssociated()));
         obj_msg.id = object->id();
         msg.moving_object_array.push_back(obj_msg); // コード汚すぎない？
       }
