@@ -2,4 +2,4 @@
 
 geometry_msgs/Point center
 geometry_msgs/Vector3 velocity
-moving_object_detector/Size3D bounding_box
+geometry_msgs/Vector3 bounding_box

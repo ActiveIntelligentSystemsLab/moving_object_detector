@@ -36,7 +36,6 @@ add_message_files(
   ExpResult.msg
   MovingObject.msg
   MovingObjectArray.msg
-  Size3D.msg
 )
 
 add_service_files(
