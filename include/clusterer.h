@@ -69,7 +69,7 @@ private:
   void calculateDynamicMap();
   void calculateInitialClusterMap();
   void cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id);
-  void cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
+  bool cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object);
   void clustering(pcl::IndicesClusters &output_indices);
   void clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters);
   inline int& clusterAt(const Point2d &point)

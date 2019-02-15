@@ -130,7 +130,7 @@ void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visuali
   }
 }
 
-void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object)
+bool Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object)
 {
   pcl::PointCloud<pcl::PointXYZVelocity> cluster(*input_pointcloud_, cluster_indices.indices);
 
@@ -151,16 +151,23 @@ void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, m
   moving_object.center.orientation.z = 0;
   moving_object.center.orientation.w = 1;
 
+  // ホントは平均よりも中央値出した方がいい気がする
   Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
   for (auto& point : cluster)
   {
     Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
     velocity_sum += velocity;
   }
-  int cluster_size = cluster.points.size();
-  moving_object.velocity.x = velocity_sum(0) / cluster_size;
-  moving_object.velocity.y = velocity_sum(1) / cluster_size;
-  moving_object.velocity.z = velocity_sum(2) / cluster_size;
+  Eigen::Vector3f velocity = velocity_sum / cluster.points.size();
+
+  if (velocity.norm() < dynamic_speed_th_)
+    return false;
+
+  moving_object.velocity.x = velocity(0);
+  moving_object.velocity.y = velocity(1);
+  moving_object.velocity.z = velocity(2);
+
+  return true;
 }
 
 void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &compared_point)
@@ -310,11 +317,13 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
     moving_object_detector::MovingObject moving_object;
-    cluster2MovingObject(*cluster_it, moving_object);
-    moving_object.id = id;
-    moving_objects_msg.moving_object_array.push_back(moving_object);
+    if(cluster2MovingObject(*cluster_it, moving_object)) 
+    {
+      moving_object.id = id;
+      moving_objects_msg.moving_object_array.push_back(moving_object);
 
-    id++;
+      id++;
+    }
   }
 
   dynamic_objects_pub_.publish(moving_objects_msg);
