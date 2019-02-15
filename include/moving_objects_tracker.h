@@ -26,7 +26,6 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   std::vector<KalmanTracker::Ptr> trackers;
-  std::vector<KalmanTracker::Ptr> removed_objects;
   std::shared_ptr<kkl::alg::DataAssociation<KalmanTracker::Ptr, moving_object_detector::MovingObjectPtr>> data_association;
 
   double object_radius_;

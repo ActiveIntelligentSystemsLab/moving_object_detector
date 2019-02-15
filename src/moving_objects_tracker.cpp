@@ -142,11 +142,13 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
   }
 
   // remove tracks with large covariance
-  // ここに速度分散による除去もつける
+  // 除去する分散の値を変えるべき
   auto remove_loc = std::partition(trackers.begin(), trackers.end(), [&](const KalmanTracker::Ptr& tracker) {
     return tracker->positionCov().trace() < covariance_trace_limit_;
   });
-  removed_objects.clear();
-  std::copy(remove_loc, trackers.end(), std::back_inserter(removed_objects));
+  trackers.erase(remove_loc, trackers.end());
+  remove_loc = std::partition(trackers.begin(), trackers.end(), [&](const KalmanTracker::Ptr& tracker) {
+    return tracker->velocityCov().trace() < covariance_trace_limit_;
+  });
   trackers.erase(remove_loc, trackers.end());
 }
