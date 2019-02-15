@@ -50,7 +50,13 @@ MovingObjectsTracker::MovingObjectsTracker()
 void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::MovingObjectArrayConstPtr& moving_objects)
 {
   geometry_msgs::TransformStamped to_odom;
-  to_odom = tf_buffer_.lookupTransform("odom", moving_objects->header.frame_id, moving_objects->header.stamp);
+  try {
+    to_odom = tf_buffer_.lookupTransform("odom", moving_objects->header.frame_id, moving_objects->header.stamp);
+  } 
+  catch(tf2::LookupException &e)
+  {
+    return;
+  }
 
   std::vector<moving_object_detector::MovingObjectPtr> transformed;
   transformed.reserve(moving_objects->moving_object_array.size());
@@ -75,7 +81,7 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
     msg.moving_object_array.reserve(trackers.size());
     for (auto &object : trackers)
     {
-      if (object->correction_count() < 5)
+      if (object->correction_count() < 10)
         continue;
 
       moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->lastAssociated()));
