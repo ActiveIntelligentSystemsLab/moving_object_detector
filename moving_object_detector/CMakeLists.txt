@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   stereo_msgs
   tf2
   tf2_geometry_msgs
+  viso2_ros
   visualization_msgs
 )
 
