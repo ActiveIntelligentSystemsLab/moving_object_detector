@@ -8,11 +8,11 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 
-#include <moving_object_detector/MovingObjectArray.h>
+#include <moving_object_msgs/MovingObjectArray.h>
 
 image_transport::Publisher image_pub;
 
-void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info, const moving_object_detector::MovingObjectArrayConstPtr& moving_object_array)
+void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info, const moving_object_msgs::MovingObjectArrayConstPtr& moving_object_array)
 {
   cv::Mat cv_image;
   cv_bridge::CvImagePtr input_bridge;
@@ -51,12 +51,12 @@ int main(int argc, char **argv)
   image_pub = img_trans.advertise("moving_objects_image", 1);
   image_transport::SubscriberFilter image_sub;
   message_filters::Subscriber<sensor_msgs::CameraInfo> camerainfo_sub;
-  message_filters::Subscriber<moving_object_detector::MovingObjectArray> moving_objects_sub;
+  message_filters::Subscriber<moving_object_msgs::MovingObjectArray> moving_objects_sub;
 
   image_sub.subscribe(img_trans, input_image_topic, 10);
   moving_objects_sub.subscribe(nh, "moving_objects", 10);
   camerainfo_sub.subscribe(nh, input_camerainfo_topic, 10);
-  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, moving_object_detector::MovingObjectArray> sync(image_sub, camerainfo_sub, moving_objects_sub, 10);
+  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, moving_object_msgs::MovingObjectArray> sync(image_sub, camerainfo_sub, moving_objects_sub, 10);
   sync.registerCallback(boost::bind(&dataCB, _1, _2, _3));
 
   ros::spin();

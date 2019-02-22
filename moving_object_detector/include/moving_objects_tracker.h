@@ -1,7 +1,7 @@
 #ifndef __HEADER_MOVING_OBJECTS_TRACKER__
 #define __HEADER_MOVING_OBJECTS_TRACKER__
 
-#include <moving_object_detector/MovingObjectArray.h>
+#include <moving_object_msgs/MovingObjectArray.h>
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -27,15 +27,15 @@ private:
 
   std::vector<KalmanTracker::Ptr> trackers;
   std::vector<KalmanTracker::Ptr> removed_objects;
-  std::shared_ptr<kkl::alg::DataAssociation<KalmanTracker::Ptr, moving_object_detector::MovingObjectPtr>> data_association;
+  std::shared_ptr<kkl::alg::DataAssociation<KalmanTracker::Ptr, moving_object_msgs::MovingObjectPtr>> data_association;
 
   double object_radius_;
   double covariance_trace_limit_;
   int id_gen_;
 
-  void movingObjectsCallback(const moving_object_detector::MovingObjectArrayConstPtr &moving_objects);
+  void movingObjectsCallback(const moving_object_msgs::MovingObjectArrayConstPtr &moving_objects);
   void predict(const ros::Time& time);
-  void correct(const ros::Time& time, const std::vector<moving_object_detector::MovingObjectPtr> &moving_objects);
+  void correct(const ros::Time& time, const std::vector<moving_object_msgs::MovingObjectPtr> &moving_objects);
 };
 
 #endif

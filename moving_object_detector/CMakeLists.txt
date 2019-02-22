@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   kkl
   message_generation
+  moving_object_msgs
   pcl_conversions
   roscpp
   sensor_msgs
@@ -34,8 +35,6 @@ find_package(PCL REQUIRED
 add_message_files(
   FILES
   ExpResult.msg
-  MovingObject.msg
-  MovingObjectArray.msg
 )
 
 add_service_files(

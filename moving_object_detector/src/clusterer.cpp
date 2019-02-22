@@ -22,7 +22,7 @@ Clusterer::Clusterer()
   clusters_image_pub_ = image_transport_->advertise("clusters_image", 1);
   
   velocity_pc_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &Clusterer::dataCB, this);
-  dynamic_objects_pub_ = node_handle_.advertise<moving_object_detector::MovingObjectArray>("moving_objects", 1);
+  dynamic_objects_pub_ = node_handle_.advertise<moving_object_msgs::MovingObjectArray>("moving_objects", 1);
   clusters_pub_ = node_handle_.advertise<visualization_msgs::MarkerArray>("clusters", 1);
 }
 
@@ -130,7 +130,7 @@ void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visuali
   }
 }
 
-void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_detector::MovingObject& moving_object)
+void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_msgs::MovingObject& moving_object)
 {
   pcl::PointCloud<pcl::PointXYZVelocity> cluster(*input_pointcloud_, cluster_indices.indices);
 
@@ -303,13 +303,13 @@ void Clusterer::publishClustersImage()
 
 void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
 {
-  moving_object_detector::MovingObjectArray moving_objects_msg;
+  moving_object_msgs::MovingObjectArray moving_objects_msg;
   moving_objects_msg.header = input_header_;
 
   int id = 0;
   for (auto cluster_it = clusters.begin (); cluster_it != clusters.end (); cluster_it++)
   {
-    moving_object_detector::MovingObject moving_object;
+    moving_object_msgs::MovingObject moving_object;
     cluster2MovingObject(*cluster_it, moving_object);
     moving_object.id = id;
     moving_objects_msg.moving_object_array.push_back(moving_object);

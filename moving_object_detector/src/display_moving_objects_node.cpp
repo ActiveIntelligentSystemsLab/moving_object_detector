@@ -1,4 +1,4 @@
-#include <moving_object_detector/MovingObjectArray.h>
+#include <moving_object_msgs/MovingObjectArray.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -7,7 +7,7 @@ ros::Publisher markers_pub;
 
 double alpha, red, blue, green;
 
-void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_object_msg);
+void callback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_object_msg);
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "display_moving_objects");
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   ros::spin();
 }
 
-void callback(const moving_object_detector::MovingObjectArrayConstPtr& moving_objects_msg) {
+void callback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_objects_msg) {
   visualization_msgs::MarkerArray pub_msg;
 
   // First element is used for delete markers in previous frame
