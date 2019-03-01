@@ -21,6 +21,7 @@ private:
   ros::NodeHandle node_handle_;
   ros::Subscriber moving_objects_sub_;
   ros::Publisher tracked_moving_objects_pub_;
+  ros::Publisher trackers_covariance_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;

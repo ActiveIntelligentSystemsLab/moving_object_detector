@@ -1,6 +1,7 @@
 #include "moving_objects_tracker.h"
 
 #include <geometry_msgs/TransformStamped.h>
+#include <moving_object_detector/TrackerCovarianceArray.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <kkl/alg/nearest_neighbor_association.hpp>
@@ -44,7 +45,7 @@ MovingObjectsTracker::MovingObjectsTracker()
 
   moving_objects_sub_ = node_handle_.subscribe("moving_objects", 1, &MovingObjectsTracker::movingObjectsCallback, this);
   tracked_moving_objects_pub_ = node_handle_.advertise<moving_object_msgs::MovingObjectArray>("tracked_moving_objects", 1);
-
+  trackers_covariance_pub_ = node_handle_.advertise<moving_object_detector::TrackerCovarianceArray>("trackers_sovariance", 1);
 }
 
 void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_objects)
@@ -93,6 +94,32 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
 
     }
     tracked_moving_objects_pub_.publish(msg);
+  }
+
+  if (trackers_covariance_pub_.getNumSubscribers())
+  {
+    moving_object_detector::TrackerCovarianceArray msg;
+    msg.header.frame_id = "odom";
+    msg.header.stamp = moving_objects->header.stamp;
+    msg.tracker_covariance_array.reserve(trackers.size());
+
+    for (auto &object : trackers)
+    {
+      if (object->correction_count() < 5)
+        continue;
+
+      if (object->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
+        ROS_INFO("Type mismatch: now: %s, require: %s, any: %s", object->lastAssociated().type().name(), typeid(moving_object_msgs::MovingObjectPtr).name(), boost::any().type().name());
+      else
+      {
+        moving_object_detector::TrackerCovariance cov_msg;
+        cov_msg.id = object->id();
+        for (int i = 0; i < object->cov().size(); i++)
+          cov_msg.covariance[i] = object->cov()(i);
+        msg.tracker_covariance_array.push_back(cov_msg);
+      }
+    }
+    trackers_covariance_pub_.publish(msg);
   }
 }
 

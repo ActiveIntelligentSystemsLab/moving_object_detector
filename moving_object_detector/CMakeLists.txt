@@ -36,6 +36,8 @@ find_package(PCL REQUIRED
 add_message_files(
   FILES
   ExpResult.msg
+  TrackerCovariance.msg
+  TrackerCovarianceArray.msg
 )
 
 add_service_files(
