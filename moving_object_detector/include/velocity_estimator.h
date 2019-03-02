@@ -19,7 +19,7 @@
 #include <stereo_msgs/DisparityImage.h>
 #include <dynamic_reconfigure/server.h>
 #include <moving_object_detector/VelocityEstimatorConfig.h>
-#include <dis_flow/FlowImage.h>
+#include <optical_flow_msg/OpticalFlow.h>
 #include <list>
 
 class VelocityEstimator {
@@ -31,12 +31,12 @@ private:
   ros::Publisher pc_with_velocity_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_left_sub_;
-  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_right_sub_;
+  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_left_sub_;
+  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_right_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> left_camera_info_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dis_flow::FlowImage, dis_flow::FlowImage, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
@@ -47,7 +47,7 @@ private:
   ros::Time time_stamp_previous_;
       
   void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
-  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, tf2::Transform transform);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform);
   bool isValid(const pcl::PointXYZ &point);

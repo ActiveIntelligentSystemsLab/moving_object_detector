@@ -29,7 +29,7 @@ VelocityEstimator::VelocityEstimator() {
   disparity_image_sub_.subscribe(node_handle_, "disparity_image", 20);
   left_camera_info_sub_.subscribe(node_handle_, "left_camera_info", 1);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dis_flow::FlowImage, dis_flow::FlowImage, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
 }
 
@@ -40,7 +40,7 @@ void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorC
   matching_tolerance_ = config.matching_tolerance;
 }
 
-void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dis_flow::FlowImageConstPtr& optical_flow_left, const dis_flow::FlowImageConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();

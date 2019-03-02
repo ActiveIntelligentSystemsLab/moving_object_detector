@@ -10,7 +10,7 @@
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
 #include <viso2_ros/VisoInfo.h>
-#include <dis_flow/FlowImage.h>
+#include <optical_flow_msg/OpticalFlow.h>
 #include <stereo_msgs/DisparityImage.h>
 
 // visual odometry, stereo matching, optical flowへの入力を与えるノード
@@ -40,12 +40,12 @@ private:
 
   // Subscriber to check stereo matching, optical flow and visual odometry is completed
   message_filters::Subscriber<viso2_ros::VisoInfo> viso2_info_sub_;
-  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_left_sub_;
-  message_filters::Subscriber<dis_flow::FlowImage> optical_flow_right_sub_;
+  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_left_sub_;
+  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_right_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
   // TimeSynchronizer to check stereo matching, optical flow and visual odometry is completed
-  typedef message_filters::TimeSynchronizer<viso2_ros::VisoInfo, dis_flow::FlowImage, dis_flow::FlowImage, stereo_msgs::DisparityImage> ProcessedDataSynchronizer;
+  typedef message_filters::TimeSynchronizer<viso2_ros::VisoInfo, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, stereo_msgs::DisparityImage> ProcessedDataSynchronizer;
   std::shared_ptr<ProcessedDataSynchronizer> processed_data_time_sync_;
   
   sensor_msgs::CameraInfo left_camera_info_;
@@ -61,7 +61,7 @@ private:
   void publishSynchronizedStereo();
   
   void stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
-  void processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const dis_flow::FlowImageConstPtr& left_flow, const dis_flow::FlowImageConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity);
+  void processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msg::OpticalFlowConstPtr& left_flow, const optical_flow_msg::OpticalFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity);
   bool publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response);
   
 public:

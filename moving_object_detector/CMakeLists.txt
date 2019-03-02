@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   kkl
   message_generation
   moving_object_msgs
+  optical_flow_msg
   pcl_conversions
   roscpp
   sensor_msgs
