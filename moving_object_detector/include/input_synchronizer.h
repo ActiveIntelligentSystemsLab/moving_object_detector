@@ -13,12 +13,14 @@
 #include <optical_flow_msg/OpticalFlow.h>
 #include <stereo_msgs/DisparityImage.h>
 
+#include <memory>
+
 // visual odometry, stereo matching, optical flowへの入力を与えるノード
 // visual odometry, stereo matching, optical flowの処理が終了するたびに，タイムスタンプを同期させたステレオ画像とcamera infoを1セットpublishする
-
 class InputSynchronizer {
 private:
-  ros::NodeHandle node_handle_;
+  std::shared_ptr<ros::NodeHandle> node_handle_;
+  std::shared_ptr<ros::NodeHandle> private_node_handle;
   
   ros::ServiceServer publish_service_;
   
@@ -54,7 +56,7 @@ private:
   sensor_msgs::Image right_rect_image_;
   sensor_msgs::CameraInfo right_rect_info_;
 
-  ros::Duration republish_timeout_;
+  double republish_timeout_;
   ros::Time last_published_stamp_;
   bool publish_required_;
     
