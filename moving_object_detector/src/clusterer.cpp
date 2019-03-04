@@ -130,7 +130,7 @@ void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visuali
   }
 }
 
-void Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_msgs::MovingObject& moving_object)
+bool Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_msgs::MovingObject& moving_object)
 {
   pcl::PointCloud<pcl::PointXYZVelocity> cluster(*input_pointcloud_, cluster_indices.indices);
 
