@@ -1,6 +1,7 @@
 #include "moving_objects_tracker.h"
 
 #include <geometry_msgs/TransformStamped.h>
+#include <moving_object_detector/TrackerCovarianceArray.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <kkl/alg/nearest_neighbor_association.hpp>
@@ -12,7 +13,7 @@ namespace kkl {
  * @brief definition of the distance between tracker and observation for data association
  */
 template<>
-boost::optional<double> distance(const std::shared_ptr<KalmanTracker>& tracker, const moving_object_detector::MovingObjectPtr& observation) {
+boost::optional<double> distance(const std::shared_ptr<KalmanTracker>& tracker, const moving_object_msgs::MovingObjectPtr& observation) {
   // もともと位置だけを使っていたのを適当に位置＋速度の4次元に変更したが，あってるかは知らない
   // パラメータとかは調整するべき
   Eigen::Vector4d x;
@@ -36,18 +37,18 @@ MovingObjectsTracker::MovingObjectsTracker()
 {
   tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
 
-  data_association.reset(new kkl::alg::NearestNeighborAssociation<KalmanTracker::Ptr, moving_object_detector::MovingObjectPtr>());
+  data_association.reset(new kkl::alg::NearestNeighborAssociation<KalmanTracker::Ptr, moving_object_msgs::MovingObjectPtr>());
 
   object_radius_ = 0.5; // 後で調整する
   covariance_trace_limit_ = 0.5;
   id_gen_ = 0;
 
   moving_objects_sub_ = node_handle_.subscribe("moving_objects", 1, &MovingObjectsTracker::movingObjectsCallback, this);
-  tracked_moving_objects_pub_ = node_handle_.advertise<moving_object_detector::MovingObjectArray>("tracked_moving_objects", 1);
-
+  tracked_moving_objects_pub_ = node_handle_.advertise<moving_object_msgs::MovingObjectArray>("tracked_moving_objects", 1);
+  trackers_covariance_pub_ = node_handle_.advertise<moving_object_detector::TrackerCovarianceArray>("trackers_sovariance", 1);
 }
 
-void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::MovingObjectArrayConstPtr& moving_objects)
+void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_objects)
 {
   geometry_msgs::TransformStamped to_odom;
   try {
@@ -58,11 +59,11 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
     return;
   }
 
-  std::vector<moving_object_detector::MovingObjectPtr> transformed;
+  std::vector<moving_object_msgs::MovingObjectPtr> transformed;
   transformed.reserve(moving_objects->moving_object_array.size());
   for (auto& moving_object : moving_objects->moving_object_array)
   {
-    moving_object_detector::MovingObjectPtr transformed_object(new moving_object_detector::MovingObject);
+    moving_object_msgs::MovingObjectPtr transformed_object(new moving_object_msgs::MovingObject);
     tf2::doTransform(moving_object.center, transformed_object->center, to_odom);
     tf2::doTransform(moving_object.velocity, transformed_object->velocity, to_odom);
     transformed_object->bounding_box = moving_object.bounding_box;
@@ -75,7 +76,7 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
   // publish tracks msg
   // moving_objectにID付けるのと，別トピックかなんかでcovarianceの情報とか出した方がいい
   if(tracked_moving_objects_pub_.getNumSubscribers()) {
-    moving_object_detector::MovingObjectArray msg;
+    moving_object_msgs::MovingObjectArray msg;
     msg.header.frame_id = "odom";
     msg.header.stamp = moving_objects->header.stamp;
     msg.moving_object_array.reserve(trackers.size());
@@ -84,7 +85,7 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
       if (object->correction_count() < 10)
         continue;
 
-      moving_object_detector::MovingObject obj_msg = *(boost::any_cast<moving_object_detector::MovingObjectPtr>(object->lastAssociated()));
+      moving_object_msgs::MovingObject obj_msg = *(boost::any_cast<moving_object_msgs::MovingObjectPtr>(object->lastAssociated()));
       obj_msg.id = object->id();
       obj_msg.center.position.x = object->position().x();
       obj_msg.center.position.y = object->position().y();
@@ -94,6 +95,32 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_detector::M
     }
     tracked_moving_objects_pub_.publish(msg);
   }
+
+  if (trackers_covariance_pub_.getNumSubscribers())
+  {
+    moving_object_detector::TrackerCovarianceArray msg;
+    msg.header.frame_id = "odom";
+    msg.header.stamp = moving_objects->header.stamp;
+    msg.tracker_covariance_array.reserve(trackers.size());
+
+    for (auto &object : trackers)
+    {
+      if (object->correction_count() < 5)
+        continue;
+
+      if (object->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
+        ROS_INFO("Type mismatch: now: %s, require: %s, any: %s", object->lastAssociated().type().name(), typeid(moving_object_msgs::MovingObjectPtr).name(), boost::any().type().name());
+      else
+      {
+        moving_object_detector::TrackerCovariance cov_msg;
+        cov_msg.id = object->id();
+        for (int i = 0; i < object->cov().size(); i++)
+          cov_msg.covariance[i] = object->cov()(i);
+        msg.tracker_covariance_array.push_back(cov_msg);
+      }
+    }
+    trackers_covariance_pub_.publish(msg);
+  }
 }
 
 void MovingObjectsTracker::predict(const ros::Time& time)
@@ -102,7 +129,7 @@ void MovingObjectsTracker::predict(const ros::Time& time)
     tracked_object->predict(time);
 }
 
-void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<moving_object_detector::MovingObjectPtr> &moving_objects)
+void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<moving_object_msgs::MovingObjectPtr> &moving_objects)
 {
   std::vector<bool> associated(moving_objects.size(), false);
   auto associations = data_association->associate(trackers, moving_objects);

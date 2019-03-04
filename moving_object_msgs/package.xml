@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>moving_object_msgs</name>
+  <version>0.0.0</version>
+  <description>The moving_object_msgs package</description>
+
+  <maintainer email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</maintainer>
+  <license>TODO</license>
+  <url type="website">https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+</package>
