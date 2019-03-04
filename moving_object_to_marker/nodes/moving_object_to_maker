@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import rospy
+from moving_object_msgs.msg import MovingObjectArray
+from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import Marker, MarkerArray
+
+class MovingObjectToMarker:
+    def __init__(self):
+        rospy.init_node('moving_object_to_marker')
+
+        self._color = ColorRGBA()
+        self._color.a = rospy.get_param('~alpha', 0.5)
+        self._color.r = rospy.get_param('~red',   1.0)
+        self._color.g = rospy.get_param('~green', 0.0)
+        self._color.b = rospy.get_param('~blue',  0.0)
+
+        self._marker_pub = rospy.Publisher('marker_array', MarkerArray, queue_size=1)
+        self._moving_object_sub = rospy.Subscriber('moving_object_array', MovingObjectArray, self.movingObjectCallback)
+
+    def movingObjectCallback(self, moving_object_array):
+        """
+        Callback function for MovingObjectArray subscriber.
+        This callback converts MovingObjectArray to MarkerArray and publish it.
+
+        @param moving_object_array: Array of moving object
+        @type  moving_object: moving_object_msgs/MovingObjectArray
+        """
+        marker_array = MarkerArray()
+
+        # First element is used for delete markers in previous frame
+        delete_marker = Marker()
+        delete_marker.header = moving_object_array.header
+        delete_marker.action = Marker.DELETEALL
+        marker_array.markers.append(delete_marker)
+
+        for moving_object in moving_object_array.moving_object_array:
+            # Represent pose and size of moving object as bounding box
+            bounding_box = self.movingObjectToBoundingBox(moving_object, moving_object_array.header)
+            marker_array.markers.append(bounding_box)
+
+            # Represent velocity of moving object as arrow
+            velocity_arrow = self.movingObjectToVelocityArrow(moving_object, moving_object_array.header)
+            marker_array.markers.append(velocity_arrow)
+        
+        self._marker_pub.publish(marker_array)
+
+    def movingObjectToBoundingBox(self, moving_object, header):
+        """
+        Create a bounding box of a moving object as visualization_msgs/Marker.
+        The box represent pose and size of the object.
+
+        @param moving_object: a moving object converted to a bounding box
+        @type  moving_object: moving_object_msgs/MovingObject
+        @param header: A header includes frame_id, time stamp and sequence number
+        @type  header: std_msgs/Header
+        @return: Created bounding box
+        @rtype:  visualization_msgs/Marker
+        """
+        bounding_box = Marker()
+        bounding_box.header = header
+        bounding_box.id = moving_object.id
+        bounding_box.type = Marker.CUBE
+        bounding_box.action = Marker.ADD
+        bounding_box.pose = moving_object.center
+        bounding_box.scale.x = moving_object.bounding_box.x
+        bounding_box.scale.y = moving_object.bounding_box.y
+        bounding_box.scale.z = moving_object.bounding_box.z
+        bounding_box.color = self._color
+        bounding_box.ns = 'bounding_box'
+
+        return bounding_box
+
+    def movingObjectToVelocityArrow(self, moving_object, header):
+        """
+        Create a velocity arrow of a moving object as visualization_msgs/Marker.
+
+        @param moving_object: a moving object converted to a velocity arrow
+        @type  moving_object: moving_object_msgs/MovingObject
+        @param header: A header includes frame_id, time stamp and sequence number
+        @type  header: std_msgs/Header
+        @return: Created velocity arrow
+        @rtype:  visualization_msgs/Marker
+        """
+        velocity_arrow = Marker()
+        velocity_arrow.id = moving_object.id
+        velocity_arrow.type = Marker.ARROW
+        velocity_arrow.action = Marker.ADD
+        velocity_arrow.color = self._color
+        velocity_arrow.ns = 'velocity_arrow'
+        velocity_arrow.scale.x = 0.1 # Shaft diameter
+        velocity_arrow.scale.y = 0.2 # Head diameter
+        velocity_arrow.scale.z = 0.0 # Head length, when 0.0 use default value
+
+        arrow_start = moving_object.center.position
+        arrow_end = moving_object.center.position
+        arrow_end.x = moving_object.velocity.x
+        arrow_end.y = moving_object.velocity.y
+        arrow_end.z = moving_object.velocity.z
+
+        velocity_arrow.points.append(arrow_start)
+        velocity_arrow.points.append(arrow_end)
+
+        return velocity_arrow
+
+if __name__ == '__main__':
+    result_calc = MovingObjectToMarker()
+    rospy.spin()

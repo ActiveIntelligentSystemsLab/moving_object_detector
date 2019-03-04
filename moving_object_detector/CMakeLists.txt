@@ -96,12 +96,6 @@ target_link_libraries(clusterer_node
 #   PUBLIC -pg
 # )
 
-add_executable(display_moving_objects_node src/display_moving_objects_node.cpp)
-add_dependencies(display_moving_objects_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(display_moving_objects_node
-  ${catkin_LIBRARIES}
-)
-
 add_executable(display_moving_objects_2d_node src/display_moving_objects_2d_node.cpp)
 add_dependencies(display_moving_objects_2d_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(display_moving_objects_2d_node
