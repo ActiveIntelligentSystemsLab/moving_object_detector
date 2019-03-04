@@ -3,8 +3,8 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
-  <arg name="gazebo_bag" value="/home/aisl/Datasets/simulation_exp_dynamic_camera/input_gazebo.bag"/>
-  <arg name="elas_bag" value="/home/aisl/Datasets/simulation_exp_dynamic_camera/input_elas.bag"/>
+  <arg name="gazebo_bag" value="/home/aisl/Desktop/2019-02-15-10-30-02.bag"/>
+  <arg name="elas_bag" value="/home/aisl/Desktop/2019-02-15-10-38-42.bag"/>
 
   <node name="bag_player" pkg="rosbag" type="play" args="--clock $(arg gazebo_bag) $(arg elas_bag)"/>
 </launch>
