@@ -3,7 +3,7 @@
 InputSynchronizer::InputSynchronizer()
 {
   node_handle_.reset(new ros::NodeHandle);
-  private_node_handle.reset(new ros::NodeHandle(*node_handle_, "~"));
+  private_node_handle.reset(new ros::NodeHandle("~"));
   image_transport_.reset(new image_transport::ImageTransport(*node_handle_));
 
   republish_timeout_ = private_node_handle->param("republish_timeout", 1.0);
