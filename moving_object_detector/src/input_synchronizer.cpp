@@ -57,12 +57,12 @@ void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr&
 
 void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msg::OpticalFlowConstPtr& left_flow, const optical_flow_msg::OpticalFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
 {
-  ROS_INFO("recieve output data and require repubish");
   publish_required_ = true;
 }
 
 bool InputSynchronizer::publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response)
 {
+  ROS_INFO("Repubish is required from service");
   publish_required_ = true;
   return true;
 }
