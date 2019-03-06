@@ -62,9 +62,8 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     tf2::fromMsg(camera_transform->transform, tf2_now2previous);
     transform(pc_previous, pc_previous_transformed, tf2_now2previous.inverse());
 
-    
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
-    
+
     pcl::PointXYZVelocity default_value;
     default_value.x = std::nanf("");
     default_value.y = std::nanf("");
