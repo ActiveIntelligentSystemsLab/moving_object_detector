@@ -2,32 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 project(moving_object_tracker)
 
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
-  dynamic_reconfigure
   geometry_msgs
-  image_geometry
-  image_transport
   kkl
   message_generation
   moving_object_msgs
-  pcl_conversions
   roscpp
-  sensor_msgs
   std_msgs
-  tf2
   tf2_geometry_msgs
-  visualization_msgs
-  velocity_estimator
+  tf2_ros
 )
-
-find_package(OpenCV)
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(PCL REQUIRED
-  common
-  filters
-  search
-  segmentation
-)
 
 add_message_files(
   FILES
@@ -47,18 +31,12 @@ catkin_package(
     message_runtime 
     std_msgs 
 )
-# To use gprof
-# set(catkin_LIBRARIES ${catkin_LIBRARIES} -pg)
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
-
-link_directories(${PCL_LIBRARY_DIRS})
 
 add_executable(moving_objects_tracker_node
   src/moving_objects_tracker.cpp
