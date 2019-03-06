@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(moving_object_detector)
+project(moving_object_tracker)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge

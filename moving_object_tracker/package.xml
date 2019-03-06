@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>moving_object_detector</name>
+  <name>moving_object_tracker</name>
   <version>0.0.0</version>
-  <description>移動物体を抽出するノード</description>
+  <description>A node to track moving objects and remove error by Kalman filter</description>
   <maintainer email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</maintainer>
   <license>TODO</license>
   
