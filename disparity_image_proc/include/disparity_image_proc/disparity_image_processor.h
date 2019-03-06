@@ -1,5 +1,5 @@
-#ifndef __HEADER_PROCESS_DISPARITY_IMAGE__
-#define HEADADER_PROCESS_DISPARITY_IMAGE__
+#ifndef DISPARITY_IMAGE_PROCESSOR_H
+#define DISPARITY_IMAGE_PROCESSOR_H
 
 #include <image_geometry/pinhole_camera_model.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -12,10 +12,10 @@
 #include <exception>
 #include <opencv2/core/core.hpp>
 
-class ProcessDisparityImage
+class DisparityImageProcessor
 {
 public:
-  ProcessDisparityImage(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info);
+  DisparityImageProcessor(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info);
   
   bool getDisparity(int u, int v, float& disparity);
   bool getPoint3D(int u, int v, pcl::PointXYZ& point3d);
@@ -31,4 +31,4 @@ private:
 };
 
 
-#endif // __HEADER_PROCESS_DISPARITY_IMAGE__
+#endif // DISPARITY_IMAGE_PROCESSOR_H

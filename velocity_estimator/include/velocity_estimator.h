@@ -1,8 +1,6 @@
 #ifndef __HEADER_MOVING_OBJECT_DETECTOR__
 #define __HEADER_MOVING_OBJECT_DETECTOR__
 
-#include "process_disparity_image.h"
-
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -20,6 +18,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <velocity_estimator/VelocityEstimatorConfig.h>
 #include <optical_flow_msg/OpticalFlow.h>
+#include <disparity_image_proc/disparity_image_processor.h>
+
 #include <list>
 
 class VelocityEstimator {
@@ -52,7 +52,7 @@ private:
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform);
   bool isValid(const pcl::PointXYZ &point);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
-  bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, ProcessDisparityImage &disparity_processor);
+  bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
 };
 
 #endif

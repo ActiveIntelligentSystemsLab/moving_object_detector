@@ -1,13 +1,13 @@
-#include "process_disparity_image.h"
+#include <disparity_image_proc/disparity_image_processor.h>
 
-ProcessDisparityImage::ProcessDisparityImage(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info) : _disparity_msg(disparity_msg)
+DisparityImageProcessor::DisparityImageProcessor(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info) : _disparity_msg(disparity_msg)
 {
   _disparity_map = cv::Mat_<float>(_disparity_msg->image.height, _disparity_msg->image.width, (float*)&_disparity_msg->image.data[0], _disparity_msg->image.step);
   
   _left_camera_model.fromCameraInfo(left_camera_info);
 }
 
-bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
+bool DisparityImageProcessor::getDisparity(int u, int v, float& disparity)
 {
   if (u < 0 || u >= getWidth())
     return false;
@@ -23,7 +23,7 @@ bool ProcessDisparityImage::getDisparity(int u, int v, float& disparity)
   return true;
 }
 
-bool ProcessDisparityImage::getPoint3D(int u, int v, pcl::PointXYZ &point3d)
+bool DisparityImageProcessor::getPoint3D(int u, int v, pcl::PointXYZ &point3d)
 {
   float disparity;
   if (!getDisparity(u, v, disparity))
@@ -42,7 +42,7 @@ bool ProcessDisparityImage::getPoint3D(int u, int v, pcl::PointXYZ &point3d)
   return true;
 }
 
-bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
+bool DisparityImageProcessor::getPoint3D(int u, int v, tf2::Vector3& point3d)
 {
   float disparity;
   if (!getDisparity(u, v, disparity))
@@ -66,17 +66,17 @@ bool ProcessDisparityImage::getPoint3D(int u, int v, tf2::Vector3& point3d)
   return true;
 }
 
-int ProcessDisparityImage::getWidth()
+int DisparityImageProcessor::getWidth()
 {
   return _disparity_map.cols;
 }
 
-int ProcessDisparityImage::getHeight()
+int DisparityImageProcessor::getHeight()
 {
   return _disparity_map.rows;
 }
 
-void ProcessDisparityImage::toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcloud)
+void DisparityImageProcessor::toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcloud)
 {
   float nan = std::nan("");
   pcl::PointXYZ default_value(nan, nan, nan);

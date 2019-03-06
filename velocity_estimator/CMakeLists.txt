@@ -3,6 +3,7 @@ project(velocity_estimator)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
+  disparity_image_proc
   dynamic_reconfigure
   image_geometry
   image_transport
@@ -62,7 +63,6 @@ target_link_libraries(input_synchronizer_node
 add_executable(velocity_estimator_node
   src/velocity_estimator.cpp
   src/velocity_estimator_node.cpp
-  src/process_disparity_image.cpp
 )
 add_dependencies(velocity_estimator_node
   ${catkin_EXPORTED_TARGETS}

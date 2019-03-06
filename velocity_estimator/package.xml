@@ -8,6 +8,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>cv_bridge</depend>
+  <depend>disparity_image_proc</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>image_geometry</depend>
   <depend>image_transport</depend>
@@ -24,7 +25,6 @@
   <depend>libopencv-dev</depend>
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>message_generation</build_depend>
-
   <exec_depend>libpcl-all</exec_depend>
   <exec_depend>message_runtime</exec_depend>
 </package>

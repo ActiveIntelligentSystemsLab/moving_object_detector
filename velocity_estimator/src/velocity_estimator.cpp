@@ -50,8 +50,8 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     cv::Mat left_flow = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     cv::Mat right_flow = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
     
-    ProcessDisparityImage disparity_processor(disparity_image, left_camera_info);
-    ProcessDisparityImage disparity_processor_previous(disparity_image_previous_, left_camera_info);
+    DisparityImageProcessor disparity_processor(disparity_image, left_camera_info);
+    DisparityImageProcessor disparity_processor_previous(disparity_image_previous_, left_camera_info);
 
     pcl::PointCloud<pcl::PointXYZ> pc_now, pc_previous;
     disparity_processor.toPointCloud(pc_now);
@@ -192,7 +192,7 @@ bool VelocityEstimator::getPreviousPoint(const cv::Point2i &now, cv::Point2i &pr
   return true;
 }
 
-bool VelocityEstimator::getRightPoint(const cv::Point2i &left, cv::Point2i &right, ProcessDisparityImage &disparity_processor)
+bool VelocityEstimator::getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
 {
   float disparity;
   if (!disparity_processor.getDisparity(left.x, left.y, disparity))
