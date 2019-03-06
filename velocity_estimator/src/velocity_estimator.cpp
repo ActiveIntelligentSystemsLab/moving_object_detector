@@ -56,9 +56,7 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     disparity_processor_previous.toPointCloud(pc_previous);
 
     pcl::PointCloud<pcl::PointXYZ> pc_previous_transformed;
-    tf2::Transform tf2_now2previous;
-    tf2::fromMsg(camera_transform->transform, tf2_now2previous);
-    transform(pc_previous, pc_previous_transformed, tf2_now2previous.inverse());
+    transformPCPreviousToNow(pc_previous, pc_previous_transformed, camera_transform->transform);
 
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
 
@@ -159,6 +157,14 @@ void VelocityEstimator::transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::Po
     }
   }
 }
+
+void VelocityEstimator::transformPCPreviousToNow(pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &camera_now_to_previous)
+{
+  tf2::Transform tf2_now_to_previous;
+  tf2::fromMsg(camera_now_to_previous, tf2_now_to_previous);
+  transform(pc_previous, pc_previous_transformed, tf2_now_to_previous.inverse());
+}
+
 
 bool VelocityEstimator::isValid(const pcl::PointXYZ &point)
 {
