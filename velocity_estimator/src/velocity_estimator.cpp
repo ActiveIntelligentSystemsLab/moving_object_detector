@@ -3,19 +3,13 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
-#include <image_transport/camera_common.h>
-#include <pcl/common/geometry.h>
-#include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <algorithm>
 #include <cmath>
-#include <limits>
 #include <stdexcept>
-#include <vector>
+#include <memory>
 
 VelocityEstimator::VelocityEstimator() {  
   reconfigure_func_ = boost::bind(&VelocityEstimator::reconfigureCB, this, _1, _2);

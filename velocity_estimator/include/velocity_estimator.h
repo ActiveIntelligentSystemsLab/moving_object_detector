@@ -1,22 +1,21 @@
 #ifndef VELOCITY_ESTIMATOR_H
 #define VELOCITY_ESTIMATOR_H
 
-#include <ros/ros.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
+#include <disparity_image_proc/disparity_image_processor.h>
+#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <image_geometry/pinhole_camera_model.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
-#include <stereo_msgs/DisparityImage.h>
-#include <dynamic_reconfigure/server.h>
-#include <velocity_estimator/VelocityEstimatorConfig.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #include <optical_flow_msg/OpticalFlow.h>
-#include <disparity_image_proc/disparity_image_processor.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <stereo_msgs/DisparityImage.h>
+#include <velocity_estimator/VelocityEstimatorConfig.h>
 
 #include <list>
 
