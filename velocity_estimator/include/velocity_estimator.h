@@ -1,5 +1,5 @@
-#ifndef __HEADER_MOVING_OBJECT_DETECTOR__
-#define __HEADER_MOVING_OBJECT_DETECTOR__
+#ifndef VELOCITY_ESTIMATOR_H
+#define VELOCITY_ESTIMATOR_H
 
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
@@ -50,6 +50,7 @@ private:
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, tf2::Transform transform);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform);
+  void transformPCPreviousToNow(pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, geometry_msgs::TransformStamped &camera_now_to_previous);
   bool isValid(const pcl::PointXYZ &point);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
