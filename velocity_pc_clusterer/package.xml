@@ -14,5 +14,5 @@
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
-  <build_depend>velocity_estimator</depend>
+  <build_depend>velocity_estimator</build_depend>
 </package>
