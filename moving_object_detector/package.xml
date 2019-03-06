@@ -28,6 +28,7 @@
 
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>velocity_estimator</build_depend>
   <buildtool_depend>kkl</buildtool_depend> <!-- from https://aisl-serv6.aisl.cs.tut.ac.jp:20443/koide/grace_person_following -->
 
   <exec_depend>gazebo_factory_world</exec_depend>

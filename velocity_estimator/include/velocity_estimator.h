@@ -18,7 +18,7 @@
 #include <image_transport/camera_common.h>
 #include <stereo_msgs/DisparityImage.h>
 #include <dynamic_reconfigure/server.h>
-#include <moving_object_detector/VelocityEstimatorConfig.h>
+#include <velocity_estimator/VelocityEstimatorConfig.h>
 #include <optical_flow_msg/OpticalFlow.h>
 #include <list>
 
@@ -38,15 +38,15 @@ private:
 
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
-  dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig> reconfigure_server_;
-  dynamic_reconfigure::Server<moving_object_detector::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
+  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig> reconfigure_server_;
+  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
   
   double matching_tolerance_;
 
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   ros::Time time_stamp_previous_;
       
-  void reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level);
+  void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, tf2::Transform transform);
   void transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform);

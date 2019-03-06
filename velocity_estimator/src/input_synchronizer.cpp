@@ -60,7 +60,7 @@ void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConst
   publish_required_ = true;
 }
 
-bool InputSynchronizer::publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response)
+bool InputSynchronizer::publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response)
 {
   ROS_INFO("Repubish is required from service");
   publish_required_ = true;

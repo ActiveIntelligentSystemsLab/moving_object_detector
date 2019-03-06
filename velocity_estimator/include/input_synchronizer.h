@@ -6,7 +6,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <moving_object_detector/InputSynchronizerPublish.h>
+#include <velocity_estimator/InputSynchronizerPublish.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
 #include <viso2_ros/VisoInfo.h>
@@ -64,7 +64,7 @@ private:
   
   void stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
   void processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msg::OpticalFlowConstPtr& left_flow, const optical_flow_msg::OpticalFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity);
-  bool publishServiceCallback(moving_object_detector::InputSynchronizerPublish::Request &request, moving_object_detector::InputSynchronizerPublish::Response &response);
+  bool publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response);
   
 public:
   InputSynchronizer();

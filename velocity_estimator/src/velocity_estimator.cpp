@@ -1,5 +1,5 @@
 #include "velocity_estimator.h"
-#include "pcl_point_xyz_velocity.h"
+#include "velocity_estimator/pcl_point_xyz_velocity.h"
 
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
@@ -33,7 +33,7 @@ VelocityEstimator::VelocityEstimator() {
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
 }
 
-void VelocityEstimator::reconfigureCB(moving_object_detector::VelocityEstimatorConfig& config, uint32_t level)
+void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
 {
   ROS_INFO("Reconfigure Request: matching_tolerance = %f", config.matching_tolerance);
   
