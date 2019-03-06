@@ -15,8 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   stereo_msgs
-  tf2
-  tf2_geometry_msgs
+  tf2_eigen
   viso2_ros
 )
 find_package(OpenCV)

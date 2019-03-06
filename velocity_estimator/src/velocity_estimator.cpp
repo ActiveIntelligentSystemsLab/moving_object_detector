@@ -9,7 +9,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <algorithm>
 #include <cmath>
@@ -136,35 +136,29 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   time_stamp_previous_ = camera_transform->header.stamp;
 }
 
-void VelocityEstimator::transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, tf2::Transform transform)
+/**
+ * \brief Transform pointcloud of previous frame to now frame
+ *
+ * \param pc_previous Pointcloud of previous frame
+ * \param pc_previous_transformed Transformed pointcloud of previous frame
+ * \param now_to_previous Transformation from now frame to previous frame
+ */
+void VelocityEstimator::transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous)
 {
-  geometry_msgs::Transform msg_transform = tf2::toMsg(transform);
-  this->transform(pc_in, pc_transformed, msg_transform);
-}
+  Eigen::Isometry3d eigen_now_to_previous = tf2::transformToEigen(now_to_previous);
+  Eigen::Isometry3d eigen_previous_to_now = eigen_now_to_previous.inverse();
 
-void VelocityEstimator::transform(pcl::PointCloud<pcl::PointXYZ> &pc_in, pcl::PointCloud<pcl::PointXYZ> &pc_transformed, geometry_msgs::Transform transform)
-{
-  Eigen::Transform<float,3,Eigen::Affine> eigen_transform = Eigen::Translation3f(transform.translation.x, transform.translation.y, transform.translation.z) * Eigen::Quaternion<float>(transform.rotation.w, transform.rotation.x, transform.rotation.y, transform.rotation.z);
-
-  pc_transformed = pcl::PointCloud<pcl::PointXYZ>(pc_in.width, pc_in.height);
-  for (int u = 0; u < pc_in.width; u++) 
+  pc_previous_transformed = pcl::PointCloud<pcl::PointXYZ>(pc_previous.width, pc_previous.height);
+  for (int u = 0; u < pc_previous.width; u++)
   {
-    for (int v =0; v < pc_in.height; v++) 
+    for (int v =0; v < pc_previous.height; v++)
     {
-      pcl::PointXYZ &point = pc_in.at(u, v);
-      Eigen::Vector3f eigen_transformed = eigen_transform * Eigen::Vector3f(point.x, point.y, point.z);
-      pc_transformed.at(u, v) = pcl::PointXYZ(eigen_transformed.x(), eigen_transformed.y(), eigen_transformed.z());
+      const pcl::PointXYZ &point = pc_previous.at(u, v);
+      Eigen::Vector3d eigen_transformed = eigen_previous_to_now * Eigen::Vector3d(point.x, point.y, point.z);
+      pc_previous_transformed.at(u, v) = pcl::PointXYZ(eigen_transformed.x(), eigen_transformed.y(), eigen_transformed.z());
     }
   }
 }
-
-void VelocityEstimator::transformPCPreviousToNow(pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &camera_now_to_previous)
-{
-  tf2::Transform tf2_now_to_previous;
-  tf2::fromMsg(camera_now_to_previous, tf2_now_to_previous);
-  transform(pc_previous, pc_previous_transformed, tf2_now_to_previous.inverse());
-}
-
 
 bool VelocityEstimator::isValid(const pcl::PointXYZ &point)
 {
