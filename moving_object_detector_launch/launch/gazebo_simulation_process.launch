@@ -3,34 +3,6 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
-  <!--
-  <node name="bag_recorder" pkg="rosbag" type="record" args="exp_result"/>
-  -->
-
-  <node name="nodelet_manager" pkg="nodelet" type="nodelet" args="manager"/>
-
-  <!--
-  <node name="left_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
-    <remap from="camera" to="synchronized/left"/>
-    <remap from="synchronized/left/image_raw" to="synchronized/left/image_rect_color"/>
-    <remap from="camera_out" to="viso2/input/left"/>
-
-    <param name="width" value="1280"/>
-    <param name="height" value="360"/>
-    <param name="y_offset" value="180"/>
-  </node>
-
-  <node name="right_camera_crop" pkg="nodelet" type="nodelet" args="load image_proc/crop_decimate nodelet_manager">
-    <remap from="camera" to="synchronized/right"/>
-    <remap from="synchronized/right/image_raw" to="synchronized/right/image_rect_color"/>
-    <remap from="camera_out" to="viso2/input/right"/>
-
-    <param name="width" value="1280"/>
-    <param name="height" value="360"/>
-    <param name="y_offset" value="180"/>
-  </node>
-  -->
-
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="synchronized"/>
     <remap from="image" to="image_rect_color"/>
@@ -49,7 +21,7 @@
     <param name="debug_view" value="false"/>
   </node>
 
-  <node name="input_synchronizer" pkg="moving_object_detector" type="input_synchronizer_node">
+  <node name="input_synchronizer" pkg="velocity_estimator" type="input_synchronizer_node">
     <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
     <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
 
@@ -64,8 +36,7 @@
     <param name="image_transport" value="compressed"/>
   </node>
 
-  <!-- <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node" launch-prefix="gnome-terminal -x gdb args"> -->
-  <node name="velocity_estimator" pkg="moving_object_detector" type="velocity_estimator_node">
+  <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
@@ -78,9 +49,9 @@
     <remap from="image" to="/image_rect_color"/>
   </node>
 
-  <node name="clusterer" pkg="moving_object_detector" type="clusterer_node"/>
+  <node name="clusterer" pkg="velocity_pc_clusterer" type="clusterer_node"/>
 
-  <node name="moving_object_tracker" pkg="moving_object_detector" type="moving_objects_tracker_node"/>
+  <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   <node name="display_moving_objects_node_track" pkg="moving_object_detector" type="display_moving_objects_node">
     <remap from="moving_objects" to="tracked_moving_objects"/>
     <remap from="moving_object_markers" to="tracked_markers"/>
@@ -90,21 +61,13 @@
   </node>
   
   <!-- Nodes for visualization -->
-  <node name="display_moving_objects_node" pkg="moving_object_detector" type="display_moving_objects_node"/>
-  -->
-  <node name="velocity2color" pkg="moving_object_detector" type="velocity2color_node"/>
-  <node name="display_2d" pkg="moving_object_detector" type="display_moving_objects_2d_node">
+  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
+  <node name="velocity2color" pkg="velocity_estimator" type="velocity2color_node"/>
+  <node name="project_moving_object_on_image" pkg="project_moving_object_on_image" type="project_moving_object_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
   <node name="odometry_to_marker" pkg="odometry_to_marker" type="odometry_to_marker">
     <remap from="odometry" to="moving_object/odom"/>
     <remap from="marker" to="moving_object/velocity_marker"/>
   </node>
-  
-  <!--
-  <node name="result_calculator" pkg="moving_object_detector" type="simulation_exp_result_calc">
-    <remap from="odom" to="moving_object/odom"/>
-    <remap from="center" to="moving_object/center"/>
-  </node>
-  -->
 </launch>
