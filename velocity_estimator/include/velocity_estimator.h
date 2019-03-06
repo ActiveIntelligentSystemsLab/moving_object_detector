@@ -42,7 +42,6 @@ private:
   
   double matching_tolerance_;
 
-  stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   cv::Mat left_flow_, right_flow_;
   pcl::PointCloud<pcl::PointXYZ> pc_now_, pc_previous_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;

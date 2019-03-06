@@ -97,14 +97,13 @@ void VelocityEstimator::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocit
 
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
+  disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
+
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
     left_flow_ = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     right_flow_ = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
-    
-    disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
-    disparity_previous_.reset(new DisparityImageProcessor(disparity_image_previous_, left_camera_info));
 
     disparity_now_->toPointCloud(pc_now_);
     disparity_previous_->toPointCloud(pc_previous_);
@@ -119,7 +118,7 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     ros::Duration process_time = ros::Time::now() - start_process;
     ROS_INFO("process time: %f", process_time.toSec());
   }
-  disparity_image_previous_ = disparity_image;
+  disparity_previous_ = disparity_now_;
   time_stamp_previous_ = camera_transform->header.stamp;
 }
 
