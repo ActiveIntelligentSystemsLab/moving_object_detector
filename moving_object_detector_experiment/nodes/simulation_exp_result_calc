@@ -7,8 +7,8 @@ from geometry_msgs.msg import PointStamped
 from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Vector3Stamped
 from nav_msgs.msg import Odometry
-from moving_object_detector.msg import MovingObjectArray
-from moving_object_detector.msg import ExpResult
+from moving_object_msg.msg import MovingObjectArray
+from moving_object_detector_experiment.msg import ExpResult
 import ros_numpy
 import rospy
 import tf2_geometry_msgs

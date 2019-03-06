@@ -31,17 +31,15 @@ find_package(PCL REQUIRED
 
 add_message_files(
   FILES
-  ExpResult.msg
-  TrackerCovariance.msg
-  TrackerCovarianceArray.msg
+    TrackerCovariance.msg
+    TrackerCovarianceArray.msg
 )
 
 generate_messages(
   DEPENDENCIES
-  geometry_msgs
-  std_msgs
+    geometry_msgs
+    std_msgs
 )
-
 
 catkin_package(
   CATKIN_DEPENDS
@@ -69,11 +67,4 @@ add_executable(moving_objects_tracker_node
 add_dependencies(moving_objects_tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(moving_objects_tracker_node
   ${catkin_LIBRARIES}
-)
-
-catkin_install_python(
-  PROGRAMS 
-    nodes/simulation_exp_result_calc
-  DESTINATION
-    ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
