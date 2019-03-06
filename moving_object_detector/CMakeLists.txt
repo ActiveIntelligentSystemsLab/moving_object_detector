@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   dynamic_reconfigure
   geometry_msgs
+  image_geometry
   image_transport
   kkl
   message_generation
@@ -41,7 +42,6 @@ generate_messages(
   std_msgs
 )
 
-generate_dynamic_reconfigure_options(cfg/Clusterer.cfg)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -61,25 +61,6 @@ include_directories(
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-
-add_executable(clusterer_node 
-  src/clusterer.cpp
-  src/clusterer_node.cpp
-  src/color_set.cpp
-  src/lookup_table.cpp
-)
-add_dependencies(clusterer_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(clusterer_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${PCL_COMMON_LIBRARIES}
-  ${PCL_SEARCH_LIBRARIES}
-  ${PCL_SEGMENTATION_LIBRARIES}
-)
-# To use gprof
-# target_compile_options(clusterer_node
-#   PUBLIC -pg
-# )
 
 add_executable(display_moving_objects_2d_node src/display_moving_objects_2d_node.cpp)
 add_dependencies(display_moving_objects_2d_node ${${PROJECT_NAME}_EXPORTED_TARGETS})

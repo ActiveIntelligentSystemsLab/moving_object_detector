@@ -1,7 +1,7 @@
 #ifndef __HEADER_CLUSTERER__
 #define __HEADER_CLUSTERER__
 
-#include <moving_object_detector/ClustererConfig.h>
+#include <velocity_pc_clusterer/ClustererConfig.h>
 #include <moving_object_msgs/MovingObjectArray.h>
 
 #define PCL_NO_PRECOMPILE
@@ -45,8 +45,8 @@ private:
   image_transport::Publisher clusters_image_pub_;
   ros::Subscriber velocity_pc_sub_;
   
-  dynamic_reconfigure::Server<moving_object_detector::ClustererConfig> reconfigure_server_;
-  dynamic_reconfigure::Server<moving_object_detector::ClustererConfig>::CallbackType reconfigure_func_;
+  dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig> reconfigure_server_;
+  dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig>::CallbackType reconfigure_func_;
   
   // thresholds
   int cluster_size_th_;
@@ -101,7 +101,7 @@ private:
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishClustersImage();
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
-  void reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level);
+  void reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level);
   void removeSmallClusters();
 };
 

@@ -329,7 +329,7 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
   dynamic_objects_pub_.publish(moving_objects_msg);
 }
 
-void Clusterer::reconfigureCB(moving_object_detector::ClustererConfig& config, uint32_t level) 
+void Clusterer::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level)
 {
   ROS_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
   cluster_size_th_  = config.cluster_size;
