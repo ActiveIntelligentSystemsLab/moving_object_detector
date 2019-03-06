@@ -42,18 +42,17 @@ void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfi
 
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
+  std::shared_ptr<DisparityImageProcessor> disparity_processor;
+  disparity_processor.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
     cv::Mat left_flow = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     cv::Mat right_flow = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
-    
-    DisparityImageProcessor disparity_processor(disparity_image, left_camera_info);
-    DisparityImageProcessor disparity_processor_previous(disparity_image_previous_, left_camera_info);
 
     pcl::PointCloud<pcl::PointXYZ> pc_now, pc_previous;
-    disparity_processor.toPointCloud(pc_now);
-    disparity_processor_previous.toPointCloud(pc_previous);
+    disparity_processor->toPointCloud(pc_now);
+    disparity_processor_previous_->toPointCloud(pc_previous);
 
     pcl::PointCloud<pcl::PointXYZ> pc_previous_transformed;
     tf2::Transform tf2_now2previous;
@@ -91,10 +90,10 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
         if (!getPreviousPoint(left_now, left_previous, left_flow))
           continue;
 
-        if (!getRightPoint(left_now, right_now, disparity_processor))
+        if (!getRightPoint(left_now, right_now, *disparity_processor))
           continue;
 
-        if (!getRightPoint(left_previous, right_previous, disparity_processor_previous))
+        if (!getRightPoint(left_previous, right_previous, *disparity_processor_previous_))
           continue;
         
         if (right_now.x < 0 || right_now.x >= right_flow.cols)
@@ -135,6 +134,7 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     ROS_INFO("process time: %f", process_time.toSec());
   }
   disparity_image_previous_ = disparity_image;
+  disparity_processor_previous_ = disparity_processor;
   time_stamp_previous_ = camera_transform->header.stamp;
 }
 
