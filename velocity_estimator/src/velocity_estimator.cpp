@@ -45,8 +45,6 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
-    // flow_mapの(x, y)には(dx,dy)が格納されている
-    // つまり，フレームtの注目点の座標を(x,y)とすると，それに対応するフレームt-1の座標は(x-dx,y-dy)となる
     cv::Mat left_flow = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     cv::Mat right_flow = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
     
