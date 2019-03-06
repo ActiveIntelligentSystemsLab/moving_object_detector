@@ -43,13 +43,13 @@ private:
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
   ros::Time time_stamp_previous_;
       
-  void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
-  void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
-  bool isValid(const pcl::PointXYZ &point);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
+  bool isValid(const pcl::PointXYZ &point);
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
+  void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
+  void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
 };
 
 #endif

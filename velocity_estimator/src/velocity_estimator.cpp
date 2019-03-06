@@ -27,13 +27,6 @@ VelocityEstimator::VelocityEstimator() {
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
 }
 
-void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
-{
-  ROS_INFO("Reconfigure Request: matching_tolerance = %f", config.matching_tolerance);
-  
-  matching_tolerance_ = config.matching_tolerance;
-}
-
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
@@ -126,6 +119,65 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   time_stamp_previous_ = camera_transform->header.stamp;
 }
 
+bool VelocityEstimator::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow)
+{
+  cv::Vec2f flow_at_point;
+  try {
+    flow_at_point = flow.at<cv::Vec2f>(now.y, now.x);
+  } catch (std::out_of_range e) {
+    return false;
+  }
+
+  if (std::isnan(flow_at_point[0]) || std::isnan(flow_at_point[1]))
+    return false;
+
+  previous.x = std::round(now.x - flow_at_point[0]);
+  previous.y = std::round(now.y - flow_at_point[1]);
+
+  return true;
+}
+
+bool VelocityEstimator::getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
+{
+  float disparity;
+  if (!disparity_processor.getDisparity(left.x, left.y, disparity))
+    return false;
+  if (std::isnan(disparity) || std::isinf(disparity) || disparity < 0)
+    return false;
+
+  right.x = std::round(left.x - disparity);
+  right.y = left.y;
+
+  return true;
+}
+
+bool VelocityEstimator::isValid(const pcl::PointXYZ &point)
+{
+  if (std::isnan(point.x))
+    return false;
+
+  if (std::isinf(point.x))
+    return false;
+  
+  return true;
+}
+
+template <typename PointT> void VelocityEstimator::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
+{
+  sensor_msgs::PointCloud2 pointcloud_msg;
+  pcl::toROSMsg(pointcloud, pointcloud_msg);
+  pointcloud_msg.header.frame_id = frame_id;
+  pointcloud_msg.header.stamp = stamp;
+  pc_with_velocity_pub_.publish(pointcloud_msg);
+}
+
+void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
+{
+  ROS_INFO("Reconfigure Request: matching_tolerance = %f", config.matching_tolerance);
+
+  matching_tolerance_ = config.matching_tolerance;
+}
+
 /**
  * \brief Transform pointcloud of previous frame to now frame
  *
@@ -149,56 +201,3 @@ void VelocityEstimator::transformPCPreviousToNow(const pcl::PointCloud<pcl::Poin
     }
   }
 }
-
-bool VelocityEstimator::isValid(const pcl::PointXYZ &point)
-{
-  if (std::isnan(point.x))
-    return false;
-
-  if (std::isinf(point.x))
-    return false;
-  
-  return true;
-}
-
-bool VelocityEstimator::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow)
-{
-  cv::Vec2f flow_at_point;
-  try {
-    flow_at_point = flow.at<cv::Vec2f>(now.y, now.x);
-  } catch (std::out_of_range e) {
-    return false;
-  }
-        
-  if (std::isnan(flow_at_point[0]) || std::isnan(flow_at_point[1]))
-    return false;
-  
-  previous.x = std::round(now.x - flow_at_point[0]);
-  previous.y = std::round(now.y - flow_at_point[1]);
-
-  return true;
-}
-
-bool VelocityEstimator::getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
-{
-  float disparity;
-  if (!disparity_processor.getDisparity(left.x, left.y, disparity))
-    return false;
-  if (std::isnan(disparity) || std::isinf(disparity) || disparity < 0)
-    return false;
-
-  right.x = std::round(left.x - disparity);
-  right.y = left.y;
-
-  return true;
-}
-
-template <typename PointT> void VelocityEstimator::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
-{
-  sensor_msgs::PointCloud2 pointcloud_msg;
-  pcl::toROSMsg(pointcloud, pointcloud_msg);
-  pointcloud_msg.header.frame_id = frame_id;
-  pointcloud_msg.header.stamp = stamp;
-  pc_with_velocity_pub_.publish(pointcloud_msg);
-}
-
