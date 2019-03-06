@@ -117,11 +117,7 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
       }
     }
     
-    sensor_msgs::PointCloud2 pc_with_velocity_msg;
-    pcl::toROSMsg(pc_with_velocity, pc_with_velocity_msg);
-    pc_with_velocity_msg.header.frame_id = left_camera_info->header.frame_id;
-    pc_with_velocity_msg.header.stamp = left_camera_info->header.stamp;
-    pc_with_velocity_pub_.publish(pc_with_velocity_msg);
+    publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
 
     ros::Duration process_time = ros::Time::now() - start_process;
     ROS_INFO("process time: %f", process_time.toSec());
@@ -196,3 +192,13 @@ bool VelocityEstimator::getRightPoint(const cv::Point2i &left, cv::Point2i &righ
 
   return true;
 }
+
+template <typename PointT> void VelocityEstimator::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
+{
+  sensor_msgs::PointCloud2 pointcloud_msg;
+  pcl::toROSMsg(pointcloud, pointcloud_msg);
+  pointcloud_msg.header.frame_id = frame_id;
+  pointcloud_msg.header.stamp = stamp;
+  pc_with_velocity_pub_.publish(pointcloud_msg);
+}
+
