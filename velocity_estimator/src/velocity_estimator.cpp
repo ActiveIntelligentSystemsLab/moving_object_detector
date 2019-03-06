@@ -66,12 +66,12 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     ros::Duration time_between_frames = camera_transform->header.stamp - time_stamp_previous_;
     
     pcl::PointXYZVelocity default_value;
-    default_value.x = std::nan("");
-    default_value.y = std::nan("");
-    default_value.z = std::nan("");
-    default_value.vx = std::nan("");
-    default_value.vy = std::nan("");
-    default_value.vz = std::nan("");
+    default_value.x = std::nanf("");
+    default_value.y = std::nanf("");
+    default_value.z = std::nanf("");
+    default_value.vx = std::nanf("");
+    default_value.vy = std::nanf("");
+    default_value.vz = std::nanf("");
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity(pc_now.width, pc_now.height, default_value);
 
     cv::Point2i left_now;
