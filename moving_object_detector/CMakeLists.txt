@@ -62,13 +62,6 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_executable(display_moving_objects_2d_node src/display_moving_objects_2d_node.cpp)
-add_dependencies(display_moving_objects_2d_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(display_moving_objects_2d_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-)
-
 add_executable(moving_objects_tracker_node
   src/moving_objects_tracker.cpp
   src/moving_objects_tracker_node.cpp

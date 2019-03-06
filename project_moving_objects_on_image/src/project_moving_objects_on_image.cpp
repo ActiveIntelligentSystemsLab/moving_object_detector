@@ -4,11 +4,10 @@
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <moving_object_msgs/MovingObjectArray.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-
-#include <moving_object_msgs/MovingObjectArray.h>
 
 image_transport::Publisher image_pub;
 
@@ -41,7 +40,7 @@ void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraIn
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "display_moving_objects_2d");
+  ros::init(argc, argv, "project_moving_objects_on_image");
   ros::NodeHandle nh;
 
   image_transport::ImageTransport img_trans = image_transport::ImageTransport(nh);
