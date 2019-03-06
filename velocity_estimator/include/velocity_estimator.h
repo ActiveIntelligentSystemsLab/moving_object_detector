@@ -9,13 +9,15 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <optical_flow_msg/OpticalFlow.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
+#include <velocity_estimator/pcl_point_xyz_velocity.h>
 #include <velocity_estimator/VelocityEstimatorConfig.h>
+
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 
 #include <list>
 
@@ -41,11 +43,17 @@ private:
   double matching_tolerance_;
 
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
+  cv::Mat left_flow_, right_flow_;
+  pcl::PointCloud<pcl::PointXYZ> pc_now_, pc_previous_;
+  std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
+  geometry_msgs::TransformStamped transform_now_to_previous_;
   ros::Time time_stamp_previous_;
-      
+
+  void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
+  void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   bool isValid(const pcl::PointXYZ &point);
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
