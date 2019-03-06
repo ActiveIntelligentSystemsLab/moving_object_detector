@@ -44,7 +44,6 @@ private:
   double matching_tolerance_;
 
   stereo_msgs::DisparityImageConstPtr disparity_image_previous_;
-  std::shared_ptr<DisparityImageProcessor> disparity_processor_previous_;
   ros::Time time_stamp_previous_;
       
   void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
