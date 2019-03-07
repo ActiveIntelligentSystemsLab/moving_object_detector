@@ -242,9 +242,10 @@ template <typename PointT> void VelocityEstimator::publishPointcloud(const pcl::
 
 void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: matching_tolerance = %f", config.matching_tolerance);
+  ROS_INFO("Reconfigure Request: matching_tolerance = %f, max_color_velocity = %f", config.matching_tolerance, config.max_color_velocity);
 
   matching_tolerance_ = config.matching_tolerance;
+  max_color_velocity_ = config.max_color_velocity;
 }
 
 void VelocityEstimator::transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous)
