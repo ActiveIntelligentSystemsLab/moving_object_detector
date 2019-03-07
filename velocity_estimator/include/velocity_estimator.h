@@ -4,8 +4,6 @@
 #include <disparity_image_proc/disparity_image_processor.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <image_transport/subscriber_filter.h>
-#include <image_transport/camera_common.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <optical_flow_msg/OpticalFlow.h>
