@@ -10,6 +10,7 @@
 #include <sensor_msgs/CameraInfo.h>
 
 image_transport::Publisher image_pub;
+int red, green, blue;
 
 void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info, const moving_object_msgs::MovingObjectArrayConstPtr& moving_object_array)
 {
@@ -32,7 +33,7 @@ void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraIn
     cv::Point3d bottom_right_pt(moving_object.center.position.x + (moving_object.bounding_box.x / 2), moving_object.center.position.y + (moving_object.bounding_box.y / 2), moving_object.center.position.z + (moving_object.bounding_box.z / 2));
     cv::Point2d bottom_right_uv = camera_model.project3dToPixel(bottom_right_pt);
 
-    cv::rectangle(cv_image, top_left_uv, bottom_right_uv, CV_RGB(255, 0, 0), 2);
+    cv::rectangle(cv_image, top_left_uv, bottom_right_uv, CV_RGB(red, green, blue), 2);
   }
 
   image_pub.publish(input_bridge->toImageMsg());
@@ -42,6 +43,11 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "project_moving_objects_on_image");
   ros::NodeHandle nh;
+  ros::NodeHandle private_nh("~");
+
+  red = private_nh.param("red", 255);
+  green = private_nh.param("green", 0);
+  blue = private_nh.param("blue", 0);
 
   image_transport::ImageTransport img_trans = image_transport::ImageTransport(nh);
   std::string input_image_topic = nh.resolveName("input_image"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
