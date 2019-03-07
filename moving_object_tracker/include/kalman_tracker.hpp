@@ -1,5 +1,5 @@
-#ifndef KALMAN_TRACKER_HPP
-#define KALMAN_TRACKER_HPP
+#ifndef KALMAN_TRACKER_HPP_
+#define KALMAN_TRACKER_HPP_
 
 // Original author: Kenji Koide
 // Modified by Fujimoto

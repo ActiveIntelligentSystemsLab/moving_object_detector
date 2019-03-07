@@ -1,5 +1,5 @@
-#ifndef __HEADER_MOVING_OBJECTS_TRACKER__
-#define __HEADER_MOVING_OBJECTS_TRACKER__
+#ifndef MOVING_OBJECTS_TRACKER_H_
+#define MOVING_OBJECTS_TRACKER_H_
 
 #include <kkl/alg/data_association.hpp>
 #include <moving_object_msgs/MovingObjectArray.h>
