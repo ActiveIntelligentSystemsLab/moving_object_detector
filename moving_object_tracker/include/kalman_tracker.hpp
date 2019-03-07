@@ -7,11 +7,9 @@
 #include <Eigen/Dense>
 #include <boost/any.hpp>
 
-#include <ros/ros.h>
-
 #include <kkl/math/gaussian.hpp>
 #include <kkl/alg/kalman_filter.hpp>
-
+#include <ros/ros.h>
 
 /**
  * @brief Kalman filter-based tracker with a constant velocity model
