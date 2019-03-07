@@ -99,6 +99,7 @@ void VelocityEstimator::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocit
 void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
+  pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
   disparity_now_->toPointCloud(*pc_now_);
 
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
