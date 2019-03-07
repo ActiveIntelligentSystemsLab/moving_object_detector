@@ -72,25 +72,24 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
   predict(moving_objects->header.stamp);
   correct(moving_objects->header.stamp, transformed);
 
-  // publish tracks msg
-  // moving_objectにID付けるのと，別トピックかなんかでcovarianceの情報とか出した方がいい
+  // publish tracked objects
   if(tracked_moving_objects_pub_.getNumSubscribers()) {
     moving_object_msgs::MovingObjectArray msg;
     msg.header.frame_id = "odom";
     msg.header.stamp = moving_objects->header.stamp;
     msg.moving_object_array.reserve(trackers.size());
-    for (auto &object : trackers)
+    for (auto &tracker : trackers)
     {
-      if (object->correction_count() < 10)
+      if (tracker->correction_count() < 10)
         continue;
 
-      moving_object_msgs::MovingObject obj_msg = *(boost::any_cast<moving_object_msgs::MovingObjectPtr>(object->lastAssociated()));
-      obj_msg.id = object->id();
-      obj_msg.center.position.x = object->position().x();
-      obj_msg.center.position.y = object->position().y();
-      obj_msg.velocity.x = object->velocity().x();
-      obj_msg.velocity.y = object->velocity().y();
-      msg.moving_object_array.push_back(obj_msg); // コード汚すぎない？
+      moving_object_msgs::MovingObject obj_msg = *(boost::any_cast<moving_object_msgs::MovingObjectPtr>(tracker->lastAssociated()));
+      obj_msg.id = tracker->id();
+      obj_msg.center.position.x = tracker->position().x();
+      obj_msg.center.position.y = tracker->position().y();
+      obj_msg.velocity.x = tracker->velocity().x();
+      obj_msg.velocity.y = tracker->velocity().y();
+      msg.moving_object_array.push_back(obj_msg);
     }
     tracked_moving_objects_pub_.publish(msg);
   }
