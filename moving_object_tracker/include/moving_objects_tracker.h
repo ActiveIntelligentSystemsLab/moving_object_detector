@@ -1,14 +1,12 @@
 #ifndef __HEADER_MOVING_OBJECTS_TRACKER__
 #define __HEADER_MOVING_OBJECTS_TRACKER__
 
+#include <kkl/alg/data_association.hpp>
 #include <moving_object_msgs/MovingObjectArray.h>
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 
-// Koideさん作のやつ
-#include <kkl/alg/data_association.hpp>
-// Koideさんのやつをベースにした何か
-#include <kalman_tracker.hpp>
+#include "kalman_tracker.hpp"
 
 #include <memory>
 #include <vector>
