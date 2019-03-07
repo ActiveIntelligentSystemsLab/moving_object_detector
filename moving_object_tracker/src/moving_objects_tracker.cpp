@@ -1,10 +1,9 @@
 #include "moving_objects_tracker.h"
 
 #include <geometry_msgs/TransformStamped.h>
+#include <kkl/alg/nearest_neighbor_association.hpp>
 #include <moving_object_tracker/TrackerCovarianceArray.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <kkl/alg/nearest_neighbor_association.hpp>
 
 namespace kkl {
   namespace alg {
