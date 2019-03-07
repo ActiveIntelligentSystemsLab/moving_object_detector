@@ -52,19 +52,19 @@
   <node name="clusterer" pkg="velocity_pc_clusterer" type="clusterer_node"/>
 
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
-  <node name="display_moving_objects_node_track" pkg="moving_object_detector" type="display_moving_objects_node">
+  
+  <!-- Nodes for visualization -->
+  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
+  <node name="velocity2color" pkg="velocity_estimator" type="velocity2color_node"/>
+  <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
+    <remap from="input_image" to="/synchronized/left/image_rect_color"/>
+  </node>
+  <node name="project_tracked_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
     <remap from="moving_objects" to="tracked_moving_objects"/>
     <remap from="moving_object_markers" to="tracked_markers"/>
 
     <param name="red" value="0.0"/>
     <param name="green" value="1.0"/>
-  </node>
-  
-  <!-- Nodes for visualization -->
-  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
-  <node name="velocity2color" pkg="velocity_estimator" type="velocity2color_node"/>
-  <node name="project_moving_object_on_image" pkg="project_moving_object_on_image" type="project_moving_object_on_image">
-    <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
   <node name="odometry_to_marker" pkg="odometry_to_marker" type="odometry_to_marker">
     <remap from="odometry" to="moving_object/odom"/>
