@@ -10,11 +10,14 @@
 #include <stdexcept>
 #include <memory>
 
-VelocityEstimator::VelocityEstimator() {  
+VelocityEstimator::VelocityEstimator() {
+  image_transport.reset(new image_transport::ImageTransport(node_handle_));
+
   reconfigure_func_ = boost::bind(&VelocityEstimator::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
+  velocity_image_pub_ = image_transport->advertise("velocity_image", 1);
   
   camera_transform_sub_.subscribe(node_handle_, "camera_transform", 1);
   optical_flow_left_sub_.subscribe(node_handle_, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
@@ -24,6 +27,32 @@ VelocityEstimator::VelocityEstimator() {
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
+}
+
+void VelocityEstimator::constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image)
+{
+  velocity_image = cv::Mat(velocity_pc.height, velocity_pc.width, CV_8UC3, cv::Vec3b(0, 0, 0));
+  for (size_t i = 0; i < velocity_pc.size(); i++)
+  {
+    const pcl::PointXYZVelocity &velocity_point = velocity_pc.at(i);
+
+    if (std::isnan(velocity_point.vx) || std::isinf(velocity_point.vx))
+      continue;
+
+    double red, green, blue;
+
+    // Regularize to [0.0, 1.0]
+    red = std::abs(velocity_point.vx) / max_color_velocity_;
+    red = std::min(red, 1.0);
+
+    green = std::abs(velocity_point.vy) / max_color_velocity_;
+    green = std::min(green, 1.0);
+
+    blue = std::abs(velocity_point.vz) / max_color_velocity_;
+    blue = std::min(blue, 1.0);
+
+    velocity_image.at<cv::Vec3b>(i) = cv::Vec3b(blue * 255, green * 255, red * 255);
+  }
 }
 
 void VelocityEstimator::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
@@ -84,6 +113,13 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
     constructVelocityPC(pc_with_velocity);
     
     publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+
+    if (velocity_image_pub_.getNumSubscribers() > 0)
+    {
+      cv::Mat velocity_image;
+      constructVelocityImage(pc_with_velocity, velocity_image);
+      publishVelocityImage(velocity_image);
+    }
 
     ros::Duration process_time = ros::Time::now() - start_process;
     ROS_INFO("process time: %f", process_time.toSec());
@@ -182,6 +218,16 @@ bool VelocityEstimator::isValid(const pcl::PointXYZ &point)
     return false;
   
   return true;
+}
+
+void VelocityEstimator::publishVelocityImage(const cv::Mat &velocity_image)
+{
+  std_msgs::Header header;
+  header.frame_id = transform_now_to_previous_.header.frame_id;
+  header.stamp = transform_now_to_previous_.header.stamp;
+
+  cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::BGR8, velocity_image);
+  velocity_image_pub_.publish(cv_image.toImageMsg());
 }
 
 template <typename PointT> void VelocityEstimator::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)

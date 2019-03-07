@@ -4,6 +4,7 @@
 #include <disparity_image_proc/disparity_image_processor.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <optical_flow_msg/OpticalFlow.h>
@@ -24,8 +25,11 @@ public:
   VelocityEstimator();
 private:
   ros::NodeHandle node_handle_;
+
+  std::shared_ptr<image_transport::ImageTransport> image_transport;
   
   ros::Publisher pc_with_velocity_pub_;
+  image_transport::Publisher velocity_image_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_left_sub_;
@@ -40,11 +44,25 @@ private:
   
   double matching_tolerance_;
 
+  /**
+   * \brief Parameter used by visualization of velocity pc on image plane
+   * When velocity of point is faster than this parameter, maximum color intensity is assigned at corresponded pixel
+   */
+  double max_color_velocity_;
+
   cv::Mat left_flow_, right_flow_;
   std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_now_, pc_previous_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
   geometry_msgs::TransformStamped transform_now_to_previous_;
   ros::Time time_stamp_previous_;
+
+  /**
+   * \brief Construct velocity image which visualize velocity_pc as RGB color image
+   *
+   * \param velocity_pc Input pointcloud whose points have 3D position and velocity
+   * \param velocity_image Output image visualizes velocity by RGB color
+   */
+  void constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image);
 
   /**
    * \brief Calculate velocity of each point and construct pointcloud.
@@ -69,6 +87,13 @@ private:
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   bool isValid(const pcl::PointXYZ &point);
+
+  /**
+   * \brief Publish image which visualize velocity pc by RGB color
+   *
+   * \param velocity_image Already constructed velocity image
+   */
+  void publishVelocityImage(const cv::Mat &velocity_image);
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
 
