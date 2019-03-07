@@ -148,11 +148,11 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
     if(!associated[i]) {
       // check if the detection is far from existing tracks
       bool close_to_tracker = false;
-      for(const auto& object : trackers) {
+      for(const auto& tracker : trackers) {
         Eigen::Vector2d pos;
         pos.x() = moving_objects[i]->center.position.x;
         pos.y() = moving_objects[i]->center.position.y;
-        if((object->position() - pos).norm() < object_radius_ * 2.0) { 
+        if((tracker->position() - pos).norm() < object_radius_ * 2.0) {
           close_to_tracker = true;
           break;
         }
