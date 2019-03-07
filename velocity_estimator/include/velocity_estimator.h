@@ -48,8 +48,24 @@ private:
   geometry_msgs::TransformStamped transform_now_to_previous_;
   ros::Time time_stamp_previous_;
 
+  /**
+   * \brief Calculate velocity of each point and construct pointcloud.
+   *
+   * \param velocity_pc Pointcloud whose points have 3D position and velocity
+   */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+
+  /**
+   * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image
+   *
+   * \param left_now A point in left now image.
+   * \param left_previous A point in left previous image matched to left_now.
+   * \param right_now A point in right now image matched to left_now.
+   * \param right_previous A point in right previous image matched to left_now.
+   *
+   * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
+   */
   bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
@@ -57,6 +73,14 @@ private:
   bool isValid(const pcl::PointXYZ &point);
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
+
+  /**
+   * \brief Transform pointcloud of previous frame to now frame
+   *
+   * \param pc_previous Pointcloud of previous frame
+   * \param pc_previous_transformed Transformed pointcloud of previous frame
+   * \param now_to_previous Transformation from now frame to previous frame
+   */
   void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
 };
 

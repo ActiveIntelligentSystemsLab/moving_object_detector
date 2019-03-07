@@ -26,11 +26,6 @@ VelocityEstimator::VelocityEstimator() {
   time_sync_->registerCallback(boost::bind(&VelocityEstimator::dataCB, this, _1, _2, _3, _4, _5));
 }
 
-/**
- * \brief Calculate velocity of each point and construct pointcloud.
- *
- * \param velocity_pc Pointcloud whose points have 3D position and velocity
- */
 void VelocityEstimator::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
   pcl::PointCloud<pcl::PointXYZ> pc_previous_transformed;
@@ -99,16 +94,6 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   time_stamp_previous_ = transform_now_to_previous_.header.stamp;
 }
 
-/**
- * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image
- *
- * \param left_now A point in left now image.
- * \param left_previous A point in left previous image matched to left_now.
- * \param right_now A point in right now image matched to left_now.
- * \param right_previous A point in right previous image matched to left_now.
- *
- * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
- */
 bool VelocityEstimator::getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
 {
   if (!getPreviousPoint(left_now, left_previous, left_flow_))
@@ -215,13 +200,6 @@ void VelocityEstimator::reconfigureCB(velocity_estimator::VelocityEstimatorConfi
   matching_tolerance_ = config.matching_tolerance;
 }
 
-/**
- * \brief Transform pointcloud of previous frame to now frame
- *
- * \param pc_previous Pointcloud of previous frame
- * \param pc_previous_transformed Transformed pointcloud of previous frame
- * \param now_to_previous Transformation from now frame to previous frame
- */
 void VelocityEstimator::transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous)
 {
   Eigen::Isometry3d eigen_now_to_previous = tf2::transformToEigen(now_to_previous);
