@@ -124,8 +124,8 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
 
 void MovingObjectsTracker::predict(const ros::Time& time)
 {
-  for (auto& tracked_object : trackers)
-    tracked_object->predict(time);
+  for (auto& tracker : trackers)
+    tracker->predict(time);
 }
 
 void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<moving_object_msgs::MovingObjectPtr> &moving_objects)
