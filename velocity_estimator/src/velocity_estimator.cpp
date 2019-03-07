@@ -102,13 +102,13 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
   disparity_now_->toPointCloud(*pc_now_);
 
+  transform_now_to_previous_ = *camera_transform;
+
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
     left_flow_ = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     right_flow_ = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
-
-    transform_now_to_previous_ = *camera_transform;
 
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);
