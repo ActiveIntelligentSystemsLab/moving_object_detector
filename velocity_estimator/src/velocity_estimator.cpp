@@ -48,43 +48,20 @@ void VelocityEstimator::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocit
       pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
       pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
 
+      if (!isValid(point3d_now))
+        continue;
+
       point_with_velocity.x = point3d_now.x;
       point_with_velocity.y = point3d_now.y;
       point_with_velocity.z = point3d_now.z;
 
-      if (!isValid(point3d_now))
-        continue;
-
       cv::Point2i left_previous, right_now, right_previous;
 
-      if (!getPreviousPoint(left_now, left_previous, left_flow_))
+      if (!getMatchPoints(left_now, left_previous, right_now, right_previous))
         continue;
-
-      if (!getRightPoint(left_now, right_now, *disparity_now_))
-        continue;
-
-      if (!getRightPoint(left_previous, right_previous, *disparity_previous_))
-        continue;
-
-      if (right_now.x < 0 || right_now.x >= right_flow_.cols)
-        continue;
-
-      cv::Vec2f flow_right = right_flow_.at<cv::Vec2f>(right_now.y, right_now.x);
-
-      if(std::isnan(flow_right[0]) || std::isnan(flow_right[1]))
-        continue;
-
-      if (matching_tolerance_ >= 0) { // matching_toleranceが負なら無効化
-        double x_diff = right_previous.x + flow_right[0] - right_now.x;
-        double y_diff = right_previous.y + flow_right[1] - right_now.y;
-        double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-        if (diff > matching_tolerance_)
-          continue;
-      }
 
       pcl::PointXYZ point3d_previous;
       point3d_previous = pc_previous_transformed.at(left_previous.x, left_previous.y);
-
       if (!isValid(point3d_previous))
         continue;
 
@@ -120,6 +97,46 @@ void VelocityEstimator::dataCB(const geometry_msgs::TransformStampedConstPtr& ca
   disparity_previous_ = disparity_now_;
   pc_previous_ = pc_now_;
   time_stamp_previous_ = transform_now_to_previous_.header.stamp;
+}
+
+/**
+ * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image
+ *
+ * \param left_now A point in left now image.
+ * \param left_previous A point in left previous image matched to left_now.
+ * \param right_now A point in right now image matched to left_now.
+ * \param right_previous A point in right previous image matched to left_now.
+ *
+ * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
+ */
+bool VelocityEstimator::getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
+{
+  if (!getPreviousPoint(left_now, left_previous, left_flow_))
+    return false;
+
+  if (!getRightPoint(left_now, right_now, *disparity_now_))
+    return false;
+
+  if (!getRightPoint(left_previous, right_previous, *disparity_previous_))
+    return false;
+
+  if (right_now.x < 0 || right_now.x >= right_flow_.cols)
+    return false;
+
+  cv::Vec2f flow_right = right_flow_.at<cv::Vec2f>(right_now.y, right_now.x);
+
+  if(std::isnan(flow_right[0]) || std::isnan(flow_right[1]))
+    return false;
+
+  if (matching_tolerance_ >= 0) { // matching_toleranceが負なら無効化
+    double x_diff = right_previous.x + flow_right[0] - right_now.x;
+    double y_diff = right_previous.y + flow_right[1] - right_now.y;
+    double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
+    if (diff > matching_tolerance_)
+      return false;
+  }
+
+  return true;
 }
 
 bool VelocityEstimator::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow)
