@@ -101,19 +101,20 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
     msg.header.stamp = moving_objects->header.stamp;
     msg.tracker_covariance_array.reserve(trackers.size());
 
-    for (auto &object : trackers)
+    for (auto &tracker : trackers)
     {
-      if (object->correction_count() < 5)
+      // Remove intermittent objects
+      if (tracker->correction_count() < 5)
         continue;
 
-      if (object->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
-        ROS_INFO("Type mismatch: now: %s, require: %s, any: %s", object->lastAssociated().type().name(), typeid(moving_object_msgs::MovingObjectPtr).name(), boost::any().type().name());
+      if (tracker->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
+        ROS_INFO("Type mismatch: now: %s, require: %s, any: %s", tracker->lastAssociated().type().name(), typeid(moving_object_msgs::MovingObjectPtr).name(), boost::any().type().name());
       else
       {
         moving_object_tracker::TrackerCovariance cov_msg;
-        cov_msg.id = object->id();
-        for (int i = 0; i < object->cov().size(); i++)
-          cov_msg.covariance[i] = object->cov()(i);
+        cov_msg.id = tracker->id();
+        for (int i = 0; i < tracker->cov().size(); i++)
+          cov_msg.covariance[i] = tracker->cov()(i);
         msg.tracker_covariance_array.push_back(cov_msg);
       }
     }
