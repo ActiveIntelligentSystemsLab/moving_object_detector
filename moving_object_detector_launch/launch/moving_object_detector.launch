@@ -46,18 +46,28 @@
     <remap from="image" to="/synchronized/right/image_rect_color"/>
     <param name="debug_view" value="false"/>
   </node>
-  
-  <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
+
+  <node name="input_synchronizer" pkg="velocity_estimator" type="input_synchronizer_node">
     <remap from="synchronizer_input_left_rect_image" to="/zed/left/image_rect_color"/>
     <remap from="synchronizer_input_right_rect_image" to="/zed/right/image_rect_color"/>
-    
+
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
 
+    <remap from="viso2_info" to="/viso2/info"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="disparity_image" to="/zed/disparity/disparity_image"/>
+
+    <param name="image_transport" value="compressed"/>
+  </node>
+  
+  <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
     <remap from="disparity_image" to="/zed/disparity/disparity_image"/>
+    <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
 
   <node name="clusterer" pkg="velocity_pc_clusterer" type="clusterer_node"/>
