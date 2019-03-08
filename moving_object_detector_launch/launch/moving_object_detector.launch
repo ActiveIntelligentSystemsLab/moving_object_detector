@@ -7,6 +7,7 @@
     <include file="$(find zed_wrapper)/launch/zed_camera.launch" pass_all_args="true">
       <!-- compliant mode for rviz -->
       <arg name="odometry_frame"        value="$(arg odometry_frame)" />
+      <arg name="svo_file"              value="/home/aisl/Datasets/ZED_walking_with_robot/ZED_data/walking_with_robot2.svo" />
     </include>
   </group>
   
@@ -41,7 +42,7 @@
     <remap from="image" to="/synchronized/left/image_rect_color"/>
     <param name="debug_view" value="false"/>
   </node>
-  
+
   <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
     <param name="debug_view" value="false"/>
