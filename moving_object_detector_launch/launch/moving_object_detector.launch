@@ -66,6 +66,4 @@
   <node name="project_moving_object_on_image" pkg="project_moving_object_on_image" type="project_moving_object_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
-
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/debug_view.rviz" required="true"/>
 </launch>
