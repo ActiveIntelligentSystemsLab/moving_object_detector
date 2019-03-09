@@ -40,12 +40,10 @@
   
   <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
-    <param name="debug_view" value="false"/>
   </node>
 
   <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
-    <param name="debug_view" value="false"/>
   </node>
 
   <node name="input_synchronizer" pkg="velocity_estimator" type="input_synchronizer_node">
