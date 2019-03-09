@@ -2,5 +2,11 @@
   <!--
   gazebo_simulation_spawn_robots.launch should be launched after load this world.
   -->
-  <include file="$(find gazebo_factory_world)/launch/factory_world.launch"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <env name="GAZEBO_MODEL_PATH" value="$(find gazebo_factory_world)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+
+    <arg name="world_name" value="$(find gazebo_factory_world)/worlds/factory.world"/>
+    <arg name="verbose" value="true"/>
+    <arg name="gui" value="false"/>
+  </include>
 </launch>
