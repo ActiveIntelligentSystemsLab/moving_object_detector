@@ -52,6 +52,10 @@
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   
   <!-- Nodes for visualization -->
+  <node name="left_flow_view" pkg="flow_view" type="flow_view">
+    <remap from="flow" to="optical_flow_left/flows"/>
+    <remap from="flow_image" to="left_flow_image"/>
+  </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
   <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
