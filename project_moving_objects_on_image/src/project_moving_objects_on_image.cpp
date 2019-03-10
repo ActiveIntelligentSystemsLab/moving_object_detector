@@ -8,12 +8,39 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
+#include <memory>
+
+tf2_ros::Buffer tf_buffer;
+std::shared_ptr<tf2_ros::TransformListener> tf_listener;
 image_transport::Publisher image_pub;
 int red, green, blue;
 
 void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info, const moving_object_msgs::MovingObjectArrayConstPtr& moving_object_array)
 {
+  geometry_msgs::TransformStamped tf_to_camera;
+  try {
+    tf_to_camera = tf_buffer.lookupTransform(image->header.frame_id, moving_object_array->header.frame_id, image->header.stamp);
+  }
+  catch(tf2::LookupException &e)
+  {
+    ROS_WARN("TF Lookup Exception: %s", e.what());
+    return;
+  }
+
+  std::vector<moving_object_msgs::MovingObjectPtr> transformed;
+  transformed.reserve(moving_object_array->moving_object_array.size());
+  for (auto& moving_object : moving_object_array->moving_object_array)
+  {
+    moving_object_msgs::MovingObjectPtr transformed_object(new moving_object_msgs::MovingObject);
+    tf2::doTransform(moving_object.center, transformed_object->center, tf_to_camera);
+    tf2::doTransform(moving_object.velocity, transformed_object->velocity, tf_to_camera);
+    transformed_object->bounding_box = moving_object.bounding_box;
+    transformed.push_back(transformed_object);
+  }
+
   cv::Mat cv_image;
   cv_bridge::CvImagePtr input_bridge;
   try {
@@ -21,16 +48,17 @@ void dataCB(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraIn
     cv_image = input_bridge->image;
   } catch(cv_bridge::Exception& exception) {
     ROS_ERROR("Failed to Convert image from msg to cv");
+    return;
   }
 
   image_geometry::PinholeCameraModel camera_model;
   camera_model.fromCameraInfo(camera_info);
 
-  for (auto& moving_object : moving_object_array->moving_object_array) {
-    cv::Point3d top_left_pt(moving_object.center.position.x - (moving_object.bounding_box.x / 2), moving_object.center.position.y - (moving_object.bounding_box.y / 2), moving_object.center.position.z - (moving_object.bounding_box.z / 2));
+  for (auto& moving_object : transformed) {
+    cv::Point3d top_left_pt(moving_object->center.position.x - (moving_object->bounding_box.x / 2), moving_object->center.position.y - (moving_object->bounding_box.y / 2), moving_object->center.position.z - (moving_object->bounding_box.z / 2));
 
     cv::Point2d top_left_uv = camera_model.project3dToPixel(top_left_pt);
-    cv::Point3d bottom_right_pt(moving_object.center.position.x + (moving_object.bounding_box.x / 2), moving_object.center.position.y + (moving_object.bounding_box.y / 2), moving_object.center.position.z + (moving_object.bounding_box.z / 2));
+    cv::Point3d bottom_right_pt(moving_object->center.position.x + (moving_object->bounding_box.x / 2), moving_object->center.position.y + (moving_object->bounding_box.y / 2), moving_object->center.position.z + (moving_object->bounding_box.z / 2));
     cv::Point2d bottom_right_uv = camera_model.project3dToPixel(bottom_right_pt);
 
     cv::rectangle(cv_image, top_left_uv, bottom_right_uv, CV_RGB(red, green, blue), 2);
@@ -48,6 +76,8 @@ int main(int argc, char **argv)
   red = private_nh.param("red", 255);
   green = private_nh.param("green", 0);
   blue = private_nh.param("blue", 0);
+
+  tf_listener.reset(new tf2_ros::TransformListener(tf_buffer));
 
   image_transport::ImageTransport img_trans = image_transport::ImageTransport(nh);
   std::string input_image_topic = nh.resolveName("input_image"); // image_transport::SubscriberFilter は何故か名前解決してくれないので
