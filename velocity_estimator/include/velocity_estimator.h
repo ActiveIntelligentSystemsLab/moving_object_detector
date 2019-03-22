@@ -7,7 +7,7 @@
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <optical_flow_msg/OpticalFlow.h>
+#include <dense_flow_msg/DenseFlow.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -32,12 +32,12 @@ private:
   image_transport::Publisher velocity_image_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_left_sub_;
-  message_filters::Subscriber<optical_flow_msg::OpticalFlow> optical_flow_right_sub_;
+  message_filters::Subscriber<dense_flow_msg::DenseFlow> optical_flow_left_sub_;
+  message_filters::Subscriber<dense_flow_msg::DenseFlow> optical_flow_right_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> left_camera_info_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msg::OpticalFlow, optical_flow_msg::OpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dense_flow_msg::DenseFlow, dense_flow_msg::DenseFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
   dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
@@ -70,7 +70,7 @@ private:
    * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
-  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_left, const optical_flow_msg::OpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dense_flow_msg::DenseFlowConstPtr& optical_flow_left, const dense_flow_msg::DenseFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
 
   /**
    * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image

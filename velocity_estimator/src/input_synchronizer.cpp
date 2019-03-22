@@ -55,7 +55,7 @@ void InputSynchronizer::stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr&
   }
 }
 
-void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msg::OpticalFlowConstPtr& left_flow, const optical_flow_msg::OpticalFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
+void InputSynchronizer::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const dense_flow_msg::DenseFlowConstPtr& left_flow, const dense_flow_msg::DenseFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
 {
   publish_required_ = true;
 }

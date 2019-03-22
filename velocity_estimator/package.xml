@@ -13,7 +13,7 @@
   <depend>image_geometry</depend>
   <depend>image_transport</depend>
   <depend>message_filters</depend>
-  <depend>optical_flow_msgs</depend>
+  <depend>dense_flow_msgs</depend>
   <depend>pcl_conversions</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
