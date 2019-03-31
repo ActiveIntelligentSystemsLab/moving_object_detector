@@ -55,20 +55,13 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 add_library(${PROJECT_NAME}
   src/input_synchronizer_nodelet.cpp
+  src/velocity_estimator_nodelet.cpp
 )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-add_executable(velocity_estimator_node
-  src/velocity_estimator.cpp
-  src/velocity_estimator_node.cpp
-)
-add_dependencies(velocity_estimator_node
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
 )
-target_link_libraries(velocity_estimator_node
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
 )
@@ -88,7 +81,6 @@ install(
 
 install(
   TARGETS
-    velocity_estimator_node
     velocity2color_node
   RUNTIME DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}

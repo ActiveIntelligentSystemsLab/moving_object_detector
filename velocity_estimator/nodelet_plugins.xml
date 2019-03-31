@@ -6,4 +6,10 @@
     Synchronize input topics of velocity estimator.
   </description>
   </class>
+
+  <class name="velocity_estimator/velocity_estimator" type="velocity_estimator::VelocityEstimatorNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      Estimate velocity of pointcloud.
+    </description>
+  </class>
 </library>

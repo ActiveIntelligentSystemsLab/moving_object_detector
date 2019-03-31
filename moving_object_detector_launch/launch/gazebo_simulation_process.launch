@@ -37,7 +37,7 @@
     <param name="image_transport" value="compressed"/>
   </node>
 
-  <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
+  <node name="velocity_estimator" pkg="nodelet" type="nodelet" args="load velocity_estimator/velocity_estimator $(arg nodelet_manager_name)">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flow"/>

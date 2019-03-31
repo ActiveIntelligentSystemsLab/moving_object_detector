@@ -7,6 +7,7 @@
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <nodelet/nodelet.h>
 #include <dense_flow_msg/DenseFlow.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
@@ -20,12 +21,12 @@
 
 #include <list>
 
-class VelocityEstimator {
-public:
-  VelocityEstimator();
-private:
-  ros::NodeHandle node_handle_;
+namespace velocity_estimator{
 
+class VelocityEstimatorNodelet : public nodelet::Nodelet {
+public:
+  virtual void onInit();
+private:
   std::shared_ptr<image_transport::ImageTransport> image_transport;
   
   ros::Publisher pc_with_velocity_pub_;
@@ -106,5 +107,7 @@ private:
    */
   void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
 };
+
+} // namespace velocity_estimator
 
 #endif
