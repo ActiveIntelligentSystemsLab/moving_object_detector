@@ -59,10 +59,6 @@
     <remap from="flow" to="optical_flow_left/flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
-  <node name="disparity_view" pkg="disparity_view" type="disparity_view_node">
-    <remap from="disparity" to="elas/disparity"/>
-    <remap from="image" to="disparity_image"/>
-  </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
   <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
