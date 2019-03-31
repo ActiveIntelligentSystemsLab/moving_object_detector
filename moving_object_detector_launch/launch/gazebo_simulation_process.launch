@@ -27,8 +27,8 @@
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
 
     <remap from="viso2_info" to="/viso2/info"/>
-    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
-    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
     <remap from="disparity_image" to="/elas/disparity"/>
 
     <param name="image_transport" value="compressed"/>
@@ -36,8 +36,8 @@
 
   <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
-    <remap from="optical_flow_left" to="/optical_flow_left/flows"/>
-    <remap from="optical_flow_right" to="/optical_flow_right/flows"/>
+    <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
+    <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
     <remap from="disparity_image" to="/elas/disparity"/>
     <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
