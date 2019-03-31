@@ -84,6 +84,7 @@ class MovingObjectToMarker:
         @rtype:  visualization_msgs/Marker
         """
         velocity_arrow = Marker()
+        velocity_arrow.header = header
         velocity_arrow.id = moving_object.id
         velocity_arrow.type = Marker.ARROW
         velocity_arrow.action = Marker.ADD
