@@ -12,6 +12,7 @@ PLUGINLIB_EXPORT_CLASS(velocity_pc_clusterer::ClustererNodelet, nodelet::Nodelet
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 
+#include <algorithm>
 #include <cmath>
 #include <Eigen/Core>
 #include <list>
@@ -158,14 +159,13 @@ bool ClustererNodelet::cluster2MovingObject(const pcl::PointIndices& cluster_ind
   moving_object.center.orientation.z = 0;
   moving_object.center.orientation.w = 1;
 
-  // ホントは平均よりも中央値出した方がいい気がする
-  Eigen::Vector3f velocity_sum(0.0, 0.0, 0.0);
-  for (auto& point : cluster)
-  {
-    Eigen::Map<Eigen::Vector3f> velocity(point.data_velocity);
-    velocity_sum += velocity;
-  }
-  Eigen::Vector3f velocity = velocity_sum / cluster.points.size();
+  std::sort(cluster.begin(), cluster.end(), [](pcl::PointXYZVelocity a, pcl::PointXYZVelocity b) {
+    Eigen::Map<Eigen::Vector3f> a_velocity(a.data_velocity);
+    Eigen::Map<Eigen::Vector3f> b_velocity(b.data_velocity);
+    return a_velocity.norm() > b_velocity.norm();
+  });
+
+  Eigen::Vector3f velocity(cluster.at(cluster.size() / 2).data_velocity);
 
   if (velocity.norm() < dynamic_speed_th_)
     return false;
