@@ -3,6 +3,9 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
+  <arg name="nodelet_manager_name" value="nodelet_manager"/>
+  <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
+
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="synchronized"/>
     <remap from="image" to="image_rect_color"/>
@@ -11,11 +14,11 @@
     <param name="publish_tf" value="false"/>
   </node>
 
-  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
+  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
   </node>
 
-  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="standalone dis_flow/dis_flow">
+  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
   </node>
 
@@ -52,8 +55,8 @@
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   
   <!-- Nodes for visualization -->
-  <node name="left_flow_view" pkg="flow_view" type="flow_view">
-    <remap from="flow" to="optical_flow_left/flows"/>
+  <node name="left_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+    <remap from="flow" to="optical_flow_left/flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
   <node name="disparity_view" pkg="disparity_view" type="disparity_view_node">
