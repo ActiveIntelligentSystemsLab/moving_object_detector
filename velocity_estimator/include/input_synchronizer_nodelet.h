@@ -1,7 +1,8 @@
-#ifndef __HEADER_INPUT_SYNCHRONIZER__
-#define __HEADER_INPUT_SYNCHRONIZER__
+#ifndef __HEADER_INPUT_SYNCHRONIZER_NODELET__
+#define __HEADER_INPUT_SYNCHRONIZER_NODELET__
 
 #include <ros/ros.h>
+#include <nodelet/nodelet.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <message_filters/subscriber.h>
@@ -15,13 +16,11 @@
 
 #include <memory>
 
+namespace velocity_estimator {
 // visual odometry, stereo matching, optical flowへの入力を与えるノード
 // visual odometry, stereo matching, optical flowの処理が終了するたびに，タイムスタンプを同期させたステレオ画像とcamera infoを1セットpublishする
-class InputSynchronizer {
+class InputSynchronizerNodelet : public nodelet::Nodelet {
 private:
-  std::shared_ptr<ros::NodeHandle> node_handle_;
-  std::shared_ptr<ros::NodeHandle> private_node_handle;
-  
   ros::ServiceServer publish_service_;
   
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
@@ -67,7 +66,9 @@ private:
   bool publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response);
   
 public:
-  InputSynchronizer();
+  virtual void onInit();
 };
+
+} // namespace velocity_estimator
 
 #endif

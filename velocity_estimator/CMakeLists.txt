@@ -39,6 +39,8 @@ catkin_package(
     PCL
   INCLUDE_DIRS
     include
+  LIBRARIES
+    ${PROJECT_NAME}
 )
 
 include_directories(
@@ -51,11 +53,10 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_executable(input_synchronizer_node
-  src/input_synchronizer.cpp
-  src/input_synchronizer_node.cpp
+add_library(${PROJECT_NAME}
+  src/input_synchronizer_nodelet.cpp
 )
-target_link_libraries(input_synchronizer_node
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -76,6 +77,10 @@ add_executable(velocity2color_node src/velocity2color_node.cpp)
 add_dependencies(velocity2color_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity2color_node ${catkin_LIBRARIES})
 
+install(TARGETS ${PROJECT_NAME}
+        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
 install(
   DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -83,7 +88,6 @@ install(
 
 install(
   TARGETS
-    input_synchronizer_node
     velocity_estimator_node
     velocity2color_node
   RUNTIME DESTINATION
