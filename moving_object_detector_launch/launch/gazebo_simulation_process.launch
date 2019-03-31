@@ -59,7 +59,9 @@
     <remap from="flow" to="optical_flow_left/flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
-  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker"/>
+  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
+    <remap from="moving_object_array" to="moving_objects"/>
+  </node>
   <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
