@@ -50,7 +50,7 @@
     <remap from="image" to="/image_rect_color"/>
   </node>
 
-  <node name="clusterer" pkg="velocity_pc_clusterer" type="clusterer_node"/>
+  <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)"/>
 
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   

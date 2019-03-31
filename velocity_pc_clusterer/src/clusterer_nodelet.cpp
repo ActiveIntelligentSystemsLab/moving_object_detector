@@ -1,4 +1,8 @@
-#include "clusterer.h"
+#include <pluginlib/class_list_macros.h>
+
+#include "clusterer_nodelet.h"
+
+PLUGINLIB_EXPORT_CLASS(velocity_pc_clusterer::ClustererNodelet, nodelet::Nodelet)
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -13,20 +17,23 @@
 #include <list>
 #include <vector>
 
-Clusterer::Clusterer()
+namespace velocity_pc_clusterer {
+
+void ClustererNodelet::onInit()
 {
-  reconfigure_func_ = boost::bind(&Clusterer::reconfigureCB, this, _1, _2);
+  ros::NodeHandle &node_handle = getNodeHandle();
+  reconfigure_func_ = boost::bind(&ClustererNodelet::reconfigureCB, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_func_);
 
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle_);
+  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle);
   clusters_image_pub_ = image_transport_->advertise("clusters_image", 1);
   
-  velocity_pc_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &Clusterer::dataCB, this);
-  dynamic_objects_pub_ = node_handle_.advertise<moving_object_msgs::MovingObjectArray>("moving_objects", 1);
-  clusters_pub_ = node_handle_.advertise<visualization_msgs::MarkerArray>("clusters", 1);
+  velocity_pc_sub_ = node_handle.subscribe<sensor_msgs::PointCloud2>("velocity_pc", 10, &ClustererNodelet::dataCB, this);
+  dynamic_objects_pub_ = node_handle.advertise<moving_object_msgs::MovingObjectArray>("moving_objects", 1);
+  clusters_pub_ = node_handle.advertise<visualization_msgs::MarkerArray>("clusters", 1);
 }
 
-void Clusterer::calculateDynamicMap()
+void ClustererNodelet::calculateDynamicMap()
 {
   if (dynamic_map_.size() != input_pointcloud_->size())
     dynamic_map_.resize(input_pointcloud_->size());
@@ -42,7 +49,7 @@ void Clusterer::calculateDynamicMap()
   }
 }
 
-void Clusterer::calculateInitialClusterMap()
+void ClustererNodelet::calculateInitialClusterMap()
 {
   if (lookup_table_.size() != input_pointcloud_->size())
     lookup_table_.resize(input_pointcloud_->size());
@@ -68,7 +75,7 @@ void Clusterer::calculateInitialClusterMap()
   }
 }
 
-void Clusterer::clustering(pcl::IndicesClusters &output_indices)
+void ClustererNodelet::clustering(pcl::IndicesClusters &output_indices)
 {
   calculateDynamicMap();
   initClusterMap();
@@ -80,7 +87,7 @@ void Clusterer::clustering(pcl::IndicesClusters &output_indices)
   clusterMap2IndicesCluster(output_indices);
 }
 
-void Clusterer::clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters)
+void ClustererNodelet::clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters)
 {
   if (number_of_clusters_ <= 0)
     return;
@@ -102,7 +109,7 @@ void Clusterer::clusterMap2IndicesCluster(pcl::IndicesClusters &indices_clusters
   }
 }
 
-void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id)
+void ClustererNodelet::cluster2Marker(const pcl::PointIndices& cluster_indices, visualization_msgs::Marker& marker, int marker_id)
 {
   int r, g, b;
   color_set_.getColor(marker_id, r, g, b);
@@ -130,7 +137,7 @@ void Clusterer::cluster2Marker(const pcl::PointIndices& cluster_indices, visuali
   }
 }
 
-bool Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_msgs::MovingObject& moving_object)
+bool ClustererNodelet::cluster2MovingObject(const pcl::PointIndices& cluster_indices, moving_object_msgs::MovingObject& moving_object)
 {
   pcl::PointCloud<pcl::PointXYZVelocity> cluster(*input_pointcloud_, cluster_indices.indices);
 
@@ -170,7 +177,7 @@ bool Clusterer::cluster2MovingObject(const pcl::PointIndices& cluster_indices, m
   return true;
 }
 
-void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &compared_point)
+void ClustererNodelet::comparePoints(const Point2d &interest_point, const Point2d &compared_point)
 {
   if (!isInRange(compared_point))
     return;
@@ -205,7 +212,7 @@ void Clusterer::comparePoints(const Point2d &interest_point, const Point2d &comp
   }
 }
 
-void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
+void ClustererNodelet::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
 {
   ros::Time start = ros::Time::now();
 
@@ -228,7 +235,7 @@ void Clusterer::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_msg)
   ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
 }
 
-void Clusterer::initClusterMap()
+void ClustererNodelet::initClusterMap()
 {
   number_of_clusters_ = 0;
 
@@ -237,7 +244,7 @@ void Clusterer::initClusterMap()
   std::fill(cluster_map_.begin(), cluster_map_.end(), NOT_BELONGED_);
 }
 
-void Clusterer::integrateConnectedClusters()
+void ClustererNodelet::integrateConnectedClusters()
 {
   number_of_clusters_ = 0;
   for (int i = 0; i < cluster_map_.size(); i++)
@@ -253,7 +260,7 @@ void Clusterer::integrateConnectedClusters()
   }
 }
 
-void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
+void ClustererNodelet::publishClusters(const pcl::IndicesClusters &clusters)
 {
   visualization_msgs::MarkerArray clusters_msg;
 
@@ -276,7 +283,7 @@ void Clusterer::publishClusters(const pcl::IndicesClusters &clusters)
   clusters_pub_.publish(clusters_msg);
 }
 
-void Clusterer::publishClustersImage()
+void ClustererNodelet::publishClustersImage()
 {
   cv::Mat clusters_image(input_pointcloud_->height, input_pointcloud_->width, CV_8UC3);
 
@@ -308,7 +315,7 @@ void Clusterer::publishClustersImage()
   clusters_image_pub_.publish(clusters_image_msg);
 }
 
-void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
+void ClustererNodelet::publishMovingObjects(const pcl::IndicesClusters &clusters)
 {
   moving_object_msgs::MovingObjectArray moving_objects_msg;
   moving_objects_msg.header = input_header_;
@@ -329,7 +336,7 @@ void Clusterer::publishMovingObjects(const pcl::IndicesClusters &clusters)
   dynamic_objects_pub_.publish(moving_objects_msg);
 }
 
-void Clusterer::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level)
+void ClustererNodelet::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level)
 {
   ROS_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
   cluster_size_th_  = config.cluster_size;
@@ -338,7 +345,7 @@ void Clusterer::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, ui
   neighbor_distance_th_ = config.neighbor_distance;
 }
 
-void Clusterer::removeSmallClusters()
+void ClustererNodelet::removeSmallClusters()
 {
   if (number_of_clusters_ <= 0)
     return;
@@ -378,3 +385,5 @@ void Clusterer::removeSmallClusters()
     cluster_map_.at(i) = cluster_old2new.at(old_cluster);
   }
 }
+
+} // namespace velocity_pc_clusterer

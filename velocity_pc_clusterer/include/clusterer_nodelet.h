@@ -17,12 +17,15 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <image_transport/image_transport.h>
+#include <nodelet/nodelet.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 
 #include <utility>
 #include <vector>
+
+namespace velocity_pc_clusterer {
 
 struct Point2d {
   int u;
@@ -31,13 +34,11 @@ struct Point2d {
   Point2d(int u, int v) : u(u), v(v){}
 };
 
-class Clusterer {
+class ClustererNodelet : public nodelet::Nodelet {
 public:
-  Clusterer();
+  virtual void onInit();
   
 private:
-  ros::NodeHandle node_handle_;
-
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
   ros::Publisher dynamic_objects_pub_;
@@ -104,5 +105,7 @@ private:
   void reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level);
   void removeSmallClusters();
 };
+
+} // velocity_pc_clusterer
 
 #endif

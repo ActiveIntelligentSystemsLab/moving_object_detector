@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   image_transport
   moving_object_msgs
+  nodelet
   pcl_conversions
   roscpp
   sensor_msgs
@@ -21,7 +22,7 @@ find_package(PCL REQUIRED
 
 generate_dynamic_reconfigure_options(cfg/Clusterer.cfg)
 
-catkin_package()
+catkin_package(LIBRARIES ${PROJECT_NAME})
 
 include_directories(
   include
@@ -30,14 +31,13 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-add_executable(clusterer_node
-  src/clusterer.cpp
-  src/clusterer_node.cpp
+add_library(${PROJECT_NAME}
+  src/clusterer_nodelet.cpp
   src/color_set.cpp
   src/lookup_table.cpp
 )
-add_dependencies(clusterer_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(clusterer_node
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_COMMON_LIBRARIES}
@@ -45,6 +45,6 @@ target_link_libraries(clusterer_node
 )
 
 install(
-  TARGETS clusterer_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  TARGETS ${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
