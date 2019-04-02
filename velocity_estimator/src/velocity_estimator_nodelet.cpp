@@ -24,6 +24,7 @@ void VelocityEstimatorNodelet::onInit() {
   reconfigure_server_.setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
+  static_flow_pub_ = node_handle.advertise<dense_flow_msg::DenseFlow>("static_flow", 1);
   velocity_image_pub_ = image_transport->advertise("velocity_image", 1);
   
   camera_transform_sub_.subscribe(node_handle, "camera_transform", 1);
@@ -34,6 +35,28 @@ void VelocityEstimatorNodelet::onInit() {
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dense_flow_msg::DenseFlow, dense_flow_msg::DenseFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&VelocityEstimatorNodelet::dataCB, this, _1, _2, _3, _4, _5));
+}
+
+void VelocityEstimatorNodelet::calculateStaticOpticalFlow(cv::Mat *flow)
+{
+  int height = static_cast<int>(pc_previous_transformed_->height);
+  int width = static_cast<int>(pc_previous_transformed_->width);
+  *flow = cv::Mat(height, width, CV_32FC2);
+
+  for (int y = 0; y < height; y++)
+  {
+    for (int x = 0; x < width; x++)
+    {
+      pcl::PointXYZ pcl_point = pc_previous_transformed_->at(x, y);
+      cv::Point3d point_3d;
+      point_3d.x = pcl_point.x;
+      point_3d.y = pcl_point.y;
+      point_3d.z = pcl_point.z;
+      cv::Point2d point_2d = left_cam_model_.project3dToPixel(point_3d);
+      cv::Vec2f static_flow(point_2d.x, point_2d.y);
+      flow->at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
+    }
+  }
 }
 
 void VelocityEstimatorNodelet::constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image)
@@ -64,9 +87,6 @@ void VelocityEstimatorNodelet::constructVelocityImage(const pcl::PointCloud<pcl:
 
 void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
-  pcl::PointCloud<pcl::PointXYZ> pc_previous_transformed;
-  transformPCPreviousToNow(*pc_previous_, pc_previous_transformed, transform_now_to_previous_.transform);
-
   ros::Duration time_between_frames = transform_now_to_previous_.header.stamp - time_stamp_previous_;
 
   initializeVelocityPC(velocity_pc);
@@ -92,7 +112,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
         continue;
 
       pcl::PointXYZ point3d_previous;
-      point3d_previous = pc_previous_transformed.at(left_previous.x, left_previous.y);
+      point3d_previous = pc_previous_transformed_->at(left_previous.x, left_previous.y);
       if (!isValid(point3d_previous))
         continue;
 
@@ -107,15 +127,23 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
 {
   disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
   pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
+
   disparity_now_->toPointCloud(*pc_now_);
 
   transform_now_to_previous_ = *camera_transform;
+
+  left_cam_model_.fromCameraInfo(left_camera_info);
 
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
     left_flow_ = cv_bridge::toCvCopy(optical_flow_left->flow)->image;
     right_flow_ = cv_bridge::toCvCopy(optical_flow_right->flow)->image;
+
+    pc_previous_transformed_.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, transform_now_to_previous_.transform);
+
+    cv::Mat static_flow;
 
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);
@@ -127,6 +155,13 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
       cv::Mat velocity_image;
       constructVelocityImage(pc_with_velocity, velocity_image);
       publishVelocityImage(velocity_image);
+    }
+
+    if (static_flow_pub_.getNumSubscribers() > 0)
+    {
+      cv::Mat static_flow;
+      calculateStaticOpticalFlow(&static_flow);
+      publishStaticOpticalFlow(static_flow);
     }
 
     ros::Duration process_time = ros::Time::now() - start_process;
@@ -226,6 +261,22 @@ bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
     return false;
   
   return true;
+}
+
+void VelocityEstimatorNodelet::publishStaticOpticalFlow(const cv::Mat &static_flow)
+{
+  std_msgs::Header header;
+  header.frame_id = transform_now_to_previous_.header.frame_id;
+  header.stamp = transform_now_to_previous_.header.stamp;
+
+  dense_flow_msg::DenseFlow flow_msg;
+  flow_msg.header = header;
+  flow_msg.previous_stamp = time_stamp_previous_;
+
+  cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::TYPE_32FC2, static_flow);
+  flow_msg.flow = *(cv_image.toImageMsg());
+
+  static_flow_pub_.publish(flow_msg);
 }
 
 void VelocityEstimatorNodelet::publishVelocityImage(const cv::Mat &velocity_image)

@@ -4,6 +4,7 @@
 #include <disparity_image_proc/disparity_image_processor.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -30,6 +31,7 @@ private:
   std::shared_ptr<image_transport::ImageTransport> image_transport;
   
   ros::Publisher pc_with_velocity_pub_;
+  ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
@@ -53,9 +55,22 @@ private:
 
   cv::Mat left_flow_, right_flow_;
   std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_now_, pc_previous_;
+
+  /**
+   * \brief Pointcloud of previous frame transformed by camera motion matrix from previous to now
+   */
+  std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_previous_transformed_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
   geometry_msgs::TransformStamped transform_now_to_previous_;
   ros::Time time_stamp_previous_;
+
+  image_geometry::PinholeCameraModel left_cam_model_;
+
+  /**
+   * \brief Calculate optical flow with static assumption
+   * \param flow calculated flow by this function
+   */
+  void calculateStaticOpticalFlow(cv::Mat *flow);
 
   /**
    * \brief Construct velocity image which visualize velocity_pc as RGB color image
@@ -88,6 +103,13 @@ private:
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   bool isValid(const pcl::PointXYZ &point);
+
+  /**
+   * \brief Publish static optical flow
+   *
+   * \param Calculated static optical flow
+   */
+  void publishStaticOpticalFlow(const cv::Mat &static_flow);
 
   /**
    * \brief Publish image which visualize velocity pc by RGB color

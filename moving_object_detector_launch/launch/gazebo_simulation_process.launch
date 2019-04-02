@@ -59,6 +59,10 @@
     <remap from="flow" to="optical_flow_left/flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
+  <node name="static_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+    <remap from="flow" to="/static_flow"/>
+    <remap from="flow_image" to="static_flow_image"/>
+  </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="moving_objects"/>
   </node>
