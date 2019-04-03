@@ -157,13 +157,14 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
     pc_previous_transformed_.reset(new pcl::PointCloud<pcl::PointXYZ>());
     transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, transform_now_to_previous_.transform);
 
+    calculateStaticOpticalFlow();
+
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);
     
-    publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+    if (pc_with_velocity_pub_.getNumSubscribers() > 0)
+      publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
 
-    if (velocity_image_pub_.getNumSubscribers() > 0 || static_flow_pub_.getNumSubscribers() > 0)
-      calculateStaticOpticalFlow();
 
     if (velocity_image_pub_.getNumSubscribers() > 0)
     {
