@@ -143,8 +143,6 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
     pc_previous_transformed_.reset(new pcl::PointCloud<pcl::PointXYZ>());
     transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, transform_now_to_previous_.transform);
 
-    cv::Mat static_flow;
-
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);
     
