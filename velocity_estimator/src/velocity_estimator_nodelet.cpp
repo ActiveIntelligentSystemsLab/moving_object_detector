@@ -37,11 +37,11 @@ void VelocityEstimatorNodelet::onInit() {
   time_sync_->registerCallback(boost::bind(&VelocityEstimatorNodelet::dataCB, this, _1, _2, _3, _4, _5));
 }
 
-void VelocityEstimatorNodelet::calculateStaticOpticalFlow(cv::Mat *flow)
+void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
 {
   int height = static_cast<int>(pc_previous_transformed_->height);
   int width = static_cast<int>(pc_previous_transformed_->width);
-  *flow = cv::Mat(height, width, CV_32FC2);
+  left_static_flow_ = cv::Mat(height, width, CV_32FC2);
 
   for (int y = 0; y < height; y++)
   {
@@ -54,7 +54,7 @@ void VelocityEstimatorNodelet::calculateStaticOpticalFlow(cv::Mat *flow)
       point_3d.z = pcl_point.z;
       cv::Point2d point_2d = left_cam_model_.project3dToPixel(point_3d);
       cv::Vec2f static_flow(point_2d.x, point_2d.y);
-      flow->at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
+      left_static_flow_.at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
     }
   }
 }
@@ -116,9 +116,23 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
       if (!isValid(point3d_previous))
         continue;
 
-      point_with_velocity.vx = (point3d_now.x - point3d_previous.x) / time_between_frames.toSec();
-      point_with_velocity.vy = (point3d_now.y - point3d_previous.y) / time_between_frames.toSec();
-      point_with_velocity.vz = (point3d_now.z - point3d_previous.z) / time_between_frames.toSec();
+      cv::Vec2f flow = left_flow_.at<cv::Vec2f>(left_now.y, left_now.x);
+      cv::Vec2f static_flow = left_static_flow_.at<cv::Vec2f>(left_now.y, left_now.x);
+
+      cv::Vec2f flow_diff = flow - static_flow;
+
+      if (std::sqrt(flow_diff.dot(flow_diff)) >= dynamic_flow_diff_)
+      {
+        point_with_velocity.vx = (point3d_now.x - point3d_previous.x) / time_between_frames.toSec();
+        point_with_velocity.vy = (point3d_now.y - point3d_previous.y) / time_between_frames.toSec();
+        point_with_velocity.vz = (point3d_now.z - point3d_previous.z) / time_between_frames.toSec();
+      }
+      else
+      {
+        point_with_velocity.vx = 0.0;
+        point_with_velocity.vy = 0.0;
+        point_with_velocity.vz = 0.0;
+      }
     }
   }
 }
@@ -148,6 +162,9 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
     
     publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
 
+    if (velocity_image_pub_.getNumSubscribers() > 0 || static_flow_pub_.getNumSubscribers() > 0)
+      calculateStaticOpticalFlow();
+
     if (velocity_image_pub_.getNumSubscribers() > 0)
     {
       cv::Mat velocity_image;
@@ -156,11 +173,7 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
     }
 
     if (static_flow_pub_.getNumSubscribers() > 0)
-    {
-      cv::Mat static_flow;
-      calculateStaticOpticalFlow(&static_flow);
-      publishStaticOpticalFlow(static_flow);
-    }
+      publishStaticOpticalFlow();
 
     ros::Duration process_time = ros::Time::now() - start_process;
     ROS_INFO("process time: %f", process_time.toSec());
@@ -261,7 +274,7 @@ bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
   return true;
 }
 
-void VelocityEstimatorNodelet::publishStaticOpticalFlow(const cv::Mat &static_flow)
+void VelocityEstimatorNodelet::publishStaticOpticalFlow()
 {
   std_msgs::Header header;
   header.frame_id = transform_now_to_previous_.header.frame_id;
@@ -271,7 +284,7 @@ void VelocityEstimatorNodelet::publishStaticOpticalFlow(const cv::Mat &static_fl
   flow_msg.header = header;
   flow_msg.previous_stamp = time_stamp_previous_;
 
-  cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::TYPE_32FC2, static_flow);
+  cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::TYPE_32FC2, left_static_flow_);
   flow_msg.flow = *(cv_image.toImageMsg());
 
   static_flow_pub_.publish(flow_msg);
@@ -298,8 +311,9 @@ template <typename PointT> void VelocityEstimatorNodelet::publishPointcloud(cons
 
 void VelocityEstimatorNodelet::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: matching_tolerance = %f, max_color_velocity = %f", config.matching_tolerance, config.max_color_velocity);
+  ROS_INFO("Reconfigure Request: dynamic_flow_diff = %d, matching_tolerance = %f, max_color_velocity = %f", config.dynamic_flow_diff, config.matching_tolerance, config.max_color_velocity);
 
+  dynamic_flow_diff_  = config.dynamic_flow_diff;
   matching_tolerance_ = config.matching_tolerance;
   max_color_velocity_ = config.max_color_velocity;
 }

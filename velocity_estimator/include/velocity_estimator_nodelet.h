@@ -45,6 +45,11 @@ private:
   dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig> reconfigure_server_;
   dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
   
+  /**
+   * \brief Difference[pixel] between optical flow and calculated static optical flow treated as dynamic pixel
+   */
+  int dynamic_flow_diff_;
+
   double matching_tolerance_;
 
   /**
@@ -53,7 +58,21 @@ private:
    */
   double max_color_velocity_;
 
-  cv::Mat left_flow_, right_flow_;
+  /**
+   * \brief Optical flow of left frame
+   */
+  cv::Mat left_flow_;
+
+  /**
+   * \brief Optical flow of left frame
+   */
+  cv::Mat right_flow_;
+
+  /**
+   * \brief Optical flow of left frame calculated by assuming static scene from camera motion and 3D reconstructed pointcloud
+   */
+  cv::Mat left_static_flow_;
+
   std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_now_, pc_previous_;
 
   /**
@@ -67,10 +86,9 @@ private:
   image_geometry::PinholeCameraModel left_cam_model_;
 
   /**
-   * \brief Calculate optical flow with static assumption
-   * \param flow calculated flow by this function
+   * \brief Calculate optical flow of left frame with static assumption
    */
-  void calculateStaticOpticalFlow(cv::Mat *flow);
+  void calculateStaticOpticalFlow();
 
   /**
    * \brief Construct velocity image which visualize velocity_pc as RGB color image
@@ -105,11 +123,9 @@ private:
   bool isValid(const pcl::PointXYZ &point);
 
   /**
-   * \brief Publish static optical flow
-   *
-   * \param Calculated static optical flow
+   * \brief Publish static optical flow of left frame
    */
-  void publishStaticOpticalFlow(const cv::Mat &static_flow);
+  void publishStaticOpticalFlow();
 
   /**
    * \brief Publish image which visualize velocity pc by RGB color
