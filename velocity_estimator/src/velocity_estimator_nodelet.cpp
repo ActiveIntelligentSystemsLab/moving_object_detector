@@ -177,7 +177,7 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
       publishStaticOpticalFlow();
 
     ros::Duration process_time = ros::Time::now() - start_process;
-    ROS_INFO("process time: %f", process_time.toSec());
+    NODELET_INFO("process time: %f", process_time.toSec());
   }
 
   disparity_previous_ = disparity_now_;
@@ -312,7 +312,7 @@ template <typename PointT> void VelocityEstimatorNodelet::publishPointcloud(cons
 
 void VelocityEstimatorNodelet::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: dynamic_flow_diff = %d, matching_tolerance = %f, max_color_velocity = %f", config.dynamic_flow_diff, config.matching_tolerance, config.max_color_velocity);
+  NODELET_INFO("Reconfigure Request: dynamic_flow_diff = %d, matching_tolerance = %f, max_color_velocity = %f", config.dynamic_flow_diff, config.matching_tolerance, config.max_color_velocity);
 
   dynamic_flow_diff_  = config.dynamic_flow_diff;
   matching_tolerance_ = config.matching_tolerance;

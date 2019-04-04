@@ -51,7 +51,7 @@ void InputSynchronizerNodelet::stereoTimeSyncCallback(const sensor_msgs::ImageCo
   ros::Time current_stamp = left_rect_image->header.stamp;
   if (current_stamp - last_published_stamp_ >= ros::Duration(republish_timeout_))
   {
-    ROS_INFO("Republish for timeout: last publish at %f and current stamp is %f", last_published_stamp_.toSec(), current_stamp.toSec());
+    NODELET_INFO("Republish for timeout: last publish at %f and current stamp is %f", last_published_stamp_.toSec(), current_stamp.toSec());
     publish_required_ = true;
   }
 
@@ -68,7 +68,7 @@ void InputSynchronizerNodelet::processedDataSyncCallback(const viso2_ros::VisoIn
 
 bool InputSynchronizerNodelet::publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response)
 {
-  ROS_INFO("Repubish is required from service");
+  NODELET_INFO("Repubish is required from service");
   publish_required_ = true;
   return true;
 }

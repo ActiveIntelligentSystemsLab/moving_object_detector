@@ -232,7 +232,7 @@ void ClustererNodelet::dataCB(const sensor_msgs::PointCloud2ConstPtr& input_pc_m
     publishMovingObjects(clusters);
 
   ros::Duration process_time = ros::Time::now() - start;
-  ROS_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
+  NODELET_INFO_STREAM("Process time: " << process_time.toSec() << " [s]");
 }
 
 void ClustererNodelet::initClusterMap()
@@ -338,7 +338,7 @@ void ClustererNodelet::publishMovingObjects(const pcl::IndicesClusters &clusters
 
 void ClustererNodelet::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level)
 {
-  ROS_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
+  NODELET_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
   cluster_size_th_  = config.cluster_size;
   depth_diff_th_ = config.depth_diff;
   dynamic_speed_th_ = config.dynamic_speed;
