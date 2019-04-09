@@ -42,8 +42,9 @@ private:
 
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dense_flow_msg::DenseFlow, dense_flow_msg::DenseFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
-  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig> reconfigure_server_;
-  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>::CallbackType reconfigure_func_;
+  using ReconfigureServer =  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>;
+  std::shared_ptr<ReconfigureServer> reconfigure_server_;
+  ReconfigureServer::CallbackType reconfigure_func_;
   
   /**
    * \brief Difference[pixel] between optical flow and calculated static optical flow treated as dynamic pixel

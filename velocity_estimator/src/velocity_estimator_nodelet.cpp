@@ -18,10 +18,13 @@ namespace velocity_estimator{
 
 void VelocityEstimatorNodelet::onInit() {
   ros::NodeHandle &node_handle = getNodeHandle();
+  ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
+
   image_transport.reset(new image_transport::ImageTransport(node_handle));
 
+  reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
   reconfigure_func_ = boost::bind(&VelocityEstimatorNodelet::reconfigureCB, this, _1, _2);
-  reconfigure_server_.setCallback(reconfigure_func_);
+  reconfigure_server_->setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = node_handle.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
   static_flow_pub_ = node_handle.advertise<dense_flow_msg::DenseFlow>("static_flow", 1);
