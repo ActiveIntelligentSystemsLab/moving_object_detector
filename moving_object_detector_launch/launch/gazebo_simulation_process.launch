@@ -50,7 +50,9 @@
     <remap from="image" to="/image_rect_color"/>
   </node>
 
-  <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)"/>
+  <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)">
+    <remap from="velocity_pc" to="/velocity_estimator/velocity_pc"/>
+  </node>
 
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   
@@ -60,7 +62,7 @@
     <remap from="flow_image" to="left_flow_image"/>
   </node>
   <node name="static_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="/static_flow"/>
+    <remap from="flow" to="/velocity_estimator/static_flow"/>
     <remap from="flow_image" to="static_flow_image"/>
   </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
