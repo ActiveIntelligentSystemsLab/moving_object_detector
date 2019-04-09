@@ -46,8 +46,9 @@ private:
   image_transport::Publisher clusters_image_pub_;
   ros::Subscriber velocity_pc_sub_;
   
-  dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig> reconfigure_server_;
-  dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig>::CallbackType reconfigure_func_;
+  using ReconfigureServer = dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig>;
+  std::shared_ptr<ReconfigureServer> reconfigure_server_;
+  ReconfigureServer::CallbackType reconfigure_func_;
   
   // thresholds
   int cluster_size_th_;

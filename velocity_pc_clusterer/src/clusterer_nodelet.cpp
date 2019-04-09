@@ -23,8 +23,11 @@ namespace velocity_pc_clusterer {
 void ClustererNodelet::onInit()
 {
   ros::NodeHandle &node_handle = getNodeHandle();
+  ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
+
+  reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
   reconfigure_func_ = boost::bind(&ClustererNodelet::reconfigureCB, this, _1, _2);
-  reconfigure_server_.setCallback(reconfigure_func_);
+  reconfigure_server_->setCallback(reconfigure_func_);
 
   image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle);
   clusters_image_pub_ = image_transport_->advertise("clusters_image", 1);
