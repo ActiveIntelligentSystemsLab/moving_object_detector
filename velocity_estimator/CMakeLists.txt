@@ -3,13 +3,13 @@ project(velocity_estimator)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
-  dense_flow_msg
   disparity_image_proc
   dynamic_reconfigure
   image_geometry
   image_transport
   message_filters
   message_generation
+  optical_flow_msgs
   pcl_conversions
   roscpp
   sensor_msgs

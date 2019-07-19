@@ -9,7 +9,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <nodelet/nodelet.h>
-#include <dense_flow_msg/DenseFlow.h>
+#include <optical_flow_msgs/DenseOpticalFlow.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -35,12 +35,12 @@ private:
   image_transport::Publisher velocity_image_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<dense_flow_msg::DenseFlow> optical_flow_left_sub_;
-  message_filters::Subscriber<dense_flow_msg::DenseFlow> optical_flow_right_sub_;
+  message_filters::Subscriber<optical_flow_msgs::DenseOpticalFlow> optical_flow_left_sub_;
+  message_filters::Subscriber<optical_flow_msgs::DenseOpticalFlow> optical_flow_right_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> left_camera_info_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, dense_flow_msg::DenseFlow, dense_flow_msg::DenseFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
   using ReconfigureServer =  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -59,15 +59,8 @@ private:
    */
   double max_color_velocity_;
 
-  /**
-   * \brief Optical flow of left frame
-   */
-  cv::Mat left_flow_;
-
-  /**
-   * \brief Optical flow of left frame
-   */
-  cv::Mat right_flow_;
+  optical_flow_msgs::DenseOpticalFlowConstPtr left_flow_;
+  optical_flow_msgs::DenseOpticalFlowConstPtr right_flow_;
 
   /**
    * \brief Optical flow of left frame calculated by assuming static scene from camera motion and 3D reconstructed pointcloud
@@ -105,7 +98,7 @@ private:
    * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
-  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const dense_flow_msg::DenseFlowConstPtr& optical_flow_left, const dense_flow_msg::DenseFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
 
   /**
    * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image
@@ -118,7 +111,7 @@ private:
    * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
    */
   bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous);
-  bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const cv::Mat &flow);
+  bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   bool isValid(const pcl::PointXYZ &point);
