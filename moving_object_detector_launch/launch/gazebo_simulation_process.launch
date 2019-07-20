@@ -71,7 +71,7 @@
     <remap from="flow" to="/velocity_estimator/static_flow"/>
     <remap from="flow_image" to="static_flow_image"/>
   </node>
-  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_view/disparity $(arg nodelet_manager_name)">
+  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
     <remap from="disparity" to="/sgm_gpu_nodelet/disparity"/>
   </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
