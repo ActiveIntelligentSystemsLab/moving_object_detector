@@ -97,7 +97,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
   cv::Point2i left_now;
   for (left_now.y = 0; left_now.y < left_flow_->height; left_now.y++)
   {
-    for (left_now.x = 0; left_now.x < left_flow_->height; left_now.x++)
+    for (left_now.x = 0; left_now.x < left_flow_->width; left_now.x++)
     {
       pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
       pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
@@ -204,12 +204,12 @@ bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::P
   if (right_now.x < 0 || right_now.x >= right_flow_->width)
     return false;
 
-  int flow_index = right_now.y * right_flow_->width * right_now.x;
+  int flow_index = right_now.y * right_flow_->width + right_now.x;
 
   if (right_flow_->invalid_map[flow_index])
     return false;
 
-  optical_flow_msgs::PixelDisplacement flow_at_point = right_flow_->flow_field[right_now.y * right_flow_->width * right_now.x];
+  optical_flow_msgs::PixelDisplacement flow_at_point = right_flow_->flow_field[flow_index];
 
   if(std::isnan(flow_at_point.x) || std::isnan(flow_at_point.y))
     return false;
