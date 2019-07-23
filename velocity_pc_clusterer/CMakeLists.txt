@@ -48,3 +48,6 @@ install(
   TARGETS ${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
+
+add_executable(velocity_pc_clusterer_node src/clusterer_node.cpp)
+target_link_libraries(velocity_pc_clusterer_node ${catkin_LIBRARIES})
