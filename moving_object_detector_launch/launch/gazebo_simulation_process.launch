@@ -3,9 +3,6 @@
 <launch>
   <param name="use_sim_time" type="bool" value="true"/>
 
-  <arg name="nodelet_manager_name" value="nodelet_manager"/>
-  <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
-
   <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
     <remap from="stereo" to="synchronized"/>
     <remap from="image" to="image_rect_color"/>
@@ -14,15 +11,15 @@
     <param name="publish_tf" value="false"/>
   </node>
 
-  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
+  <node name="optical_flow_left" pkg="dis_flow" type="dis_flow_node">
     <remap from="image" to="/synchronized/left/image_rect_color"/>
   </node>
 
-  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
+  <node name="optical_flow_right" pkg="dis_flow" type="dis_flow_node">
     <remap from="image" to="/synchronized/right/image_rect_color"/>
   </node>
 
-  <node name="input_synchronizer" pkg="nodelet" type="nodelet" args="load velocity_estimator/input_synchronizer $(arg nodelet_manager_name)">
+  <node name="input_synchronizer" pkg="velocity_estimator" type="input_synchronizer_node">
     <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
     <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
 
@@ -32,47 +29,41 @@
     <remap from="viso2_info" to="/viso2/info"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
-    <remap from="disparity_image" to="/sgm_gpu_nodelet/disparity"/>
+    <remap from="disparity_image" to="/sgm_gpu/disparity"/>
 
     <param name="image_transport" value="compressed"/>
   </node>
 
-  <node name="velocity_estimator" pkg="nodelet" type="nodelet" args="load velocity_estimator/velocity_estimator $(arg nodelet_manager_name)">
+  <node name="velocity_estimator" pkg="velocity_estimator" type="velocity_estimator_node">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
     <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
     <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
-    <remap from="disparity_image" to="/sgm_gpu_nodelet/disparity"/>
+    <remap from="disparity_image" to="/sgm_gpu/disparity"/>
     <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
   
-  <!--
-  <node name="elas" pkg="elas_ros" type="elas_ros">
-    <remap from="stereo" to="synchronized"/>
-    <remap from="image" to="/image_rect_color"/>
-  </node>
-  -->
-  <node name="sgm_gpu_nodelet" pkg="nodelet" type="nodelet" args="load sgm_gpu/sgm_gpu_nodelet $(arg nodelet_manager_name)">
+  <node name="sgm_gpu" pkg="sgm_gpu" type="sgm_gpu_node">
     <remap from="left_image" to="/synchronized/left/image_rect_color"/>
     <remap from="right_image" to="/synchronized/right/image_rect_color"/>
   </node>
 
-  <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)">
+  <node name="clusterer" pkg="velocity_pc_clusterer" type="velocity_pc_clusterer_node">
     <remap from="velocity_pc" to="/velocity_estimator/velocity_pc"/>
   </node>
 
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   
   <!-- Nodes for visualization -->
-  <node name="left_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+  <node name="left_flow_view" pkg="dense_flow_view" type="dense_flow_view_node">
     <remap from="flow" to="/optical_flow_left/flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
-  <node name="static_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+  <node name="static_flow_view" pkg="dense_flow_view" type="dense_flow_view_node">
     <remap from="flow" to="/velocity_estimator/static_flow"/>
     <remap from="flow_image" to="static_flow_image"/>
   </node>
-  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
-    <remap from="disparity" to="/sgm_gpu_nodelet/disparity"/>
+  <node name="disparity_view" pkg="disparity_visualize" type="disparity_visualize_node">
+    <remap from="disparity" to="/sgm_gpu/disparity"/>
   </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="moving_objects"/>
