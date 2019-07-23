@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_filters
   message_generation
+  nodelet
   optical_flow_msgs
   pcl_conversions
   roscpp
@@ -85,3 +86,9 @@ install(
   RUNTIME DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+add_executable(input_synchronizer_node src/input_synchronizer_node.cpp)
+target_link_libraries(input_synchronizer_node ${catkin_LIBRARIES})
+
+add_executable(velocity_estimator_node src/velocity_estimator_node.cpp)
+target_link_libraries(velocity_estimator_node ${catkin_LIBRARIES})
