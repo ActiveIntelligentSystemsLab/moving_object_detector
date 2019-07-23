@@ -121,7 +121,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
 
       cv::Vec2f flow;
       flow[0] = left_flow_->flow_field[left_now.y * left_flow_->width + left_now.x].x;
-      flow[0] = left_flow_->flow_field[left_now.y * left_flow_->width + left_now.x].y;
+      flow[1] = left_flow_->flow_field[left_now.y * left_flow_->width + left_now.x].y;
       cv::Vec2f static_flow = left_static_flow_.at<cv::Vec2f>(left_now.y, left_now.x);
 
       cv::Vec2f flow_diff = flow - static_flow;
