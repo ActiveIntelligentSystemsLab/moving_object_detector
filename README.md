@@ -52,7 +52,7 @@ Then robots spawn in simulator world and it can controlled by Xbox wired control
 Next, launch moving object detector:
 
 ```shell
-$ rqt --perspective-file `rospack find moving_object_detector_launch`/rqt/moving_object_detector.perspective
+$ roslaunch moving_object_detector_launch gazebo_simulation_process_nodelet.launch
 ```
 
 You can see result by rqt:
