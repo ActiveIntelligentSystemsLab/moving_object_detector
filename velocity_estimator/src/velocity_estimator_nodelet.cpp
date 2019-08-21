@@ -32,12 +32,11 @@ void VelocityEstimatorNodelet::onInit() {
   
   camera_transform_sub_.subscribe(node_handle, "camera_transform", 1);
   optical_flow_left_sub_.subscribe(node_handle, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
-  optical_flow_right_sub_.subscribe(node_handle, "optical_flow_right", 1); // optical flowはrectified imageで計算すること
   disparity_image_sub_.subscribe(node_handle, "disparity_image", 20);
   left_camera_info_sub_.subscribe(node_handle, "left_camera_info", 1);
 
-  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, optical_flow_right_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
-  time_sync_->registerCallback(boost::bind(&VelocityEstimatorNodelet::dataCB, this, _1, _2, _3, _4, _5));
+  time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
+  time_sync_->registerCallback(boost::bind(&VelocityEstimatorNodelet::dataCB, this, _1, _2, _3, _4));
 }
 
 void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
@@ -142,7 +141,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
   }
 }
 
-void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_right, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
   pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
@@ -154,7 +153,6 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
   left_cam_model_.fromCameraInfo(left_camera_info);
 
   left_flow_ = optical_flow_left;
-  right_flow_ = optical_flow_right;
 
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
@@ -200,27 +198,6 @@ bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::P
 
   if (!getRightPoint(left_previous, right_previous, *disparity_previous_))
     return false;
-
-  if (right_now.x < 0 || right_now.x >= right_flow_->width)
-    return false;
-
-  int flow_index = right_now.y * right_flow_->width + right_now.x;
-
-  if (right_flow_->invalid_map[flow_index])
-    return false;
-
-  optical_flow_msgs::PixelDisplacement flow_at_point = right_flow_->flow_field[flow_index];
-
-  if(std::isnan(flow_at_point.x) || std::isnan(flow_at_point.y))
-    return false;
-
-  if (matching_tolerance_ >= 0) { // matching_toleranceが負なら無効化
-    double x_diff = right_previous.x + flow_at_point.x - right_now.x;
-    double y_diff = right_previous.y + flow_at_point.y - right_now.y;
-    double diff = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-    if (diff > matching_tolerance_)
-      return false;
-  }
 
   return true;
 }
@@ -337,10 +314,9 @@ template <typename PointT> void VelocityEstimatorNodelet::publishPointcloud(cons
 
 void VelocityEstimatorNodelet::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
 {
-  NODELET_INFO("Reconfigure Request: dynamic_flow_diff = %d, matching_tolerance = %f, max_color_velocity = %f", config.dynamic_flow_diff, config.matching_tolerance, config.max_color_velocity);
+  NODELET_INFO("Reconfigure Request: dynamic_flow_diff = %d, max_color_velocity = %f", config.dynamic_flow_diff, config.max_color_velocity);
 
   dynamic_flow_diff_  = config.dynamic_flow_diff;
-  matching_tolerance_ = config.matching_tolerance;
   max_color_velocity_ = config.max_color_velocity;
 }
 
