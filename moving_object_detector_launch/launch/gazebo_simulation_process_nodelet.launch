@@ -14,14 +14,6 @@
     <param name="publish_tf" value="false"/>
   </node>
 
-  <node name="optical_flow_left" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
-    <remap from="image" to="/synchronized/left/image_rect_color"/>
-  </node>
-
-  <node name="optical_flow_right" pkg="nodelet" type="nodelet" args="load dis_flow/dis_flow $(arg nodelet_manager_name)">
-    <remap from="image" to="/synchronized/right/image_rect_color"/>
-  </node>
-
   <node name="input_synchronizer" pkg="nodelet" type="nodelet" args="load velocity_estimator/input_synchronizer $(arg nodelet_manager_name)">
     <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
     <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
@@ -30,8 +22,7 @@
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
 
     <remap from="viso2_info" to="/viso2/info"/>
-    <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
-    <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
+    <remap from="optical_flow_left" to="/optical_flow/optical_flow"/>
     <remap from="disparity_image" to="/sgm_gpu_nodelet/disparity"/>
 
     <param name="image_transport" value="compressed"/>
@@ -39,8 +30,7 @@
 
   <node name="velocity_estimator" pkg="nodelet" type="nodelet" args="load velocity_estimator/velocity_estimator $(arg nodelet_manager_name)">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
-    <remap from="optical_flow_left" to="/optical_flow_left/flow"/>
-    <remap from="optical_flow_right" to="/optical_flow_right/flow"/>
+    <remap from="optical_flow_left" to="/optical_flow/optical_flow"/>
     <remap from="disparity_image" to="/sgm_gpu_nodelet/disparity"/>
     <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
@@ -58,7 +48,7 @@
   
   <!-- Nodes for visualization -->
   <node name="left_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="/optical_flow_left/flow"/>
+    <remap from="flow" to="/optical_flow/optical_flow"/>
     <remap from="flow_image" to="left_flow_image"/>
   </node>
   <node name="static_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
