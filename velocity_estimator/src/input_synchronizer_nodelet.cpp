@@ -33,10 +33,9 @@ void InputSynchronizerNodelet::onInit()
   // 各処理結果を受け取るsubscriberの初期化
   viso2_info_sub_.subscribe(node_handle, "viso2_info", 1);
   optical_flow_left_sub_.subscribe(node_handle, "optical_flow_left", 1);
-  optical_flow_right_sub_.subscribe(node_handle, "optical_flow_right", 1);
   disparity_image_sub_.subscribe(node_handle, "disparity_image", 1);
-  processed_data_time_sync_ = std::make_shared<ProcessedDataSynchronizer>(viso2_info_sub_, optical_flow_left_sub_, optical_flow_right_sub_, disparity_image_sub_, 30);
-  processed_data_time_sync_->registerCallback(boost::bind(&InputSynchronizerNodelet::processedDataSyncCallback, this, _1, _2, _3, _4));
+  processed_data_time_sync_ = std::make_shared<ProcessedDataSynchronizer>(viso2_info_sub_, optical_flow_left_sub_, disparity_image_sub_, 30);
+  processed_data_time_sync_->registerCallback(boost::bind(&InputSynchronizerNodelet::processedDataSyncCallback, this, _1, _2, _3));
   
   publish_service_ = node_handle.advertiseService("input_synchronizer_publish", &InputSynchronizerNodelet::publishServiceCallback, this);
 }
@@ -61,7 +60,7 @@ void InputSynchronizerNodelet::stereoTimeSyncCallback(const sensor_msgs::ImageCo
   }
 }
 
-void InputSynchronizerNodelet::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_flow, const optical_flow_msgs::DenseOpticalFlowConstPtr& right_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
+void InputSynchronizerNodelet::processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_flow, const stereo_msgs::DisparityImageConstPtr& disparity)
 {
   publish_required_ = true;
 }
