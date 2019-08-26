@@ -21,6 +21,7 @@ You should place following ros packages to your catkin workspaces and build.
 * [mars_rover_description](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/mars_rover_description)
 * [gazebo_factory_world](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/gazebo_factory_world)
 * [viso2_ros](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/viso2_ros_pub_outlier)
+* [kkl](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/koide/grace_person_following/tree/master/kkl)
 
 ## Build
 
