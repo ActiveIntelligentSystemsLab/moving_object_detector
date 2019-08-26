@@ -14,7 +14,7 @@ This contains ROS packages to detect moving objects from stereo images.
 You should place following ros packages to your catkin workspaces and build.
 
 * [ros_optical_flow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow)
-* [dis_flow](https://github.com/ActiveIntelligentSystemsLab/dis_flow_ros)
+* [pwc_net](https://github.com/fujimo-t/pwc_net_ros)
 * [sgm_gpu](https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros)
 * [disparity_visualize](https://github.com/ActiveIntelligentSystemsLab/disparity_visualize)
 * [turtlebot3_stereo_description](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/turtlebot3_stereo_description)
