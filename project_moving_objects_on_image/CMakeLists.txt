@@ -21,6 +21,7 @@ include_directories(
 )
 
 add_executable(project_moving_objects_on_image src/project_moving_objects_on_image.cpp)
+add_dependencies(project_moving_objects_on_image ${catkin_EXPORTED_TARGETS})
 target_link_libraries(project_moving_objects_on_image
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
