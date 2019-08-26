@@ -25,6 +25,5 @@
   <exec_depend>velocity_estimator</exec_depend>
   <exec_depend>velocity_pc_clusterer</exec_depend>
   <exec_depend>viso2_ros</exec_depend>
-  <exec_depend>viso2_ros</exec_depend>
   <exec_depend>zed_wrapper</exec_depend>
 </package>
