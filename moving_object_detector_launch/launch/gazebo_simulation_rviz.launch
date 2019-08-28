@@ -1,3 +1,0 @@
-<launch>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector)/rviz/gazebo_simulation.rviz" required="true"/>
-</launch>
