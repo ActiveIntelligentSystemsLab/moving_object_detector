@@ -8,7 +8,7 @@ services:
   move_detect_launch:
     container_name: move_detect_launch
     build: .
-    command: roslaunch --wait moving_object_detector_launch gazebo_simulation_process.launch
+    command: roslaunch --wait moving_object_detector_launch gazebo_simulation_process_nodelet.launch
     environment: 
       - ROS_HOSTNAME=move_detect_launch
       - ROS_MASTER_URI=http://move_detect_master:11311
