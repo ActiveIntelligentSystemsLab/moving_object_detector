@@ -20,3 +20,8 @@ RUN bash -c "apt-get update && \
 RUN bash -c "source /opt/ros/melodic/setup.bash && \
              source devel/setup.bash && \
              catkin_make"
+
+# Replace entrypoint to load catkin_ws
+RUN rm /ros_entrypoint.sh
+COPY ros_entrypoint.sh /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh
