@@ -1,0 +1,9 @@
+[submodule "docker/pwc_net_ros"]
+	path = docker/pwc_net_ros
+	url = https://github.com/fujimo-t/pwc_net_ros
+[submodule "docker/sgm_gpu_ros"]
+	path = docker/sgm_gpu_ros
+	url = https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros.git
+[submodule "docker/moving_object_simulator"]
+	path = docker/moving_object_simulator
+	url = https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_simulator.git
