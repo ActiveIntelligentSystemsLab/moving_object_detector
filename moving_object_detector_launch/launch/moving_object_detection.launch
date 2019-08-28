@@ -34,11 +34,6 @@
     <remap from="disparity_image" to="/sgm_gpu_nodelet/disparity"/>
     <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
-  
-  <node name="sgm_gpu_nodelet" pkg="nodelet" type="nodelet" args="load sgm_gpu/sgm_gpu_nodelet $(arg nodelet_manager_name)">
-    <remap from="left_image" to="/synchronized/left/image_rect_color"/>
-    <remap from="right_image" to="/synchronized/right/image_rect_color"/>
-  </node>
 
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)">
     <remap from="velocity_pc" to="/velocity_estimator/velocity_pc"/>
