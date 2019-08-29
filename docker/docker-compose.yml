@@ -16,7 +16,7 @@ services:
   move_detect_pwc:
     container_name: move_detect_pwc
     build: pwc_net_ros/docker
-    command: rosrun pwc_net pwc_net_node
+    command: rosrun pwc_net pwc_net_node image:=/synchronized/left/image_rect_color
     runtime: nvidia
     environment: 
       - ROS_HOSTNAME=move_detect_pwc
@@ -25,7 +25,7 @@ services:
   move_detect_sgm:
     container_name: move_detect_sgm
     build: sgm_gpu_ros/docker
-    command: rosrun sgm_gpu sgm_gpu_node
+    command: rosrun sgm_gpu sgm_gpu_node left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color
     runtime: nvidia
     environment: 
       - ROS_HOSTNAME=move_detect_sgm
