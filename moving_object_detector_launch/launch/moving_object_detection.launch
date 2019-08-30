@@ -67,8 +67,4 @@
     <param name="red" value="0"/>
     <param name="green" value="255"/>
   </node>
-  <node name="odometry_to_marker" pkg="odometry_to_marker" type="odometry_to_marker">
-    <remap from="odometry" to="moving_object/odom"/>
-    <remap from="marker" to="moving_object/velocity_marker"/>
-  </node>
 </launch>
