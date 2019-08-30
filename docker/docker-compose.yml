@@ -53,3 +53,16 @@ services:
       - ROS_MASTER_URI=http://move_detect_master:11311
     devices: 
       - /dev/input/js0:/dev/input/js0
+
+  move_detect_rqt:
+    container_name: move_detect_rqt
+    build: rqt
+    command: rqt --perspective-file /root/moving_object_detector/moving_object_detector_launch/rqt/moving_object_detector.perspective
+    runtime: nvidia
+    environment: 
+      - ROS_HOSTNAME=move_detect_rqt
+      - ROS_MASTER_URI=http://move_detect_master:11311
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    volumes: 
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw

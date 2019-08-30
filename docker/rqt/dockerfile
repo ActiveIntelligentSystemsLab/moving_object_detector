@@ -1,0 +1,10 @@
+FROM osrf/ros:melodic-desktop-full
+
+RUN git clone https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector.git /root/moving_object_detector
+
+# For support OpenGL on NVIDIA GPU
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility
+
+# Load ROS environment at docker exec bash
+RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
