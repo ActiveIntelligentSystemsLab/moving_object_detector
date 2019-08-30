@@ -1,10 +1,13 @@
 FROM ros:melodic-perception
 
 # Create a Catkin workspace
+RUN apt-get update && \
+    apt-get install -y python-catkin-tools
 RUN mkdir -p /root/catkin_ws/src
 WORKDIR /root/catkin_ws
 RUN bash -c "source /opt/ros/melodic/setup.bash && \
-             catkin_make"
+             catkin init && \
+             catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
 # Download sources
 RUN git clone https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/viso2_ros_pub_outlier.git src/viso2_ros
@@ -18,8 +21,7 @@ RUN bash -c "apt-get update && \
 
 # Build
 RUN bash -c "source /opt/ros/melodic/setup.bash && \
-             source devel/setup.bash && \
-             catkin_make -DCMAKE_BUILD_TYPE=Release"
+             catkin build"
 
 # Replace entrypoint to load catkin_ws
 RUN rm /ros_entrypoint.sh
