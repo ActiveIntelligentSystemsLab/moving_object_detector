@@ -19,7 +19,7 @@ RUN bash -c "apt-get update && \
 # Build
 RUN bash -c "source /opt/ros/melodic/setup.bash && \
              source devel/setup.bash && \
-             catkin_make"
+             catkin_make -DCMAKE_BUILD_TYPE=Release"
 
 # Replace entrypoint to load catkin_ws
 RUN rm /ros_entrypoint.sh
