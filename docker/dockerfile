@@ -25,3 +25,7 @@ RUN bash -c "source /opt/ros/melodic/setup.bash && \
 RUN rm /ros_entrypoint.sh
 COPY ros_entrypoint.sh /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh
+
+# Load ROS environment at docker exec bash
+RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
+RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
