@@ -41,6 +41,7 @@ This contains ROS packages to detect moving objects from stereo images.
 $ git clone --recursive https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector.git
 $ cd moving_object_detector/docker
 $ sudo docker-compose build
+$ sudo docker-compose up --no-start
 ```
 
 ## Test
@@ -50,12 +51,17 @@ $ sudo docker-compose build
 
    ```shell
    $ xhost +local:root
-   $ sudo docker-compose up
+   $ sudo docker-compose start
    ```
 
-   Then Gazebo and rqt windows will be opened.
+   Then Gazebo and rqt windows will be opened. At first start, Gazebo takes some time to download some models.
 
    Robots in Gazebo is controlled by A + left/right stick.
+3. Stop test by:
+
+   ```shell
+   $ sudo docker-compose stop
+   ```
 
 ## contained packages
 
