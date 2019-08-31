@@ -4,62 +4,58 @@ This contains ROS packages to detect moving objects from stereo images.
 
 ## Prerequisite
 
-* ROS melodic
-* Gazebo 9
-* CUDA 10.1
-* CuDNN 7
+### Hardware
 
-## Dependent packages
+* NVIDIA GPU
+* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
-You should place following ros packages to your catkin workspaces and build.
+  This can be replaced with other controller supported by [joy package](http://wiki.ros.org/joy).
+  But maybe change of key assignment is needed.
 
-* [ros_optical_flow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow)
-* [pwc_net](https://github.com/fujimo-t/pwc_net_ros)
-* [sgm_gpu](https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros)
-* [disparity_visualize](https://github.com/ActiveIntelligentSystemsLab/disparity_visualize)
-* [turtlebot3_stereo_description](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/turtlebot3_stereo_description)
-* [mars_rover_description](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/mars_rover_description)
-* [gazebo_factory_world](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/gazebo_factory_world)
-* [viso2_ros](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/viso2_ros_pub_outlier)
+### Software
+
+* Docker
+* Docker Compose (version >= 1.19)
+* [NVIDIA Container Toolkit with nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#nvidia-container-toolkit)
+
+  nvidia-docker2 is deprecated now but it is needed to use Docker Compose with NVIDIA GPU.
+
+## Already tested environment
+
+### Hardware
+
+* NVIDIA RTX 2070
+* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
+
+### Software
+
+* Ubuntu 19.04
+* Docker 19.03
+* Docker Compose 1.21
+* nvidia-docker2 2.2.1
+* nvidia-container-toolkit 1.0.3
 
 ## Build
 
 ```shell
-$ cd <YourCatkinWorkspace>/src
-$ git clone https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector.git
-$ cd ../
-$ catkin_make
+$ git clone --recursive https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector.git
+$ cd moving_object_detector/docker
+$ sudo docker-compose build
 ```
 
-## Testing
+## Test
 
-Launch Gazebo simulator first:
+1. Plug Xbox controller to PC
+2. Launch commands at `moving_object_detector/docker` directory:
 
-```shell
-$ roslaunch gazebo_factory_world factory_world.launch
-```
+   ```shell
+   $ xhost +local:root
+   $ sudo docker-compose up
+   ```
 
-If this is first time of launch Gazebo, take a minite by downloading models.
+   Then Gazebo and rqt windows will be opened.
 
-After the simulator world is available, then spawn robots:
-
-```shell
-$ roslaunch moving_object_detector_launch gazebo_simulation_spawn_robots.launch
-```
-
-Then robots spawn in simulator world and it can controlled by Xbox wired controller.
-
-Next, launch moving object detector:
-
-```shell
-$ roslaunch moving_object_detector_launch gazebo_simulation_process_nodelet.launch
-```
-
-You can see result by rqt:
-
-```shell
-$ rqt --perspective-file `rospack find moving_object_detector_launch`/rqt/moving_object_detector.perspective
-```
+   Robots in Gazebo is controlled by A + left/right stick.
 
 ## contained packages
 
