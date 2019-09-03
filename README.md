@@ -2,6 +2,10 @@
 
 This contains ROS packages to detect moving objects from stereo images.
 
+## System overview
+
+![overview](system_overview.png)
+
 ## Prerequisite
 
 ### Hardware
