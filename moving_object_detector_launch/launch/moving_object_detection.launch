@@ -1,7 +1,15 @@
 <?xml version="1.0"?>
 
 <launch>
-  <param name="use_sim_time" type="bool" value="true"/>
+  <!-- Image topics are should be set -->
+  <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
+  <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
+  <!-- Set true if you use simulator -->
+  <arg name="use_sim_time" default="false"/>
+  <!-- Set it if you use other transport for image -->
+  <arg name="image_transport" default="raw"/>
+
+  <param name="use_sim_time" type="bool" value="$(arg use_sim_time)"/>
 
   <arg name="nodelet_manager_name" value="nodelet_manager"/>
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
@@ -15,8 +23,8 @@
   </node>
 
   <node name="input_synchronizer" pkg="nodelet" type="nodelet" args="load velocity_estimator/input_synchronizer $(arg nodelet_manager_name)">
-    <remap from="synchronizer_input_left_rect_image" to="/stereo_robot/mobile_base/camera/left/image_raw"/>
-    <remap from="synchronizer_input_right_rect_image" to="/stereo_robot/mobile_base/camera/right/image_raw"/>
+    <remap from="synchronizer_input_left_rect_image" to="$(arg left_image_topic)"/>
+    <remap from="synchronizer_input_right_rect_image" to="$(arg right_image_topic)"/>
 
     <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
@@ -25,7 +33,7 @@
     <remap from="optical_flow_left" to="/pwc_net/optical_flow"/>
     <remap from="disparity_image" to="/sgm_gpu/disparity"/>
 
-    <param name="image_transport" value="compressed"/>
+    <param name="image_transport" value="$(arg image_transport)"/>
   </node>
 
   <node name="velocity_estimator" pkg="nodelet" type="nodelet" args="load velocity_estimator/velocity_estimator $(arg nodelet_manager_name)">

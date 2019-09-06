@@ -8,7 +8,7 @@ services:
   move_detect_launch:
     container_name: move_detect_launch
     build: .
-    command: roslaunch --wait moving_object_detector_launch moving_object_detection.launch
+    command: roslaunch --wait moving_object_detector_launch moving_object_detection.launch left_image_topic:=/stereo_camera/left/image_rect_color right_image_topic:=/stereo_camera/right/image_rect_color use_sim_time:=true
     environment: 
       - ROS_HOSTNAME=move_detect_launch
       - ROS_MASTER_URI=http://move_detect_master:11311
