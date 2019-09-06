@@ -13,7 +13,7 @@ RUN bash -c "source /opt/ros/melodic/setup.bash && \
 RUN git clone https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/viso2_ros_pub_outlier.git src/viso2_ros
 RUN git clone https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow.git src/ros_optical_flow
 RUN git clone https://aisl-serv6.aisl.cs.tut.ac.jp:20443/fujimoto/moving_object_detector.git src/moving_object_detector
-RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_visualize.git
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_visualize.git src/disparity_visualize
 
 # Install dependencies
 RUN bash -c "apt-get update && \
