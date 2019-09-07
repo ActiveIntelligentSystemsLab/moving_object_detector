@@ -84,6 +84,18 @@ $ sudo docker-compose up --no-start
    $ sudo docker-compose stop
    ```
 
+## Test with Sintel Dataset
+
+You can also use [MPI Sintel Stereo Training Data](http://sintel.is.tue.mpg.de/stereo) as input instead of Gazebo simulator.
+But be careful, building docker image for Sintel will take a lot of time to download the dataset.
+
+Launch commands at `moving_object_detector/docker` directory:
+
+```shell
+$ xhost +local:root
+$ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
+```
+
 ## contained packages
 
 * disparity_image_proc
