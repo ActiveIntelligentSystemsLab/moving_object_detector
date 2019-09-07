@@ -1,7 +1,7 @@
 version: "2.3"
 services: 
   gazebo:
-    container_name: move_detect_sim
+    container_name: move_detect_gazebo
     build: moving_object_simulator/docker
     command: roslaunch --wait gazebo_factory_world factory_world.launch
     runtime: nvidia
