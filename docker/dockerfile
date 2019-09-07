@@ -32,3 +32,7 @@ RUN chmod +x /ros_entrypoint.sh
 # Load ROS environment at docker exec bash
 RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
 RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
+
+# Install tools for development
+RUN apt-get update && \
+    apt-get install -y vim byobu
