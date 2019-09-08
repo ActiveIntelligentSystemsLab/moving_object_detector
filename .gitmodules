@@ -1,6 +1,6 @@
 [submodule "docker/pwc_net_ros"]
 	path = docker/pwc_net_ros
-	url = https://github.com/ActiveIntelligentSystemsLab/pwc_net_ros
+	url = https://github.com/ActiveIntelligentSystemsLab/pwc_net_ros.git
 [submodule "docker/sgm_gpu_ros"]
 	path = docker/sgm_gpu_ros
 	url = https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros.git
