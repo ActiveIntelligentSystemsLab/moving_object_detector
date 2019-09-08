@@ -133,4 +133,3 @@ $ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
 * kkl
 
   Kalman filter library written by Kenji Koide.
-  It is copied from https://aisl-serv6.aisl.cs.tut.ac.jp:20443/koide/grace_person_following.git
