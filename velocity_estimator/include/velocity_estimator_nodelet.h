@@ -28,11 +28,15 @@ class VelocityEstimatorNodelet : public nodelet::Nodelet {
 public:
   virtual void onInit();
 private:
-  std::shared_ptr<image_transport::ImageTransport> image_transport;
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
   ros::Publisher pc_with_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
+  /**
+   * \brief Publish residual between estimated optical flow and synthesis optical flow with static scene assumption
+   */
+  image_transport::Publisher flow_residual_pub_;
   
   message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
   message_filters::Subscriber<optical_flow_msgs::DenseOpticalFlow> optical_flow_left_sub_;
@@ -73,7 +77,14 @@ private:
   std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_previous_transformed_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
   geometry_msgs::TransformStamped transform_now_to_previous_;
+
+  ros::Time time_stamp_now_;
   ros::Time time_stamp_previous_;
+
+  std::string camera_frame_id_;
+
+  int image_width_;
+  int image_height_;
 
   image_geometry::PinholeCameraModel left_cam_model_;
 
@@ -115,16 +126,24 @@ private:
   bool isValid(const pcl::PointXYZ &point);
 
   /**
+   * \brief Publish residual image between estimated optical flow and static optical flow
+   * 
+   * Pixel value of the image is Euclidean norm between two flows.
+   */
+  void publishFlowResidual();
+  /**
    * \brief Publish static optical flow of left frame
+   * 
+   * The flow is synthesis optical flow calculated by camera transform and depth image, static scene assumption
    */
   void publishStaticOpticalFlow();
-
   /**
    * \brief Publish image which visualize velocity pc by RGB color
    *
    * \param velocity_image Already constructed velocity image
    */
   void publishVelocityImage(const cv::Mat &velocity_image);
+
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
 

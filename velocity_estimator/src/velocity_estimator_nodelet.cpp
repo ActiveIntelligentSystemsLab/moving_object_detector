@@ -20,7 +20,7 @@ void VelocityEstimatorNodelet::onInit() {
   ros::NodeHandle &node_handle = getNodeHandle();
   ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
 
-  image_transport.reset(new image_transport::ImageTransport(private_node_handle));
+  image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
 
   reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
   reconfigure_func_ = boost::bind(&VelocityEstimatorNodelet::reconfigureCB, this, _1, _2);
@@ -28,7 +28,8 @@ void VelocityEstimatorNodelet::onInit() {
   
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("static_flow", 1);
-  velocity_image_pub_ = image_transport->advertise("velocity_image", 1);
+  velocity_image_pub_ = image_transport_->advertise("velocity_image", 1);
+  flow_residual_pub_ = image_transport_->advertise("flow_residual", 1);
   
   camera_transform_sub_.subscribe(node_handle, "camera_transform", 1);
   optical_flow_left_sub_.subscribe(node_handle, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
@@ -154,6 +155,11 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
 
   left_flow_ = optical_flow_left;
 
+  time_stamp_now_ = camera_transform->header.stamp;
+  camera_frame_id_ = left_camera_info->header.frame_id;
+  image_width_ = optical_flow_left->width;
+  image_height_ = optical_flow_left->height;
+
   if (optical_flow_left->previous_stamp == time_stamp_previous_) {
     ros::Time start_process = ros::Time::now();
 
@@ -178,6 +184,9 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
 
     if (static_flow_pub_.getNumSubscribers() > 0)
       publishStaticOpticalFlow();
+
+    if (flow_residual_pub_.getNumSubscribers() > 0)
+      publishFlowResidual();
 
     ros::Duration process_time = ros::Time::now() - start_process;
     NODELET_INFO("process time: %f", process_time.toSec());
@@ -263,6 +272,30 @@ bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
     return false;
   
   return true;
+}
+
+void VelocityEstimatorNodelet::publishFlowResidual()
+{
+  std_msgs::Header header;
+  header.frame_id = camera_frame_id_;
+  header.stamp = time_stamp_now_;
+
+  cv_bridge::CvImage flow_residual(header, "mono8");
+  flow_residual.image = cv::Mat(image_height_, image_width_, CV_8UC1);
+  
+  int total_pixel = image_height_ * image_width_;
+  for (int pixel_index = 0; pixel_index < total_pixel; pixel_index++) 
+  {
+    optical_flow_msgs::PixelDisplacement flow_pixel = left_flow_->flow_field[pixel_index];
+    cv::Vec2f& static_flow_pixel = left_static_flow_.at<cv::Vec2f>(pixel_index);
+
+    float residual_pixel = std::sqrt(std::pow(flow_pixel.x - static_flow_pixel[0], 2) + std::pow(flow_pixel.y - static_flow_pixel[1], 2));
+    residual_pixel = std::min(residual_pixel, 255.0f);
+    flow_residual.image.at<unsigned char>(pixel_index) = static_cast<unsigned char>(residual_pixel);
+  }
+
+  sensor_msgs::ImagePtr flow_residual_msg = flow_residual.toImageMsg();
+  flow_residual_pub_.publish(flow_residual_msg);
 }
 
 void VelocityEstimatorNodelet::publishStaticOpticalFlow()
