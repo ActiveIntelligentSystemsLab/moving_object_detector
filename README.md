@@ -122,9 +122,9 @@ $ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
 
   Visualize moving_object_msgs with input image
 
-* velocity_estimator
+* scene_flow_constructor
 
-  Generate pointcloud with velocity from camera transform, disparity image and optical flow
+  Construct scene flow from camera transform, disparity image and optical flow
 
 * velocity_pc_clusterer
 
