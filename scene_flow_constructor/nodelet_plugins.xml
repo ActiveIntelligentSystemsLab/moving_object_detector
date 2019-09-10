@@ -2,9 +2,9 @@
 
 <library path="lib/libscene_flow_constructor">
   <class name="scene_flow_constructor/input_synchronizer" type="scene_flow_constructor::InputSynchronizerNodelet" base_class_type="nodelet::Nodelet">
-  <description>
-    Synchronize input topics of scene_flow_constructor.
-  </description>
+    <description>
+      Synchronize input topics of scene_flow_constructor.
+    </description>
   </class>
 
   <class name="scene_flow_constructor/scene_flow_constructor" type="scene_flow_constructor::SceneFlowConstructorNodelet" base_class_type="nodelet::Nodelet">
