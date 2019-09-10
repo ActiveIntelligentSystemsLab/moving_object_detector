@@ -43,3 +43,8 @@ Parmeters are define in [here](cfg/Clusterer.cfg).
 
 It can be set by [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure)
 
+## Nodelet: scene_flow_clusterer/scene_flow_clusterer
+
+Nodelet version of scene_flow_clusterer_node.
+
+Topics and parameters are same to the node.
