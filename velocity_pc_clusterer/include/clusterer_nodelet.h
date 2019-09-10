@@ -6,7 +6,7 @@
 
 #define PCL_NO_PRECOMPILE
 
-#include <velocity_estimator/pcl_point_xyz_velocity.h>
+#include <scene_flow_constructor/pcl_point_xyz_velocity.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/PointIndices.h>

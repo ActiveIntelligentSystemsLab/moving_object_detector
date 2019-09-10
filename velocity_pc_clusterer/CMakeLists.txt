@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   roscpp
   sensor_msgs
-  velocity_estimator
+  scene_flow_constructor
   visualization_msgs
 )
 find_package(OpenCV)

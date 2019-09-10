@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(velocity_estimator)
+project(scene_flow_constructor)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_eigen
   viso2_ros
 )
-find_package(OpenCV)
+find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(PCL REQUIRED)
 
@@ -27,10 +27,7 @@ add_service_files(FILES InputSynchronizerPublish.srv)
 
 generate_messages(DEPENDENCIES std_msgs)
 
-generate_dynamic_reconfigure_options(
-  cfg/Velocity2Color.cfg
-  cfg/VelocityEstimator.cfg
-)
+generate_dynamic_reconfigure_options(cfg/SceneFlowConstructor.cfg)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -56,7 +53,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 add_library(${PROJECT_NAME}
   src/input_synchronizer_nodelet.cpp
-  src/velocity_estimator_nodelet.cpp
+  src/${PROJECT_NAME}_nodelet.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -67,10 +64,6 @@ target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBS}
 )
 
-add_executable(velocity2color_node src/velocity2color_node.cpp)
-add_dependencies(velocity2color_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(velocity2color_node ${catkin_LIBRARIES})
-
 install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
@@ -80,15 +73,9 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(
-  TARGETS
-    velocity2color_node
-  RUNTIME DESTINATION
-    ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 add_executable(input_synchronizer_node src/input_synchronizer_node.cpp)
 target_link_libraries(input_synchronizer_node ${catkin_LIBRARIES})
 
-add_executable(velocity_estimator_node src/velocity_estimator_node.cpp)
-target_link_libraries(velocity_estimator_node ${catkin_LIBRARIES})
+add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})

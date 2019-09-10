@@ -1,8 +1,8 @@
 #include <pluginlib/class_list_macros.h>
 
-#include "velocity_estimator_nodelet.h"
+#include "scene_flow_constructor_nodelet.h"
 
-PLUGINLIB_EXPORT_CLASS(velocity_estimator::VelocityEstimatorNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, nodelet::Nodelet)
 
 // ROS headers
 #include <cv_bridge/cv_bridge.h>
@@ -17,16 +17,16 @@ PLUGINLIB_EXPORT_CLASS(velocity_estimator::VelocityEstimatorNodelet, nodelet::No
 #include <stdexcept>
 #include <memory>
 
-namespace velocity_estimator{
+namespace scene_flow_constructor {
 
-void VelocityEstimatorNodelet::onInit() {
+void SceneFlowConstructorNodelet::onInit() {
   ros::NodeHandle &node_handle = getNodeHandle();
   ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
 
   image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
 
   reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
-  reconfigure_func_ = boost::bind(&VelocityEstimatorNodelet::reconfigureCB, this, _1, _2);
+  reconfigure_func_ = boost::bind(&SceneFlowConstructorNodelet::reconfigureCB, this, _1, _2);
   reconfigure_server_->setCallback(reconfigure_func_);
   
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
@@ -40,10 +40,10 @@ void VelocityEstimatorNodelet::onInit() {
   left_camera_info_sub_.subscribe(node_handle, "left_camera_info", 1);
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
-  time_sync_->registerCallback(boost::bind(&VelocityEstimatorNodelet::dataCB, this, _1, _2, _3, _4));
+  time_sync_->registerCallback(boost::bind(&SceneFlowConstructorNodelet::dataCB, this, _1, _2, _3, _4));
 }
 
-void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
+void SceneFlowConstructorNodelet::calculateStaticOpticalFlow()
 {
   left_static_flow_ = cv::Mat(image_height_, image_width_, CV_32FC2);
 
@@ -63,7 +63,7 @@ void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
   }
 }
 
-void VelocityEstimatorNodelet::checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void SceneFlowConstructorNodelet::checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   if (camera_transform->header.frame_id == left_optical_flow->header.frame_id &&
       camera_transform->header.frame_id == left_camera_info->header.frame_id &&
@@ -81,7 +81,7 @@ void VelocityEstimatorNodelet::checkSameFrameId(const geometry_msgs::TransformSt
   }
 }
 
-void VelocityEstimatorNodelet::checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void SceneFlowConstructorNodelet::checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   if (left_optical_flow->width == left_camera_info->width && left_optical_flow->height == left_camera_info->height &&
       left_optical_flow->width == disparity_image->image.width && left_optical_flow->height == disparity_image->image.height)
@@ -97,7 +97,7 @@ void VelocityEstimatorNodelet::checkSameSize(const optical_flow_msgs::DenseOptic
   }
 }
 
-void VelocityEstimatorNodelet::constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image)
+void SceneFlowConstructorNodelet::constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image)
 {
   velocity_image = cv::Mat(image_height_, image_width_, CV_8UC3, cv::Vec3b(0, 0, 0));
   for (size_t i = 0; i < velocity_pc.size(); i++)
@@ -123,7 +123,7 @@ void VelocityEstimatorNodelet::constructVelocityImage(const pcl::PointCloud<pcl:
   }
 }
 
-void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
+void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
   ros::Duration time_between_frames = transform_now_to_previous_.header.stamp - time_stamp_previous_;
 
@@ -177,7 +177,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
   }
 }
 
-void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+void SceneFlowConstructorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   checkSameFrameId(camera_transform, optical_flow_left, left_camera_info, disparity_image);
   checkSameSize(optical_flow_left, left_camera_info, disparity_image);
@@ -235,7 +235,7 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
   time_stamp_previous_ = time_stamp_now_;
 }
 
-bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
+bool SceneFlowConstructorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
 {
   if (!getPreviousPoint(left_now, left_previous, *left_flow_))
     return false;
@@ -249,7 +249,7 @@ bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::P
   return true;
 }
 
-bool VelocityEstimatorNodelet::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow)
+bool SceneFlowConstructorNodelet::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow)
 {
   if (now.x < 0 || now.x >= image_width_ || now.y < 0 || now.y >= image_height_) {
     return false;
@@ -270,7 +270,7 @@ bool VelocityEstimatorNodelet::getPreviousPoint(const cv::Point2i &now, cv::Poin
   return true;
 }
 
-bool VelocityEstimatorNodelet::getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
+bool SceneFlowConstructorNodelet::getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
 {
   float disparity;
   if (!disparity_processor.getDisparity(left.x, left.y, disparity))
@@ -284,7 +284,7 @@ bool VelocityEstimatorNodelet::getRightPoint(const cv::Point2i &left, cv::Point2
   return true;
 }
 
-void VelocityEstimatorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
+void SceneFlowConstructorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
   pcl::PointXYZVelocity default_value;
   default_value.x = std::nanf("");
@@ -296,7 +296,7 @@ void VelocityEstimatorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::PointXY
   velocity_pc = pcl::PointCloud<pcl::PointXYZVelocity>(image_width_, image_height_, default_value);
 }
 
-bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
+bool SceneFlowConstructorNodelet::isValid(const pcl::PointXYZ &point)
 {
   if (std::isnan(point.x))
     return false;
@@ -307,7 +307,7 @@ bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
   return true;
 }
 
-void VelocityEstimatorNodelet::publishFlowResidual()
+void SceneFlowConstructorNodelet::publishFlowResidual()
 {
   std_msgs::Header header;
   header.frame_id = camera_frame_id_;
@@ -331,7 +331,7 @@ void VelocityEstimatorNodelet::publishFlowResidual()
   flow_residual_pub_.publish(flow_residual_msg);
 }
 
-void VelocityEstimatorNodelet::publishStaticOpticalFlow()
+void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
 {
   std_msgs::Header header;
   header.frame_id = transform_now_to_previous_.header.frame_id;
@@ -358,7 +358,7 @@ void VelocityEstimatorNodelet::publishStaticOpticalFlow()
   static_flow_pub_.publish(flow_msg);
 }
 
-void VelocityEstimatorNodelet::publishVelocityImage(const cv::Mat &velocity_image)
+void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_image)
 {
   std_msgs::Header header;
   header.frame_id = transform_now_to_previous_.header.frame_id;
@@ -368,7 +368,7 @@ void VelocityEstimatorNodelet::publishVelocityImage(const cv::Mat &velocity_imag
   velocity_image_pub_.publish(cv_image.toImageMsg());
 }
 
-template <typename PointT> void VelocityEstimatorNodelet::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
+template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
 {
   sensor_msgs::PointCloud2 pointcloud_msg;
   pcl::toROSMsg(pointcloud, pointcloud_msg);
@@ -377,7 +377,7 @@ template <typename PointT> void VelocityEstimatorNodelet::publishPointcloud(cons
   pc_with_velocity_pub_.publish(pointcloud_msg);
 }
 
-void VelocityEstimatorNodelet::reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level)
+void SceneFlowConstructorNodelet::reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level)
 {
   NODELET_INFO("Reconfigure Request: dynamic_flow_diff = %d, max_color_velocity = %f", config.dynamic_flow_diff, config.max_color_velocity);
 
@@ -385,7 +385,7 @@ void VelocityEstimatorNodelet::reconfigureCB(velocity_estimator::VelocityEstimat
   max_color_velocity_ = config.max_color_velocity;
 }
 
-void VelocityEstimatorNodelet::transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous)
+void SceneFlowConstructorNodelet::transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous)
 {
   Eigen::Isometry3d eigen_now_to_previous = tf2::transformToEigen(now_to_previous);
   Eigen::Isometry3d eigen_previous_to_now = eigen_now_to_previous.inverse();
@@ -402,4 +402,4 @@ void VelocityEstimatorNodelet::transformPCPreviousToNow(const pcl::PointCloud<pc
   }
 }
 
-} // namespace velocity_estimator
+} // namespace scene_flow_constructor

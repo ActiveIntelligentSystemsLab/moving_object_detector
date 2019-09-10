@@ -7,7 +7,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <velocity_estimator/InputSynchronizerPublish.h>
+#include <scene_flow_constructor/InputSynchronizerPublish.h>
 #include <image_transport/subscriber_filter.h>
 #include <image_transport/camera_common.h>
 #include <viso2_ros/VisoInfo.h>
@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace velocity_estimator {
+namespace scene_flow_constructor {
 // visual odometry, stereo matching, optical flowへの入力を与えるノード
 // visual odometry, stereo matching, optical flowの処理が終了するたびに，タイムスタンプを同期させたステレオ画像とcamera infoを1セットpublishする
 class InputSynchronizerNodelet : public nodelet::Nodelet {
@@ -62,12 +62,12 @@ private:
   
   void stereoTimeSyncCallback(const sensor_msgs::ImageConstPtr& left_rect_image, const sensor_msgs::CameraInfoConstPtr& left_rect_info, const sensor_msgs::ImageConstPtr& right_rect_image, const sensor_msgs::CameraInfoConstPtr& right_rect_info);
   void processedDataSyncCallback(const viso2_ros::VisoInfoConstPtr& viso2_info, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_flow, const stereo_msgs::DisparityImageConstPtr& disparity);
-  bool publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response);
+  bool publishServiceCallback(scene_flow_constructor::InputSynchronizerPublish::Request &request, scene_flow_constructor::InputSynchronizerPublish::Response &response);
   
 public:
   virtual void onInit();
 };
 
-} // namespace velocity_estimator
+} // namespace scene_flow_constructor
 
 #endif

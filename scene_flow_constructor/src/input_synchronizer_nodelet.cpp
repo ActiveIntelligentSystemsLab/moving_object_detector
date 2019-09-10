@@ -2,9 +2,9 @@
 
 #include "input_synchronizer_nodelet.h"
 
-PLUGINLIB_EXPORT_CLASS(velocity_estimator::InputSynchronizerNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::InputSynchronizerNodelet, nodelet::Nodelet)
 
-namespace velocity_estimator {
+namespace scene_flow_constructor {
 
 void InputSynchronizerNodelet::onInit()
 {
@@ -65,7 +65,7 @@ void InputSynchronizerNodelet::processedDataSyncCallback(const viso2_ros::VisoIn
   publish_required_ = true;
 }
 
-bool InputSynchronizerNodelet::publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response)
+bool InputSynchronizerNodelet::publishServiceCallback(scene_flow_constructor::InputSynchronizerPublish::Request &request, scene_flow_constructor::InputSynchronizerPublish::Response &response)
 {
   NODELET_INFO("Repubish is required from service");
   publish_required_ = true;

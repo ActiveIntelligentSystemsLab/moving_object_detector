@@ -14,17 +14,17 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
-#include <velocity_estimator/pcl_point_xyz_velocity.h>
-#include <velocity_estimator/VelocityEstimatorConfig.h>
+#include <scene_flow_constructor/pcl_point_xyz_velocity.h>
+#include <scene_flow_constructor/SceneFlowConstructorConfig.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 
 #include <list>
 
-namespace velocity_estimator{
+namespace scene_flow_constructor{
 
-class VelocityEstimatorNodelet : public nodelet::Nodelet {
+class SceneFlowConstructorNodelet : public nodelet::Nodelet {
 public:
   virtual void onInit();
 private:
@@ -45,7 +45,7 @@ private:
 
   std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
   
-  using ReconfigureServer =  dynamic_reconfigure::Server<velocity_estimator::VelocityEstimatorConfig>;
+  using ReconfigureServer =  dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
   ReconfigureServer::CallbackType reconfigure_func_;
   
@@ -170,7 +170,7 @@ private:
   void publishVelocityImage(const cv::Mat &velocity_image);
 
   template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
-  void reconfigureCB(velocity_estimator::VelocityEstimatorConfig& config, uint32_t level);
+  void reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level);
 
   /**
    * \brief Transform pointcloud of previous frame to now frame
@@ -182,6 +182,6 @@ private:
   void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
 };
 
-} // namespace velocity_estimator
+} // namespace scene_flow_constructor
 
 #endif

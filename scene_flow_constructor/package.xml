@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>velocity_estimator</name>
+  <name>scene_flow_constructor</name>
   <version>0.0.0</version>
-  <description>Estimate velocity of each point in pointcloud</description>
+  <description>Construct scene flow from camera transform, optical flow and disparity image</description>
   <maintainer email="fujimoto@aisl.cs.tut.ac.jp">Hironori Fujimoto</maintainer>
   <license>TODO</license>
 
