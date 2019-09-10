@@ -6,7 +6,7 @@
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
   <!-- Should be set if you use not default node -->
   <arg name="optical_flow_topic" default="/pwc_net/optical_flow"/>
-  <arg name="disparity_flow_topic" default="/sgm_gpu/disparity"/>
+  <arg name="disparity_image_topic" default="/sgm_gpu/disparity"/>
   <!-- Set true if you use simulator -->
   <arg name="use_sim_time" default="false"/>
   <!-- Set it if you use other transport for image -->
@@ -33,36 +33,34 @@
     <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
 
     <remap from="viso2_info" to="/viso2/info"/>
-    <remap from="optical_flow_left" to="$(arg optical_flow_topic)"/>
-    <remap from="disparity_image" to="$(arg disparity_flow_topic)"/>
+    <remap from="optical_flow" to="$(arg optical_flow_topic)"/>
+    <remap from="disparity_image" to="$(arg disparity_image_topic)"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
   </node>
 
   <node name="scene_flow_constructor" pkg="nodelet" type="nodelet" args="load scene_flow_constructor/scene_flow_constructor $(arg nodelet_manager_name)">
     <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
-    <remap from="optical_flow_left" to="$(arg optical_flow_topic)"/>
-    <remap from="disparity_image" to="$(arg disparity_flow_topic)"/>
-    <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
+    <remap from="optical_flow" to="$(arg optical_flow_topic)"/>
+    <remap from="disparity_image" to="$(arg disparity_image_topic)"/>
+    <remap from="camera_info" to="/synchronized/left/camera_info"/>
   </node>
 
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
-    <remap from="velocity_pc" to="/scene_flow_constructor/velocity_pc"/>
+    <remap from="scene_flow" to="/scene_flow_constructor/scene_flow"/>
   </node>
 
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
   
   <!-- Nodes for visualization -->
-  <node name="left_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+  <node name="optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
     <remap from="flow" to="$(arg optical_flow_topic)"/>
-    <remap from="flow_image" to="left_flow_image"/>
   </node>
-  <node name="static_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="/scene_flow_constructor/static_flow"/>
-    <remap from="flow_image" to="static_flow_image"/>
+  <node name="syntetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+    <remap from="flow" to="/scene_flow_constructor/synthetic_optical_flow"/>
   </node>
   <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
-    <remap from="disparity" to="$(arg disparity_flow_topic)"/>
+    <remap from="disparity" to="$(arg disparity_image_topic)"/>
   </node>
   <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="moving_objects"/>

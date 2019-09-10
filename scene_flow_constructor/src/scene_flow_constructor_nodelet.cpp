@@ -29,15 +29,15 @@ void SceneFlowConstructorNodelet::onInit() {
   reconfigure_func_ = boost::bind(&SceneFlowConstructorNodelet::reconfigureCB, this, _1, _2);
   reconfigure_server_->setCallback(reconfigure_func_);
   
-  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("velocity_pc", 10);
-  static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("static_flow", 1);
-  velocity_image_pub_ = image_transport_->advertise("velocity_image", 1);
-  flow_residual_pub_ = image_transport_->advertise("flow_residual", 1);
+  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 10);
+  static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
+  velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
+  flow_residual_pub_ = image_transport_->advertise("optical_flow_residual", 1);
   
   camera_transform_sub_.subscribe(node_handle, "camera_transform", 1);
-  optical_flow_left_sub_.subscribe(node_handle, "optical_flow_left", 1); // optical flowはrectified imageで計算すること
+  optical_flow_left_sub_.subscribe(node_handle, "optical_flow", 1); // optical flowはrectified imageで計算すること
   disparity_image_sub_.subscribe(node_handle, "disparity_image", 20);
-  left_camera_info_sub_.subscribe(node_handle, "left_camera_info", 1);
+  left_camera_info_sub_.subscribe(node_handle, "camera_info", 1);
 
   time_sync_ = std::make_shared<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>>(camera_transform_sub_, optical_flow_left_sub_, left_camera_info_sub_, disparity_image_sub_, 50);
   time_sync_->registerCallback(boost::bind(&SceneFlowConstructorNodelet::dataCB, this, _1, _2, _3, _4));
