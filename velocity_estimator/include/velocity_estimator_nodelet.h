@@ -105,6 +105,12 @@ private:
    * If not same, output error message and shutdown
    */
   void checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+  /**
+   * \brief Check all messages have same image size
+   *
+   * If not same, output error message and shutdown
+   */
+  void checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
 
   /**
    * \brief Construct velocity image which visualize velocity_pc as RGB color image

@@ -68,12 +68,30 @@ void VelocityEstimatorNodelet::checkSameFrameId(const geometry_msgs::TransformSt
   if (camera_transform->header.frame_id == left_optical_flow->header.frame_id &&
       camera_transform->header.frame_id == left_camera_info->header.frame_id &&
       camera_transform->header.frame_id == disparity_image->header.frame_id)
+    return;
+  else
   {
     ROS_FATAL_STREAM("Frame id of synchronized messages are not same!\n" <<
                      "camera transform : " << camera_transform->header.frame_id  << "\n" <<
                      "optical flow : "     << left_optical_flow->header.frame_id << "\n" <<
                      "camera info : "      << left_camera_info->header.frame_id  << "\n" <<
                      "disparity image : "  << disparity_image->header.frame_id);
+    ros::shutdown();
+    std::exit(EXIT_FAILURE);
+  }
+}
+
+void VelocityEstimatorNodelet::checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+{
+  if (left_optical_flow->width == left_camera_info->width && left_optical_flow->height == left_camera_info->height &&
+      left_optical_flow->width == disparity_image->image.width && left_optical_flow->height == disparity_image->image.width)
+    return;
+  else
+  {
+    ROS_FATAL_STREAM("Image size of synchronized messages are not same!\n" <<
+                     "optical flow : "    << left_optical_flow->width     << "x" << left_optical_flow->height << "\n" <<
+                     "camera info : "     << left_camera_info->width      << "x" << left_camera_info->height  << "\n" <<
+                     "disparity image : " << disparity_image->image.width << "x" << disparity_image->image.height);
     ros::shutdown();
     std::exit(EXIT_FAILURE);
   }
@@ -162,6 +180,7 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
 void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   checkSameFrameId(camera_transform, optical_flow_left, left_camera_info, disparity_image);
+  checkSameSize(optical_flow_left, left_camera_info, disparity_image);
 
   disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
   pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
