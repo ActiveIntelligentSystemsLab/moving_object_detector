@@ -84,7 +84,7 @@ void VelocityEstimatorNodelet::checkSameFrameId(const geometry_msgs::TransformSt
 void VelocityEstimatorNodelet::checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
   if (left_optical_flow->width == left_camera_info->width && left_optical_flow->height == left_camera_info->height &&
-      left_optical_flow->width == disparity_image->image.width && left_optical_flow->height == disparity_image->image.width)
+      left_optical_flow->width == disparity_image->image.width && left_optical_flow->height == disparity_image->image.height)
     return;
   else
   {
