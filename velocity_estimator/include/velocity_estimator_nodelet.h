@@ -83,7 +83,13 @@ private:
 
   std::string camera_frame_id_;
 
+  /**
+   * \brief Width of optical flow, disparity image and also pointcloud
+   */
   int image_width_;
+  /**
+   * \brief Height of optical flow, disparity image and also pointcloud
+   */
   int image_height_;
 
   image_geometry::PinholeCameraModel left_cam_model_;

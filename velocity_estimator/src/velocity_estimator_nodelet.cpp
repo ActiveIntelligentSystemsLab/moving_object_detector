@@ -42,13 +42,11 @@ void VelocityEstimatorNodelet::onInit() {
 
 void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
 {
-  int height = static_cast<int>(pc_previous_transformed_->height);
-  int width = static_cast<int>(pc_previous_transformed_->width);
-  left_static_flow_ = cv::Mat(height, width, CV_32FC2);
+  left_static_flow_ = cv::Mat(image_height_, image_width_, CV_32FC2);
 
-  for (int y = 0; y < height; y++)
+  for (int y = 0; y < image_height_; y++)
   {
-    for (int x = 0; x < width; x++)
+    for (int x = 0; x < image_width_; x++)
     {
       pcl::PointXYZ pcl_point = pc_previous_transformed_->at(x, y);
       cv::Point3d point_3d;
@@ -64,7 +62,7 @@ void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
 
 void VelocityEstimatorNodelet::constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image)
 {
-  velocity_image = cv::Mat(velocity_pc.height, velocity_pc.width, CV_8UC3, cv::Vec3b(0, 0, 0));
+  velocity_image = cv::Mat(image_height_, image_width_, CV_8UC3, cv::Vec3b(0, 0, 0));
   for (size_t i = 0; i < velocity_pc.size(); i++)
   {
     const pcl::PointXYZVelocity &velocity_point = velocity_pc.at(i);
@@ -95,9 +93,9 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
   initializeVelocityPC(velocity_pc);
 
   cv::Point2i left_now;
-  for (left_now.y = 0; left_now.y < left_flow_->height; left_now.y++)
+  for (left_now.y = 0; left_now.y < image_height_; left_now.y++)
   {
-    for (left_now.x = 0; left_now.x < left_flow_->width; left_now.x++)
+    for (left_now.x = 0; left_now.x < image_width_; left_now.x++)
     {
       pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
       pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
@@ -120,8 +118,8 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
         continue;
 
       cv::Vec2f flow;
-      flow[0] = left_flow_->flow_field[left_now.y * left_flow_->width + left_now.x].x;
-      flow[1] = left_flow_->flow_field[left_now.y * left_flow_->width + left_now.x].y;
+      flow[0] = left_flow_->flow_field[left_now.y * image_width_ + left_now.x].x;
+      flow[1] = left_flow_->flow_field[left_now.y * image_width_ + left_now.x].y;
       cv::Vec2f static_flow = left_static_flow_.at<cv::Vec2f>(left_now.y, left_now.x);
 
       cv::Vec2f flow_diff = flow - static_flow;
@@ -194,7 +192,7 @@ void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConst
 
   disparity_previous_ = disparity_now_;
   pc_previous_ = pc_now_;
-  time_stamp_previous_ = transform_now_to_previous_.header.stamp;
+  time_stamp_previous_ = time_stamp_now_;
 }
 
 bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
@@ -213,11 +211,11 @@ bool VelocityEstimatorNodelet::getMatchPoints(const cv::Point2i &left_now, cv::P
 
 bool VelocityEstimatorNodelet::getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow)
 {
-  if (now.x < 0 || now.x >= flow.width || now.y < 0 || now.y >= flow.height) {
+  if (now.x < 0 || now.x >= image_width_ || now.y < 0 || now.y >= image_height_) {
     return false;
   }
 
-  int flow_index_now = now.y * flow.width + now.x;
+  int flow_index_now = now.y * image_width_ + now.x;
   if (flow.invalid_map[flow_index_now])
     return false;
   
@@ -260,7 +258,7 @@ void VelocityEstimatorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::PointXY
   default_value.vx = std::nanf("");
   default_value.vy = std::nanf("");
   default_value.vz = std::nanf("");
-  velocity_pc = pcl::PointCloud<pcl::PointXYZVelocity>(pc_now_->width, pc_now_->height, default_value);
+  velocity_pc = pcl::PointCloud<pcl::PointXYZVelocity>(image_width_, image_height_, default_value);
 }
 
 bool VelocityEstimatorNodelet::isValid(const pcl::PointXYZ &point)
@@ -309,13 +307,12 @@ void VelocityEstimatorNodelet::publishStaticOpticalFlow()
   flow_msg.previous_stamp = time_stamp_previous_;
   flow_msg.width = left_static_flow_.cols;
   flow_msg.height = left_static_flow_.rows;
-  flow_msg.flow_field.resize(flow_msg.width * flow_msg.height);
-  flow_msg.invalid_map.resize(flow_msg.width * flow_msg.height, false);
+  flow_msg.flow_field.resize(image_width_ * image_height_);
+  flow_msg.invalid_map.resize(image_width_ * image_height_, false);
 
-  //cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::TYPE_32FC2, left_static_flow_);
-  for (int y = 0; y < flow_msg.height; y++) 
+  for (int y = 0; y < image_height_; y++) 
   {
-    for (int x = 0; x < flow_msg.width; x++)
+    for (int x = 0; x < image_width_; x++)
     {
       cv::Vec2f& flow_at_point = left_static_flow_.at<cv::Vec2f>(y, x);
       flow_msg.flow_field[y * flow_msg.width + x].x = flow_at_point[0];
@@ -358,10 +355,10 @@ void VelocityEstimatorNodelet::transformPCPreviousToNow(const pcl::PointCloud<pc
   Eigen::Isometry3d eigen_now_to_previous = tf2::transformToEigen(now_to_previous);
   Eigen::Isometry3d eigen_previous_to_now = eigen_now_to_previous.inverse();
 
-  pc_previous_transformed = pcl::PointCloud<pcl::PointXYZ>(pc_previous.width, pc_previous.height);
-  for (int u = 0; u < pc_previous.width; u++)
+  pc_previous_transformed = pcl::PointCloud<pcl::PointXYZ>(image_width_, image_height_);
+  for (int u = 0; u < image_width_; u++)
   {
-    for (int v =0; v < pc_previous.height; v++)
+    for (int v =0; v < image_height_; v++)
     {
       const pcl::PointXYZ &point = pc_previous.at(u, v);
       Eigen::Vector3d eigen_transformed = eigen_previous_to_now * Eigen::Vector3d(point.x, point.y, point.z);
