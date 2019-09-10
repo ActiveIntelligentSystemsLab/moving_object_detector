@@ -100,6 +100,13 @@ private:
   void calculateStaticOpticalFlow();
 
   /**
+   * \brief Check all messages have same frame_id
+   *
+   * If not same, output error message and shutdown
+   */
+  void checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+
+  /**
    * \brief Construct velocity image which visualize velocity_pc as RGB color image
    *
    * \param velocity_pc Input pointcloud whose points have 3D position and velocity
@@ -128,6 +135,12 @@ private:
   bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous);
   bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow);
   bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
+
+  /**
+   * \brief Resize velocity pointcloud and fill each point by default value
+   *
+   * \param velocity_pc Target velocity pointcloud
+   */
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
   bool isValid(const pcl::PointXYZ &point);
 

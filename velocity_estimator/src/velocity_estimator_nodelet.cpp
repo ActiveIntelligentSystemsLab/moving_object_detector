@@ -4,13 +4,16 @@
 
 PLUGINLIB_EXPORT_CLASS(velocity_estimator::VelocityEstimatorNodelet, nodelet::Nodelet)
 
+// ROS headers
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_eigen/tf2_eigen.h>
 
+// Non-ROS headers
 #include <cmath>
+#include <cstdlib>
 #include <stdexcept>
 #include <memory>
 
@@ -57,6 +60,22 @@ void VelocityEstimatorNodelet::calculateStaticOpticalFlow()
       cv::Vec2f static_flow(point_2d.x, point_2d.y);
       left_static_flow_.at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
     }
+  }
+}
+
+void VelocityEstimatorNodelet::checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
+{
+  if (camera_transform->header.frame_id == left_optical_flow->header.frame_id &&
+      camera_transform->header.frame_id == left_camera_info->header.frame_id &&
+      camera_transform->header.frame_id == disparity_image->header.frame_id)
+  {
+    ROS_FATAL_STREAM("Frame id of synchronized messages are not same!\n" <<
+                     "camera transform : " << camera_transform->header.frame_id  << "\n" <<
+                     "optical flow : "     << left_optical_flow->header.frame_id << "\n" <<
+                     "camera info : "      << left_camera_info->header.frame_id  << "\n" <<
+                     "disparity image : "  << disparity_image->header.frame_id);
+    ros::shutdown();
+    std::exit(EXIT_FAILURE);
   }
 }
 
@@ -142,6 +161,8 @@ void VelocityEstimatorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZ
 
 void VelocityEstimatorNodelet::dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image)
 {
+  checkSameFrameId(camera_transform, optical_flow_left, left_camera_info, disparity_image);
+
   disparity_now_.reset(new DisparityImageProcessor(disparity_image, left_camera_info));
   pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
 
@@ -244,11 +265,6 @@ bool VelocityEstimatorNodelet::getRightPoint(const cv::Point2i &left, cv::Point2
   return true;
 }
 
-/**
- * \brief Resize velocity pointcloud and fill each point by default value
- *
- * \param velocity_pc Target velocity pointcloud
- */
 void VelocityEstimatorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
   pcl::PointXYZVelocity default_value;
