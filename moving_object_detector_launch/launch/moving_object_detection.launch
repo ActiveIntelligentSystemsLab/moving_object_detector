@@ -46,7 +46,7 @@
     <remap from="left_camera_info" to="/synchronized/left/camera_info"/>
   </node>
 
-  <node name="clusterer" pkg="nodelet" type="nodelet" args="load velocity_pc_clusterer/velocity_pc_clusterer $(arg nodelet_manager_name)">
+  <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
     <remap from="velocity_pc" to="/scene_flow_constructor/velocity_pc"/>
   </node>
 

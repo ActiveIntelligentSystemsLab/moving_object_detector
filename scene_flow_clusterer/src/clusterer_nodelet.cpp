@@ -2,7 +2,7 @@
 
 #include "clusterer_nodelet.h"
 
-PLUGINLIB_EXPORT_CLASS(velocity_pc_clusterer::ClustererNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(scene_flow_clusterer::ClustererNodelet, nodelet::Nodelet)
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -18,7 +18,7 @@ PLUGINLIB_EXPORT_CLASS(velocity_pc_clusterer::ClustererNodelet, nodelet::Nodelet
 #include <list>
 #include <vector>
 
-namespace velocity_pc_clusterer {
+namespace scene_flow_clusterer {
 
 void ClustererNodelet::onInit()
 {
@@ -339,7 +339,7 @@ void ClustererNodelet::publishMovingObjects(const pcl::IndicesClusters &clusters
   dynamic_objects_pub_.publish(moving_objects_msg);
 }
 
-void ClustererNodelet::reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level)
+void ClustererNodelet::reconfigureCB(scene_flow_clusterer::ClustererConfig& config, uint32_t level)
 {
   NODELET_INFO("Reconfigure Request: cluster_size = %d, depth_diff %f, dynamic_speed = %f, neighbor_distance = %d", config.cluster_size, config.depth_diff, config.dynamic_speed, config.neighbor_distance);
   cluster_size_th_  = config.cluster_size;
@@ -389,4 +389,4 @@ void ClustererNodelet::removeSmallClusters()
   }
 }
 
-} // namespace velocity_pc_clusterer
+} // namespace scene_flow_clusterer

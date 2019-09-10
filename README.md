@@ -126,9 +126,9 @@ $ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
 
   Construct scene flow from camera transform, disparity image and optical flow
 
-* velocity_pc_clusterer
+* scene_flow_clusterer
 
-  Clustering pointcloud with velocity
+  Clustering scene flow and each clusters are treated as moving objects
 
 * kkl
 

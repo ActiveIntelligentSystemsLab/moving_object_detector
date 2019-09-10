@@ -1,7 +1,7 @@
 #ifndef __HEADER_CLUSTERER__
 #define __HEADER_CLUSTERER__
 
-#include <velocity_pc_clusterer/ClustererConfig.h>
+#include <scene_flow_clusterer/ClustererConfig.h>
 #include <moving_object_msgs/MovingObjectArray.h>
 
 #define PCL_NO_PRECOMPILE
@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace velocity_pc_clusterer {
+namespace scene_flow_clusterer {
 
 struct Point2d {
   int u;
@@ -46,7 +46,7 @@ private:
   image_transport::Publisher clusters_image_pub_;
   ros::Subscriber velocity_pc_sub_;
   
-  using ReconfigureServer = dynamic_reconfigure::Server<velocity_pc_clusterer::ClustererConfig>;
+  using ReconfigureServer = dynamic_reconfigure::Server<scene_flow_clusterer::ClustererConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
   ReconfigureServer::CallbackType reconfigure_func_;
   
@@ -103,10 +103,10 @@ private:
   void publishClusters(const pcl::IndicesClusters &clusters);
   void publishClustersImage();
   void publishMovingObjects(const pcl::IndicesClusters &clusters);
-  void reconfigureCB(velocity_pc_clusterer::ClustererConfig& config, uint32_t level);
+  void reconfigureCB(scene_flow_clusterer::ClustererConfig& config, uint32_t level);
   void removeSmallClusters();
 };
 
-} // velocity_pc_clusterer
+} // scene_flow_clusterer
 
 #endif

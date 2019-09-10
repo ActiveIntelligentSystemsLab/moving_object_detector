@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<library path="lib/libscene_flow_clusterer">
+  <class name="scene_flow_clusterer/scene_flow_clusterer" type="scene_flow_clusterer::ClustererNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+    Clustering velocity pointcloud.
+  </description>
+  </class>
+</library>
