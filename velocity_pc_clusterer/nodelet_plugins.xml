@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-
-<library path="lib/libvelocity_pc_clusterer">
-  <class name="velocity_pc_clusterer/velocity_pc_clusterer" type="velocity_pc_clusterer::ClustererNodelet" base_class_type="nodelet::Nodelet">
-  <description>
-    Clustering velocity pointcloud.
-  </description>
-  </class>
-</library>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(velocity_pc_clusterer)
+project(scene_flow_clusterer)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   roscpp
   sensor_msgs
-  velocity_estimator
+  scene_flow_constructor
   visualization_msgs
 )
 find_package(OpenCV)
@@ -49,5 +49,5 @@ install(
   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-add_executable(velocity_pc_clusterer_node src/clusterer_node.cpp)
-target_link_libraries(velocity_pc_clusterer_node ${catkin_LIBRARIES})
+add_executable(${PROJECT_NAME}_node src/clusterer_node.cpp)
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})

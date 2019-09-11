@@ -2,6 +2,10 @@
 
 This contains ROS packages to detect moving objects from stereo images.
 
+## System overview
+
+![overview](system_overview.png)
+
 ## Prerequisite
 
 ### Hardware
@@ -22,16 +26,33 @@ This contains ROS packages to detect moving objects from stereo images.
 
 ## Already tested environment
 
-### Hardware
+### Environment 1
+
+#### Hardware
 
 * NVIDIA RTX 2070
 * [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
-### Software
+#### Software
 
 * Ubuntu 19.04
 * Docker 19.03
 * Docker Compose 1.21
+* nvidia-docker2 2.2.1
+* nvidia-container-toolkit 1.0.3
+
+### Environment 2
+
+#### Hardware
+
+* NVIDIA GTX 1060
+* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
+
+#### Software
+
+* Ubuntu 18.04
+* Docker 19.03
+* Docker Compose 1.24
 * nvidia-docker2 2.2.1
 * nvidia-container-toolkit 1.0.3
 
@@ -63,6 +84,18 @@ $ sudo docker-compose up --no-start
    $ sudo docker-compose stop
    ```
 
+## Test with Sintel Dataset
+
+You can also use [MPI Sintel Stereo Training Data](http://sintel.is.tue.mpg.de/stereo) as input instead of Gazebo simulator.
+But be careful, building docker image for Sintel will take a lot of time to download the dataset.
+
+Launch commands at `moving_object_detector/docker` directory:
+
+```shell
+$ xhost +local:root
+$ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
+```
+
 ## contained packages
 
 * disparity_image_proc
@@ -89,15 +122,14 @@ $ sudo docker-compose up --no-start
 
   Visualize moving_object_msgs with input image
 
-* velocity_estimator
+* scene_flow_constructor
 
-  Generate pointcloud with velocity from camera transform, disparity image and optical flow
+  Construct scene flow from camera transform, disparity image and optical flow
 
-* velocity_pc_clusterer
+* scene_flow_clusterer
 
-  Clustering pointcloud with velocity
+  Clustering scene flow and each clusters are treated as moving objects
 
 * kkl
 
   Kalman filter library written by Kenji Koide.
-  It is copied from https://aisl-serv6.aisl.cs.tut.ac.jp:20443/koide/grace_person_following.git

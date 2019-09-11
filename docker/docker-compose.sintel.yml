@@ -1,0 +1,32 @@
+version: "2.3"
+services: 
+  sintel:
+    container_name: move_detect_sintel
+    build: sintel_stereo_publisher/docker
+    depends_on:
+      - master
+    command: >
+      rosrun sintel_stereo_publisher sintel_stereo_publisher 
+      _dataset_directory:=/root/MPI-Sintel-stereo-training
+      _camera_param_file:=/root/MPI-Sintel-depth-training/training/camdata_left/alley_1/frame_0001.cam
+      _loop:=false
+      _pause:=true
+      _publish_rate:=1.0
+    environment: 
+      - ROS_HOSTNAME=move_detect_sintel
+      - ROS_MASTER_URI=http://move_detect_master:11311
+  
+  launch:
+    command: >
+      roslaunch --wait moving_object_detector_launch moving_object_detection.launch 
+      left_image_topic:=/sintel_stereo_publisher/left/image_rect_color
+      right_image_topic:=/sintel_stereo_publisher/right/image_rect_color 
+      use_sim_time:=false
+
+  pwc:
+    command: >
+      rosrun pwc_net pwc_net_node 
+      image:=/synchronized/left/image_rect_color 
+      _image_width:=1024
+      _image_height:=436
+

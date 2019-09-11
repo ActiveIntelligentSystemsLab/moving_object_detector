@@ -2,9 +2,9 @@
 
 #include "input_synchronizer_nodelet.h"
 
-PLUGINLIB_EXPORT_CLASS(velocity_estimator::InputSynchronizerNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::InputSynchronizerNodelet, nodelet::Nodelet)
 
-namespace velocity_estimator {
+namespace scene_flow_constructor {
 
 void InputSynchronizerNodelet::onInit()
 {
@@ -32,7 +32,7 @@ void InputSynchronizerNodelet::onInit()
 
   // 各処理結果を受け取るsubscriberの初期化
   viso2_info_sub_.subscribe(node_handle, "viso2_info", 1);
-  optical_flow_left_sub_.subscribe(node_handle, "optical_flow_left", 1);
+  optical_flow_left_sub_.subscribe(node_handle, "optical_flow", 1);
   disparity_image_sub_.subscribe(node_handle, "disparity_image", 1);
   processed_data_time_sync_ = std::make_shared<ProcessedDataSynchronizer>(viso2_info_sub_, optical_flow_left_sub_, disparity_image_sub_, 30);
   processed_data_time_sync_->registerCallback(boost::bind(&InputSynchronizerNodelet::processedDataSyncCallback, this, _1, _2, _3));
@@ -65,7 +65,7 @@ void InputSynchronizerNodelet::processedDataSyncCallback(const viso2_ros::VisoIn
   publish_required_ = true;
 }
 
-bool InputSynchronizerNodelet::publishServiceCallback(velocity_estimator::InputSynchronizerPublish::Request &request, velocity_estimator::InputSynchronizerPublish::Response &response)
+bool InputSynchronizerNodelet::publishServiceCallback(scene_flow_constructor::InputSynchronizerPublish::Request &request, scene_flow_constructor::InputSynchronizerPublish::Response &response)
 {
   NODELET_INFO("Repubish is required from service");
   publish_required_ = true;
