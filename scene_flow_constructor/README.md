@@ -2,6 +2,10 @@
 
 A ROS package to construct scene flow from camera transform, optical flow and disparity image.
 
+![overview](scene_flow_constructor.png)
+
+![frames](input_frames.png)
+
 ## Node: scene_flow_constructor_node
 
 Construct scene flow from camera transform, optical flow and disparity image.
