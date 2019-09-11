@@ -13,6 +13,7 @@ void InputSynchronizerNodelet::onInit()
   image_transport_.reset(new image_transport::ImageTransport(node_handle));
 
   republish_timeout_ = private_node_handle.param("republish_timeout", 1.0);
+  publish_required_ = true;
   
   // 同期済みステレオ画像とcamera infoのpublisherを初期化
   std::string publish_left_rect_image_topic = node_handle.resolveName("synchronizer_output_left_rect_image");
