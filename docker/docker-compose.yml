@@ -8,6 +8,8 @@ services:
   launch:
     container_name: move_detect_launch
     build: .
+    depends_on:
+      - master
     command: >
       roslaunch --wait moving_object_detector_launch moving_object_detection.launch 
       left_image_topic:=/stereo_robot/mobile_base/camera/left/image_raw
@@ -20,6 +22,8 @@ services:
   pwc:
     container_name: move_detect_pwc
     build: pwc_net_ros/docker
+    depends_on:
+      - master
     command: rosrun pwc_net pwc_net_node image:=/synchronized/left/image_rect_color
     runtime: nvidia
     environment: 
@@ -29,6 +33,8 @@ services:
   sgm:
     container_name: move_detect_sgm
     build: sgm_gpu_ros/docker
+    depends_on:
+      - master
     command: rosrun sgm_gpu sgm_gpu_node left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color
     runtime: nvidia
     environment: 
@@ -38,6 +44,8 @@ services:
   rqt:
     container_name: move_detect_rqt
     build: rqt
+    depends_on:
+      - master
     command: rqt --perspective-file /root/moving_object_detector/moving_object_detector_launch/rqt/moving_object_detector.perspective
     runtime: nvidia
     environment: 

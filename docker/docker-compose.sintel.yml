@@ -3,6 +3,8 @@ services:
   sintel:
     container_name: move_detect_sintel
     build: sintel_stereo_publisher/docker
+    depends_on:
+      - master
     command: >
       rosrun sintel_stereo_publisher sintel_stereo_publisher 
       _dataset_directory:=/root/MPI-Sintel-stereo-training
