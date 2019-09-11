@@ -3,6 +3,8 @@ services:
   sintel:
     container_name: move_detect_sintel
     build: sintel_stereo_publisher/docker
+    depends_on:
+      - master
     command: >
       rosrun sintel_stereo_publisher sintel_stereo_publisher 
       _dataset_directory:=/root/MPI-Sintel-stereo-training
@@ -13,6 +15,8 @@ services:
     environment: 
       - ROS_HOSTNAME=move_detect_sintel
       - ROS_MASTER_URI=http://move_detect_master:11311
+    volumes:
+      - sintel_root:/root
   
   launch:
     command: >
@@ -28,3 +32,5 @@ services:
       _image_width:=1024
       _image_height:=436
 
+volumes:
+  sintel_root:
