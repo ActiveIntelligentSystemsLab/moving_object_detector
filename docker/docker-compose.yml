@@ -18,6 +18,8 @@ services:
     environment: 
       - ROS_HOSTNAME=move_detect_launch
       - ROS_MASTER_URI=http://move_detect_master:11311
+    volumes:
+      - launch_root:/root
   
   pwc:
     container_name: move_detect_pwc
@@ -29,6 +31,8 @@ services:
     environment: 
       - ROS_HOSTNAME=move_detect_pwc
       - ROS_MASTER_URI=http://move_detect_master:11311
+    volumes:
+      - pwc_root:/root
   
   sgm:
     container_name: move_detect_sgm
@@ -40,6 +44,8 @@ services:
     environment: 
       - ROS_HOSTNAME=move_detect_sgm
       - ROS_MASTER_URI=http://move_detect_master:11311
+    volumes: 
+      - sgm_root:/root
 
   rqt:
     container_name: move_detect_rqt
@@ -55,3 +61,10 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes: 
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - rqt_root:/root
+
+volumes: 
+  rqt_root:
+  launch_root:
+  sgm_root:
+  pwc_root:

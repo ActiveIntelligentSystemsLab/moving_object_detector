@@ -14,7 +14,7 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes: 
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - gazebo-dir:/root/.gazebo
+      - gazebo_root:/root
   
   spawn_robot:
     container_name: move_detect_spawn_robot
@@ -28,6 +28,8 @@ services:
       - ROS_MASTER_URI=http://move_detect_master:11311
     devices: 
       - /dev/input/js0:/dev/input/js0
+    volumes:
+      - gazebo_root:/root
 
 volumes: 
-  gazebo-dir:
+  gazebo_root:
