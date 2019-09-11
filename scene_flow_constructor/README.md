@@ -36,7 +36,7 @@ This node should be used with input_synchronizer_node.
 
   Camera info of left camera.
 
-### Published topic
+### Published topics
 
 * `~scene_flow` ([sensor_msgs/PointCloud2](http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html))
 
@@ -61,4 +61,20 @@ This node should be used with input_synchronizer_node.
   Residual between `optical_flow` and `~synthetic_optical_flow`.
 
   Encoding is `mono8` (8bit, single channel, unsigned char).
+
+### Parameters
+
+Parameters are defined in [here](cfg/SceneFlowConstructor.cfg).
+
+They can be set by [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure).
+
+## Nodelet: scene_flow_constructor/scene_flow_constructor
+
+Nodelet version.
+
+Topics and parameters are same to the node.
+
+## Node: input_synchronizer
+
+Synchronize Input images of optical flow, stereo matching and visual odometry nodes.
 
