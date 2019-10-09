@@ -133,3 +133,8 @@ $ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
 * kkl
 
   Kalman filter library written by Kenji Koide.
+
+* viso2_stereo_server
+
+  Provide service which estimate camera motion from stereo image
+
