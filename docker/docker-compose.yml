@@ -39,7 +39,7 @@ services:
     build: sgm_gpu_ros/docker
     depends_on:
       - master
-    command: rosrun sgm_gpu sgm_gpu_node left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color
+    command: rosrun sgm_gpu sgm_gpu_server left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color
     runtime: nvidia
     environment: 
       - ROS_HOSTNAME=move_detect_sgm
