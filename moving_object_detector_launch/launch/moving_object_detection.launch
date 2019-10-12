@@ -25,7 +25,7 @@
 
     <remap from="calculate_dense_optical_flow" to="$(arg optical_flow_service)"/>
     <remap from="estimate_motion_from_stereo" to="viso2_stereo_server/estimate_motion_from_stereo"/>
-    <remap from="estimate_disparity" to="$(arg disparity_service")/>
+    <remap from="estimate_disparity" to="$(arg disparity_service)"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
   </node>
