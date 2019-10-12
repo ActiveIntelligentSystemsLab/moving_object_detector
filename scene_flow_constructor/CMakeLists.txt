@@ -11,21 +11,19 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   nodelet
   optical_flow_msgs
+  optical_flow_srvs
   pcl_conversions
   roscpp
   sensor_msgs
+  sgm_gpu
   std_msgs
   stereo_msgs
   tf2_eigen
-  viso2_ros
+  viso2_stereo_server
 )
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(PCL REQUIRED)
-
-add_service_files(FILES InputSynchronizerPublish.srv)
-
-generate_messages(DEPENDENCIES std_msgs)
 
 generate_dynamic_reconfigure_options(cfg/SceneFlowConstructor.cfg)
 
@@ -52,7 +50,6 @@ include_directories(
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_library(${PROJECT_NAME}
-  src/input_synchronizer_nodelet.cpp
   src/${PROJECT_NAME}_nodelet.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -73,9 +70,5 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-add_executable(input_synchronizer_node src/input_synchronizer_node.cpp)
-target_link_libraries(input_synchronizer_node ${catkin_LIBRARIES})
-
 add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})

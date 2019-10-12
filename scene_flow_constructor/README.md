@@ -8,33 +8,31 @@ A ROS package to construct scene flow from camera transform, optical flow and di
 
 ## Node: scene_flow_constructor_node
 
-Construct scene flow from camera transform, optical flow and disparity image.
-
-This node should be used with input_synchronizer_node.
+Construct scene flow from stereo image.
 
 ### Subscribed topics
 
-* `camera_transform` ([geometry_msgs/TransformStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TransformStamped.html))
+Input stereo image and camera info.
 
-  Camera transform of left camera from `now` time to `previous` time, caused by the camera's ego motion.
+* `left_image` ([sensor_msgs/Image](http://docs.ros.org/api/sensor_msgs/html/msg/Image.html))
 
-  It can be obtained from [visual odometry node](https://github.com/fujimo-t/viso2).
+  Should be remapped.
 
-* `optical_flow` ([optical_flow_msgs/DenseOpticalFlow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow/blob/master/optical_flow_msgs/msg/DenseOpticalFlow.msg))
+* `right_image` ([sensor_msgs/Image](http://docs.ros.org/api/sensor_msgs/html/msg/Image.html))
 
-  Dense optical flow of left image between `now` frame and `previous` frame.
+  Should be remapped.
 
-  It can be obtained from [optical flow node](https://github.com/ActiveIntelligentSystemsLab/pwc_net_ros).
+* `<base topic of left_image>/camera_info` ([sensor_msgs/CameraInfo](http://docs.ros.org/api/sensor_msgs/html/msg/CameraInfo.html))
 
-* `disparity_image` ([stereo_msgs/DisparityImage](http://docs.ros.org/api/stereo_msgs/html/msg/DisparityImage.html))
+  Remapping isn't necessary.
 
-  Disparity image estimated from left and right images.
+  Automatically find topic name based on `left_image` topic.
 
-  It can be obtained from [stereo matching node](https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros).
+* `<base topic of right_image>/camera_info` ([sensor_msgs/CameraInfo](http://docs.ros.org/api/sensor_msgs/html/msg/CameraInfo.html))
 
-* `camera_info` ([sensor_msgs/CameraInfo](http://docs.ros.org/api/sensor_msgs/html/msg/CameraInfo.html))
+  Remapping isn't necessary.
 
-  Camera info of left camera.
+  Automatically find topic name based on `right_image` topic.
 
 ### Published topics
 
@@ -62,9 +60,27 @@ This node should be used with input_synchronizer_node.
 
   Encoding is `mono8` (8bit, single channel, unsigned char).
 
+### Called services
+
+This node obtain camera motion, disparity and optical flow from external service servers.
+
+* `calculate_dense_optical_flow` ([optical_flow_srvs/CalculateDenseOpticalFlow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow/blob/master/optical_flow_srvs/srv/CalculateDenseOpticalFlow.srv))
+
+* `estimate_motion_from_stereo` (viso2_stereo_server/EstimateMotionFromStereo)
+
+* `estimate_disparity` (sgm_gpu/EstimateDisparity)
+
 ### Parameters
 
+* `~image_transport` (string)
+
+  See [here](http://wiki.ros.org/image_transport#Parameters-1).
+
 Parameters are defined in [here](cfg/SceneFlowConstructor.cfg).
+
+#### Dynamic parameters
+
+List of parameters is [this](cfg/SceneFlowConstructor.cfg).
 
 They can be set by [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure).
 
@@ -73,8 +89,4 @@ They can be set by [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure
 Nodelet version.
 
 Topics and parameters are same to the node.
-
-## Node: input_synchronizer
-
-Synchronize Input images of optical flow, stereo matching and visual odometry nodes.
 
