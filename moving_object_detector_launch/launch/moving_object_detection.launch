@@ -5,8 +5,8 @@
   <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
   <!-- Should be set if you use not default node -->
-  <arg name="optical_flow_topic" default="/pwc_net/optical_flow"/>
-  <arg name="disparity_image_topic" default="/sgm_gpu/disparity"/>
+  <arg name="optical_flow_service" default="/pwc_net/calculate_dense_optical_flow"/>
+  <arg name="disparity_service" default="/sgm_gpu_server/estimate_disparity"/>
   <!-- Set true if you use simulator -->
   <arg name="use_sim_time" default="false"/>
   <!-- Set it if you use other transport for image -->
@@ -17,54 +17,32 @@
   <arg name="nodelet_manager_name" value="nodelet_manager"/>
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
 
-  <node name="viso2" pkg="viso2_ros" type="stereo_odometer" respawn="true">
-    <remap from="stereo" to="synchronized"/>
-    <remap from="image" to="image_rect_color"/>
-    
-    <param name="base_link_frame_id" value="stereo_robot/camera_link"/>
-    <param name="publish_tf" value="false"/>
-  </node>
-
-  <node name="input_synchronizer" pkg="nodelet" type="nodelet" args="load scene_flow_constructor/input_synchronizer $(arg nodelet_manager_name)">
-    <remap from="synchronizer_input_left_rect_image" to="$(arg left_image_topic)"/>
-    <remap from="synchronizer_input_right_rect_image" to="$(arg right_image_topic)"/>
-
-    <remap from="synchronizer_output_left_rect_image" to="/synchronized/left/image_rect_color"/>
-    <remap from="synchronizer_output_right_rect_image" to="/synchronized/right/image_rect_color"/>
-
-    <remap from="viso2_info" to="/viso2/info"/>
-    <remap from="optical_flow" to="$(arg optical_flow_topic)"/>
-    <remap from="disparity_image" to="$(arg disparity_image_topic)"/>
-
-    <param name="image_transport" value="$(arg image_transport)"/>
-  </node>
+  <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server"/>
 
   <node name="scene_flow_constructor" pkg="nodelet" type="nodelet" args="load scene_flow_constructor/scene_flow_constructor $(arg nodelet_manager_name)">
-    <remap from="camera_transform" to="/viso2/camera_frame_transform"/>
-    <remap from="optical_flow" to="$(arg optical_flow_topic)"/>
-    <remap from="disparity_image" to="$(arg disparity_image_topic)"/>
-    <remap from="camera_info" to="/synchronized/left/camera_info"/>
+    <remap from="left_image" to="$(arg left_image_topic)"/>
+    <remap from="right_image" to="$(arg right_image_topic)"/>
+
+    <remap from="calculate_dense_optical_flow" to="$(arg optical_flow_service)"/>
+    <remap from="estimate_motion_from_stereo" to="viso2_stereo_server/estimate_motion_from_stereo"/>
+    <remap from="estimate_disparity" to="$(arg disparity_service")/>
+
+    <param name="image_transport" value="$(arg image_transport)"/>
   </node>
 
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
     <remap from="scene_flow" to="/scene_flow_constructor/scene_flow"/>
   </node>
 
+  <!--
   <node name="moving_object_tracker" pkg="moving_object_tracker" type="moving_objects_tracker_node"/>
+  -->
   
   <!-- Nodes for visualization -->
-  <node name="optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="$(arg optical_flow_topic)"/>
-  </node>
-  <node name="syntetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+  <node name="synthetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
     <remap from="flow" to="/scene_flow_constructor/synthetic_optical_flow"/>
   </node>
-  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
-    <remap from="disparity" to="$(arg disparity_image_topic)"/>
-  </node>
-  <node name="moving_object_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
-    <remap from="moving_object_array" to="moving_objects"/>
-  </node>
+  <!--
   <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
     <remap from="input_image" to="/synchronized/left/image_rect_color"/>
   </node>
@@ -76,4 +54,5 @@
     <param name="red" value="0"/>
     <param name="green" value="255"/>
   </node>
+  -->
 </launch>
