@@ -408,6 +408,7 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
 
   if (pc_now_ && pc_previous_transformed_) 
   {
+    calculateStaticOpticalFlow();
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);
 
