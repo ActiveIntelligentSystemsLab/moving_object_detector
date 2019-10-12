@@ -6,6 +6,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <nodelet/nodelet.h>
@@ -54,14 +55,14 @@ private:
   // Stereo image and camera info subscribers
   image_transport::SubscriberFilter left_image_sub_;
   image_transport::SubscriberFilter right_image_sub_;
-  message_filters::Subscriber left_caminfo_sub_;
-  message_filters::Subscriber right_caminfo_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> left_caminfo_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> right_caminfo_sub_;
 
   using StereoSynchronizer = message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::CameraInfo>;
   /**
    * \brief Time synchronizer of stereo image and camera info 
    */
-  std::share_ptr<StereoSynchronizer> stereo_synchronizer_;
+  std::shared_ptr<StereoSynchronizer> stereo_synchronizer_;
   
   using ReconfigureServer = dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -78,7 +79,7 @@ private:
    */
   double max_color_velocity_;
 
-  optical_flow_msgs::DenseOpticalFlowConstPtr left_flow_;
+  optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
 
   // Stereo image of previous frame
   sensor_msgs::ImageConstPtr previous_left_image_;
@@ -101,7 +102,7 @@ private:
    *
    * Estimated by visual odometry
    */
-  geometry_msgs::TransformConstPtr transform_prev2now;
+  geometry_msgs::TransformPtr transform_prev2now_;
   //geometry_msgs::TransformStamped transform_now_to_previous_;
 
   ros::Time time_stamp_now_;
@@ -143,11 +144,11 @@ private:
   /**
    * \brief Estimate left camera motion by calling external service
    */
-  void estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info);
+  void estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
   /**
    * \brief Estimate disparity by calling external service
    */
-  void estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info);
+  void estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
   /**
    * \brief Estimate optical flow by calling external service
    */
@@ -200,7 +201,7 @@ private:
   /**
    * \brief Callback function of stereo_synchronizer_
    */
-  void stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info);
+  void stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
 
   /**
    * \brief Transform pointcloud of previous frame to now frame

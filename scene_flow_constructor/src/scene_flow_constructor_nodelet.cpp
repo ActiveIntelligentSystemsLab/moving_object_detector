@@ -11,7 +11,7 @@ PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, node
 #include <optical_flow_srvs/CalculateDenseOpticalFlow.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <sgm_gpu/EstimateDisparity.h>
+#include <disparity_srv/EstimateDisparity.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <viso2_stereo_server/EstimateMotionFromStereo.h>
 
@@ -31,7 +31,7 @@ void SceneFlowConstructorNodelet::onInit() {
   motion_service_client_ = node_handle.serviceClient<viso2_stereo_server::EstimateMotionFromStereo>("estimate_motion_from_stereo");
   motion_service_client_.waitForExistence();
 
-  disparity_service_client_ = node_handle.serviceClient<sgm_gpu::EstimateDisparity>("estimate_disparity");
+  disparity_service_client_ = node_handle.serviceClient<disparity_srv::EstimateDisparity>("estimate_disparity");
   disparity_service_client_.waitForExistence();
 
   optflow_service_client_ = node_handle.serviceClient<optical_flow_srvs::CalculateDenseOpticalFlow>("calculate_dense_optical_flow");
@@ -54,8 +54,8 @@ void SceneFlowConstructorNodelet::onInit() {
   std::string right_image_topic = node_handle.resolveName("right_image");
   std::string left_caminfo_topic = image_transport::getCameraInfoTopic(left_image_topic);
   std::string right_caminfo_topic = image_transport::getCameraInfoTopic(right_image_topic);
-  left_image_sub_.subscribe(*image_transport, left_image_topic, 10);
-  right_image_sub_.subscribe(*image_transport, right_image_topic, 10);
+  left_image_sub_.subscribe(*image_transport_, left_image_topic, 10);
+  right_image_sub_.subscribe(*image_transport_, right_image_topic, 10);
   left_caminfo_sub_.subscribe(node_handle, left_caminfo_topic, 10);
   right_caminfo_sub_.subscribe(node_handle, right_caminfo_topic, 10);
 
@@ -112,7 +112,7 @@ void SceneFlowConstructorNodelet::constructVelocityImage(const pcl::PointCloud<p
 
 void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
-  ros::Duration time_between_frames = transform_now_to_previous_.header.stamp - time_stamp_previous_;
+  ros::Duration time_between_frames = time_stamp_now_ - time_stamp_previous_;
 
   initializeVelocityPC(velocity_pc);
 
@@ -164,66 +164,66 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
   }
 }
 
-void estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info)
+void SceneFlowConstructorNodelet::estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
 {
   viso2_stereo_server::EstimateMotionFromStereo::Request request;
   request.left_image = *left_image;
   request.right_image = *right_image;
   request.right_camera_info = *right_camera_info;
-  request.left_camera_infa = *left_camera_info;
+  request.left_camera_info = *left_camera_info;
 
-  viso2_stereo_servea::EstimateMotionFromStereo::Response response;
+  viso2_stereo_server::EstimateMotionFromStereo::Response response;
   bool success = motion_service_client_.call(request, response);
 
-  if (success && !motion_response.first_call && motion_response.success)
+  if (success && !response.first_call && response.success)
   {
     transform_prev2now_.reset(new geometry_msgs::Transform());
-    *transform_prev2now_ = motion_response.left_previous_to_current;
+    *transform_prev2now_ = response.left_previous_to_current;
   }
-  else if(!motion_response.first_call)
+  else if(!response.first_call)
   {
-    ROS_ERROR_STREAM("Visual odometry is failed\nInput timestamp: " << *left_image.header.stamp);
+    NODELET_ERROR_STREAM("Visual odometry is failed\nInput timestamp: " << time_stamp_now_);
     transform_prev2now_.reset();
   }
 }
 
-void estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info)
+void SceneFlowConstructorNodelet::estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
 {
-  sgm_gpu::EstimateDisparity::Request request;
+  disparity_srv::EstimateDisparity::Request request;
   request.left_image = *left_image;
   request.right_image = *right_image;
   request.left_camera_info = *left_camera_info;
   request.right_camera_info = *right_camera_info;
-  sgm_gpu::EstimateDisparity::Request response;
+  disparity_srv::EstimateDisparity::Response response;
   bool success = disparity_service_client_.call(request, response);
   disparity_previous_ = disparity_now_;
-  if (disparity_success)
-    disparity_now_.reset(new DisparityImageProcessor(disparity_response, *left_camera_info));
+  if (success)
+    disparity_now_.reset(new DisparityImageProcessor(response.disparity, *left_camera_info));
   else
   {
-    ROS_ERROR_STREAM("Disparity estimation is failed\nInput timestamp: " << *left_image.header.stamp);
+    NODELET_ERROR_STREAM("Disparity estimation is failed\nInput timestamp: " << time_stamp_now_ << "\n and " << time_stamp_previous_);
     disparity_now_.reset();
   }
 }
 
-void estimateOpticalFlow(const sensor_msgs::ImageConstPtr& left_image)
+void SceneFlowConstructorNodelet::estimateOpticalFlow(const sensor_msgs::ImageConstPtr& left_image)
 {
   optical_flow_srvs::CalculateDenseOpticalFlow::Request request;
-  request.older_image = previous_left_image_;
+  request.older_image = *previous_left_image_;
   request.newer_image = *left_image;
 
-  optical_flow_srvs::CalculateDenseOpticalFlow::Response optflow_response;
+  optical_flow_srvs::CalculateDenseOpticalFlow::Response response;
   bool success = optflow_service_client_.call(request, response);
 
   if (success)
   {
-    _left_flow.reset(new optical_flow_msgs::DenseOpticalFlow());
-    *_left_flow = optflow_response.optical_flow;
+    left_flow_.reset(new optical_flow_msgs::DenseOpticalFlow());
+    *left_flow_ = response.optical_flow;
   }
   else
   {
-    ROS_ERROR_STREAM("Optical flow estimation is failed\nInput timestamp: " << *left_image.header.stamp);
-    _left_flow.reset();
+    NODELET_ERROR_STREAM("Optical flow estimation is failed\nInput timestamp: " << time_stamp_now_ << "\n and " << time_stamp_previous_);
+    left_flow_.reset();
   }
 }
   
@@ -326,8 +326,8 @@ void SceneFlowConstructorNodelet::publishFlowResidual()
 void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
 {
   std_msgs::Header header;
-  header.frame_id = transform_now_to_previous_.header.frame_id;
-  header.stamp = transform_now_to_previous_.header.stamp;
+  header.frame_id = camera_frame_id_;
+  header.stamp = time_stamp_now_;
 
   optical_flow_msgs::DenseOpticalFlow flow_msg;
   flow_msg.header = header;
@@ -353,8 +353,8 @@ void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
 void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_image)
 {
   std_msgs::Header header;
-  header.frame_id = transform_now_to_previous_.header.frame_id;
-  header.stamp = transform_now_to_previous_.header.stamp;
+  header.frame_id = camera_frame_id_;
+  header.stamp = time_stamp_now_;
 
   cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::BGR8, velocity_image);
   velocity_image_pub_.publish(cv_image.toImageMsg());
@@ -369,9 +369,9 @@ template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(c
   pc_with_velocity_pub_.publish(pointcloud_msg);
 }
 
-void stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::ImageConstPtr& right_camera_info)
+void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
 {
-  ros::Time start_process = ros::WallTime::now();
+  ros::WallTime start_process = ros::WallTime::now();
 
   // Get disparity, optical flow and camera motion by calling external services
   estimateDisparity(left_image, right_image, left_camera_info, right_camera_info);
@@ -401,12 +401,12 @@ void stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_m
   if (pc_previous_ && transform_prev2now_)
   {
     pc_previous_transformed_.reset(new pcl::PointCloud<pcl::PointXYZ>());
-    transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, *transform_prev2now);
+    transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, *transform_prev2now_);
   }
   else
     pc_previous_transformed_.reset();
 
-  if (pc_now && pc_previous_transformed_) 
+  if (pc_now_ && pc_previous_transformed_) 
   {
     pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
     constructVelocityPC(pc_with_velocity);

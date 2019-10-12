@@ -3,6 +3,7 @@ project(scene_flow_constructor)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
+  disparity_srv
   disparity_image_proc
   dynamic_reconfigure
   image_geometry
@@ -15,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   roscpp
   sensor_msgs
-  sgm_gpu
   std_msgs
   stereo_msgs
   tf2_eigen
