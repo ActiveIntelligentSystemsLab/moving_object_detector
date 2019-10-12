@@ -42,6 +42,8 @@ namespace viso2_stereo_server
   {
     ros::WallTime start_time = ros::WallTime::now();
 
+    ROS_INFO("EstimateMotionFromStereo service is called");
+
     if (!visual_odometer_)
       initOdometer(request.left_camera_info, request.right_camera_info);
 
@@ -88,6 +90,8 @@ namespace viso2_stereo_server
 
     first_service_call_ = false;
     previous_timestamp_ = request.left_image.header.stamp;
+
+    ROS_INFO("EstimateMotionFromStereo service is finished");
 
     return true;
   }

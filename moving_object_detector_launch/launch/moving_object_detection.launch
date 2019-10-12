@@ -19,7 +19,7 @@
 
   <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server"/>
 
-  <node name="scene_flow_constructor" pkg="nodelet" type="nodelet" args="load scene_flow_constructor/scene_flow_constructor $(arg nodelet_manager_name)">
+  <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor_node">
     <remap from="left_image" to="$(arg left_image_topic)"/>
     <remap from="right_image" to="$(arg right_image_topic)"/>
 
