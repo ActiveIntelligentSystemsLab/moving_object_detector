@@ -15,7 +15,12 @@
 class DisparityImageProcessor
 {
 public:
+  image_geometry::PinholeCameraModel _left_camera_model; 
+  stereo_msgs::DisparityImage _disparity_msg;
+  cv::Mat _disparity_map;
+
   DisparityImageProcessor(const stereo_msgs::DisparityImageConstPtr& disparity_msg, const sensor_msgs::CameraInfoConstPtr& left_camera_info);
+  DisparityImageProcessor(const stereo_msgs::DisparityImage& disparity_msg, const sensor_msgs::CameraInfo& left_camera_info);
   
   bool getDisparity(int u, int v, float& disparity);
   bool getPoint3D(int u, int v, pcl::PointXYZ& point3d);
@@ -23,11 +28,6 @@ public:
   int getWidth();
   int getHeight();
   void toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcloud);
-private:
-  image_geometry::PinholeCameraModel _left_camera_model;
-  
-  stereo_msgs::DisparityImageConstPtr _disparity_msg;
-  cv::Mat _disparity_map;
 };
 
 

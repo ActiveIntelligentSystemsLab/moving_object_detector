@@ -1,0 +1,24 @@
+# Timesynchronized stereo image and camera info
+# Image must be rectified
+sensor_msgs/Image left_image
+sensor_msgs/Image right_image
+
+sensor_msgs/CameraInfo left_camera_info
+sensor_msgs/CameraInfo right_camera_info
+----
+# Timestamp of current image and previous image
+time timestamp_current
+time timestamp_previous
+
+# Elapsed time from service call to return response
+duration runtime
+
+# True if first service call
+# left_previous_to_current is not filled at first call because there is no previous image
+bool first_call
+
+# Return false if motion estimation is failed
+bool success
+
+# Transform of left camera from previous frame to current frame
+geometry_msgs/Transform left_previous_to_current

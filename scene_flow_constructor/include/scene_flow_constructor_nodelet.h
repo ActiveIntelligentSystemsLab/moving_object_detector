@@ -1,11 +1,12 @@
-#ifndef VELOCITY_ESTIMATOR_H
-#define VELOCITY_ESTIMATOR_H
+#ifndef SCENE_FLOW_CONSTRUCTOR_H
+#define SCENE_FLOW_CONSTRUCTOR_H
 
 #include <disparity_image_proc/disparity_image_processor.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <nodelet/nodelet.h>
@@ -30,6 +31,14 @@ public:
 private:
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
+  /**
+   * \brief Publisher for optical flow of left image
+   */
+  ros::Publisher optflow_pub_;
+  /**
+   * \brief Publisher for disparity at now frame
+   */
+  ros::Publisher disparity_pub_;
   ros::Publisher pc_with_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
@@ -37,15 +46,33 @@ private:
    * \brief Publish residual between estimated optical flow and synthesis optical flow with static scene assumption
    */
   image_transport::Publisher flow_residual_pub_;
-  
-  message_filters::Subscriber<geometry_msgs::TransformStamped> camera_transform_sub_;
-  message_filters::Subscriber<optical_flow_msgs::DenseOpticalFlow> optical_flow_left_sub_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo> left_camera_info_sub_;
-  message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_image_sub_;
 
-  std::shared_ptr<message_filters::TimeSynchronizer<geometry_msgs::TransformStamped, optical_flow_msgs::DenseOpticalFlow, sensor_msgs::CameraInfo, stereo_msgs::DisparityImage>> time_sync_;
+  /**
+   * \brief Client for EstimateMotionFromStereo service
+   */
+  ros::ServiceClient motion_service_client_;
+  /**
+   * \brief Client for EstimateDisparity service
+   */
+  ros::ServiceClient disparity_service_client_;
+  /**
+   * \brief Client for CalculateDenseOpticalFlow service
+   */
+  ros::ServiceClient optflow_service_client_;
+
+  // Stereo image and camera info subscribers
+  image_transport::SubscriberFilter left_image_sub_;
+  image_transport::SubscriberFilter right_image_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> left_caminfo_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> right_caminfo_sub_;
+
+  using StereoSynchronizer = message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::CameraInfo>;
+  /**
+   * \brief Time synchronizer of stereo image and camera info 
+   */
+  std::shared_ptr<StereoSynchronizer> stereo_synchronizer_;
   
-  using ReconfigureServer =  dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
+  using ReconfigureServer = dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
   ReconfigureServer::CallbackType reconfigure_func_;
   
@@ -54,15 +81,17 @@ private:
    */
   int dynamic_flow_diff_;
 
-  double matching_tolerance_;
-
   /**
    * \brief Parameter used by visualization of velocity pc on image plane
    * When velocity of point is faster than this parameter, maximum color intensity is assigned at corresponded pixel
    */
   double max_color_velocity_;
 
-  optical_flow_msgs::DenseOpticalFlowConstPtr left_flow_;
+  optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
+
+  // Stereo image of previous frame
+  sensor_msgs::ImageConstPtr previous_left_image_;
+  sensor_msgs::ImageConstPtr previous_right_image_;
 
   /**
    * \brief Optical flow of left frame calculated by assuming static scene from camera motion and 3D reconstructed pointcloud
@@ -76,7 +105,13 @@ private:
    */
   std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_previous_transformed_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
-  geometry_msgs::TransformStamped transform_now_to_previous_;
+  /**
+   * \brief Left camera motion from previous frame to current frame
+   *
+   * Estimated by visual odometry
+   */
+  geometry_msgs::TransformPtr transform_prev2now_;
+  //geometry_msgs::TransformStamped transform_now_to_previous_;
 
   ros::Time time_stamp_now_;
   ros::Time time_stamp_previous_;
@@ -100,19 +135,6 @@ private:
   void calculateStaticOpticalFlow();
 
   /**
-   * \brief Check all messages have same frame_id
-   *
-   * If not same, output error message and shutdown
-   */
-  void checkSameFrameId(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
-  /**
-   * \brief Check all messages have same image size
-   *
-   * If not same, output error message and shutdown
-   */
-  void checkSameSize(const optical_flow_msgs::DenseOpticalFlowConstPtr& left_optical_flow, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
-
-  /**
    * \brief Construct velocity image which visualize velocity_pc as RGB color image
    *
    * \param velocity_pc Input pointcloud whose points have 3D position and velocity
@@ -126,7 +148,19 @@ private:
    * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
-  void dataCB(const geometry_msgs::TransformStampedConstPtr& camera_transform, const optical_flow_msgs::DenseOpticalFlowConstPtr& optical_flow_left, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const stereo_msgs::DisparityImageConstPtr& disparity_image);
+
+  /**
+   * \brief Estimate left camera motion by calling external service
+   */
+  void estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
+  /**
+   * \brief Estimate disparity by calling external service
+   */
+  void estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
+  /**
+   * \brief Estimate optical flow by calling external service
+   */
+  void estimateOpticalFlow(const sensor_msgs::ImageConstPtr& left_image);
 
   /**
    * \brief Get points in 3 images (left previous, right now  and right previous frame) which match to a point in left now image
@@ -173,13 +207,18 @@ private:
   void reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level);
 
   /**
+   * \brief Callback function of stereo_synchronizer_
+   */
+  void stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
+
+  /**
    * \brief Transform pointcloud of previous frame to now frame
    *
    * \param pc_previous Pointcloud of previous frame
    * \param pc_previous_transformed Transformed pointcloud of previous frame
-   * \param now_to_previous Transformation from now frame to previous frame
+   * \param previous_to_now Transform from now frame to previous frame
    */
-  void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &now_to_previous);
+  void transformPCPreviousToNow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous, pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, const geometry_msgs::Transform &previous_to_now);
 };
 
 } // namespace scene_flow_constructor
