@@ -18,8 +18,9 @@ PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, node
 // Non-ROS headers
 #include <cmath>
 #include <cstdlib>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
+#include <thread>
 
 namespace scene_flow_constructor {
 
@@ -376,11 +377,17 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
 {
   ros::WallTime start_process = ros::WallTime::now();
 
-  // Get disparity, optical flow and camera motion by calling external services
-  estimateDisparity(left_image, right_image, left_camera_info, right_camera_info);
+  NODELET_DEBUG("Get disparity, optical flow and camera motion by calling external services on separate threads");
+  std::thread disparity_thread(&SceneFlowConstructorNodelet::estimateDisparity, this, left_image, right_image, left_camera_info, right_camera_info);
+  std::thread cammotion_thread(&SceneFlowConstructorNodelet::estimateCameraMotion, this, left_image, right_image, left_camera_info, right_camera_info);
   if (previous_left_image_)
-    estimateOpticalFlow(left_image);
-  estimateCameraMotion(left_image, right_image, left_camera_info, right_camera_info);
+  {
+    std::thread optflow_thread(&SceneFlowConstructorNodelet::estimateOpticalFlow, this, left_image);
+    optflow_thread.join();
+  }
+  disparity_thread.join();
+  cammotion_thread.join();
+  NODELET_DEBUG("Threads for disparity, optical flow and camera motion are finished");
 
   // Publish the disparity, optical flow for debug
   if (disparity_now_ && disparity_pub_.getNumSubscribers() > 0)
