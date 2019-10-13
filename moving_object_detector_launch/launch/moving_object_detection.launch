@@ -39,8 +39,14 @@
   -->
   
   <!-- Nodes for visualization -->
+  <node name="optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
+    <remap from="flow" to="/scene_flow_constructor/optical_flow"/>
+  </node>
   <node name="synthetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
     <remap from="flow" to="/scene_flow_constructor/synthetic_optical_flow"/>
+  </node>
+  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
+    <remap from="disparity" to="/scene_flow_constructor/disparity"/>
   </node>
   <!--
   <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">

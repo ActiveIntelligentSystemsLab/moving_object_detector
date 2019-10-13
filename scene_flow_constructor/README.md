@@ -36,6 +36,14 @@ Input stereo image and camera info.
 
 ### Published topics
 
+* `~optical_flow` ([optical_flow_msgs/DenseOpticalFlow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow/blob/master/optical_flow_msgs/msg/DenseOpticalFlow.msg))
+
+  Optical flow of left image, estimated by calling `calculate_dense_optical_flow` service.
+
+* `~disparity` ([stereo_msgs/DisparityImage](http://docs.ros.org/api/stereo_msgs/html/msg/DisparityImage.html))
+
+  Disparity estimated by calling `estimate_disparity` service.
+
 * `~scene_flow` ([sensor_msgs/PointCloud2](http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html))
 
   Pointcloud with velocity vector in 3D-space.

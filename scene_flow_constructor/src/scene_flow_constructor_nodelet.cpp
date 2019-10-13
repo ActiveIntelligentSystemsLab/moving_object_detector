@@ -27,6 +27,8 @@ void SceneFlowConstructorNodelet::onInit() {
   ros::NodeHandle &node_handle = getNodeHandle();
   ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
 
+  image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
+
   // Prepare service clients
   motion_service_client_ = node_handle.serviceClient<viso2_stereo_server::EstimateMotionFromStereo>("estimate_motion_from_stereo");
   motion_service_client_.waitForExistence();
@@ -43,7 +45,8 @@ void SceneFlowConstructorNodelet::onInit() {
   reconfigure_server_->setCallback(reconfigure_func_);
   
   // Publishers
-  image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
+  disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+  optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 10);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
@@ -379,6 +382,12 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     estimateOpticalFlow(left_image);
   estimateCameraMotion(left_image, right_image, left_camera_info, right_camera_info);
 
+  // Publish the disparity, optical flow for debug
+  if (disparity_now_ && disparity_pub_.getNumSubscribers() > 0)
+    disparity_pub_.publish(disparity_now_->_disparity_msg);
+  if (left_flow_ && optflow_pub_.getNumSubscribers() > 0)
+    optflow_pub_.publish(left_flow_);
+
   // Set params
   left_cam_model_.fromCameraInfo(left_camera_info);
   time_stamp_previous_ = time_stamp_now_;
@@ -405,6 +414,7 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
   }
   else
     pc_previous_transformed_.reset();
+
 
   if (pc_now_ && pc_previous_transformed_) 
   {

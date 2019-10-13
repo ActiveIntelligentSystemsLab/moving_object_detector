@@ -31,6 +31,14 @@ public:
 private:
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   
+  /**
+   * \brief Publisher for optical flow of left image
+   */
+  ros::Publisher optflow_pub_;
+  /**
+   * \brief Publisher for disparity at now frame
+   */
+  ros::Publisher disparity_pub_;
   ros::Publisher pc_with_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
