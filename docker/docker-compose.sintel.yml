@@ -2,7 +2,7 @@ version: "2.3"
 services: 
   sintel:
     container_name: move_detect_sintel
-    build: sintel_stereo_publisher/docker
+    build: sintel
     depends_on:
       - master
     command: >

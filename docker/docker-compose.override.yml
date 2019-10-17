@@ -2,7 +2,7 @@ version: "2.3"
 services: 
   gazebo:
     container_name: move_detect_gazebo
-    build: moving_object_simulator/docker
+    build: gazebo
     depends_on:
       - master
     command: roslaunch --wait gazebo_factory_world factory_world.launch
@@ -18,7 +18,7 @@ services:
   
   spawn_robot:
     container_name: move_detect_spawn_robot
-    build: moving_object_simulator/docker
+    build: gazebo
     depends_on:
       - master
       - gazebo
