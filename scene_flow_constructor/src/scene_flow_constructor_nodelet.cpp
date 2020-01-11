@@ -49,6 +49,7 @@ void SceneFlowConstructorNodelet::onInit() {
   disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 10);
+  colored_pc_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow", 10);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
   flow_residual_pub_ = image_transport_->advertise("optical_flow_residual", 1);
@@ -165,6 +166,45 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
         point_with_velocity.vz = 0.0;
       }
     }
+  }
+}
+
+void SceneFlowConstructorNodelet::constructVelocityColoredPC(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, pcl::PointCloud<pcl::PointXYZRGB> &colored_pc)
+{
+  colored_pc.resize(velocity_pc.size());
+
+  for (size_t i = 0; i < velocity_pc.size(); i++)
+  {
+    const pcl::PointXYZVelocity &velocity_point = velocity_pc.at(i);
+    pcl::PointXYZRGB &colored_point = colored_pc.at(i);
+
+    colored_point.x = velocity_point.x;
+    colored_point.y = velocity_point.y;
+    colored_point.z = velocity_point.z;
+
+    if (std::isnan(velocity_point.vx) || std::isinf(velocity_point.vx))
+    {
+       colored_point.r = 0;
+       colored_point.g = 0;
+       colored_point.b = 0;
+       continue;
+    }
+
+    double red, green, blue;
+
+    // Regularize to [0.0, 1.0]
+    red = std::abs(velocity_point.vx) / max_color_velocity_;
+    red = std::min(red, 1.0);
+
+    green = std::abs(velocity_point.vy) / max_color_velocity_;
+    green = std::min(green, 1.0);
+
+    blue = std::abs(velocity_point.vz) / max_color_velocity_;
+    blue = std::min(blue, 1.0);
+
+    colored_point.r = red * 255;
+    colored_point.g = green * 255;
+    colored_point.b = blue * 255;
   }
 }
 
@@ -364,13 +404,13 @@ void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_i
   velocity_image_pub_.publish(cv_image.toImageMsg());
 }
 
-template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
+template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(const ros::Publisher &publisher, const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
 {
   sensor_msgs::PointCloud2 pointcloud_msg;
   pcl::toROSMsg(pointcloud, pointcloud_msg);
   pointcloud_msg.header.frame_id = frame_id;
   pointcloud_msg.header.stamp = stamp;
-  pc_with_velocity_pub_.publish(pointcloud_msg);
+  publisher.publish(pointcloud_msg);
 }
 
 void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
@@ -430,7 +470,14 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     constructVelocityPC(pc_with_velocity);
 
     if (pc_with_velocity_pub_.getNumSubscribers() > 0)
-      publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+      publishPointcloud(pc_with_velocity_pub_, pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+
+    if (colored_pc_pub_.getNumSubscribers() > 0)
+    {
+      pcl::PointCloud<pcl::PointXYZRGB> colored_pc;
+      constructVelocityColoredPC(pc_with_velocity, colored_pc);
+      publishPointcloud(colored_pc_pub_, colored_pc, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+    }
 
     if (velocity_image_pub_.getNumSubscribers() > 0)
     {
