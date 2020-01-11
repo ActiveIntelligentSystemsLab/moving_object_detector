@@ -1,0 +1,39 @@
+version: "2.3"
+services: 
+  master:
+    build: .
+    container_name: ${COMPOSE_PROJECT_NAME}_master
+    command: roscore
+
+  gazebo:
+    build: .
+    container_name: ${COMPOSE_PROJECT_NAME}_gazebo
+    depends_on: 
+      - master
+    command: roslaunch --wait gazebo_factory_world factory_world.launch
+    runtime: nvidia
+    environment: 
+      - ROS_HOSTNAME=${COMPOSE_PROJECT_NAME}_gazebo
+      - ROS_MASTER_URI=http://${COMPOSE_PROJECT_NAME}_master:11311
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    volumes: 
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - gazebo_root:/root
+  
+  spawn_robots:
+    build: .
+    container_name: ${COMPOSE_PROJECT_NAME}_spawn_robots
+    depends_on: 
+      - gazebo
+    command: roslaunch --wait moving_object_simulator gazebo_simulation_spawn_robots.launch
+    environment:
+      - ROS_HOSTNAME=${COMPOSE_PROJECT_NAME}_spawn_robots
+      - ROS_MASTER_URI=http://${COMPOSE_PROJECT_NAME}_master:11311
+    devices: 
+      - /dev/input/js0:/dev/input/js0
+    volumes: 
+      - gazebo_root:/root
+
+volumes: 
+  gazebo_root:

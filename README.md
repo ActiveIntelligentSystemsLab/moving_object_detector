@@ -59,7 +59,7 @@ This contains ROS packages to detect moving objects from stereo images.
 ## Build
 
 ```shell
-$ git clone --recursive https://github.com/ActiveIntelligentSystemsLab/moving_object_detector.git
+$ git clone https://github.com/ActiveIntelligentSystemsLab/moving_object_detector.git
 $ cd moving_object_detector/docker
 $ sudo docker-compose build
 $ sudo docker-compose up --no-start
