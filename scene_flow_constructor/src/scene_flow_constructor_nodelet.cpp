@@ -48,8 +48,8 @@ void SceneFlowConstructorNodelet::onInit() {
   // Publishers
   disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
-  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 10);
-  colored_pc_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow", 10);
+  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
+  colored_pc_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow", 1);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
   flow_residual_pub_ = image_transport_->advertise("optical_flow_residual", 1);
@@ -59,13 +59,13 @@ void SceneFlowConstructorNodelet::onInit() {
   std::string right_image_topic = node_handle.resolveName("right_image");
   std::string left_caminfo_topic = image_transport::getCameraInfoTopic(left_image_topic);
   std::string right_caminfo_topic = image_transport::getCameraInfoTopic(right_image_topic);
-  left_image_sub_.subscribe(*image_transport_, left_image_topic, 10);
-  right_image_sub_.subscribe(*image_transport_, right_image_topic, 10);
-  left_caminfo_sub_.subscribe(node_handle, left_caminfo_topic, 10);
-  right_caminfo_sub_.subscribe(node_handle, right_caminfo_topic, 10);
+  left_image_sub_.subscribe(*image_transport_, left_image_topic, 1);
+  right_image_sub_.subscribe(*image_transport_, right_image_topic, 1);
+  left_caminfo_sub_.subscribe(node_handle, left_caminfo_topic, 1);
+  right_caminfo_sub_.subscribe(node_handle, right_caminfo_topic, 1);
 
   // Stereo synchronizer
-  stereo_synchronizer_.reset(new StereoSynchronizer(left_image_sub_, right_image_sub_, left_caminfo_sub_, right_caminfo_sub_, 10));
+  stereo_synchronizer_.reset(new StereoSynchronizer(left_image_sub_, right_image_sub_, left_caminfo_sub_, right_caminfo_sub_, 1));
   stereo_synchronizer_->registerCallback(&SceneFlowConstructorNodelet::stereoCallback, this);
 }
 
