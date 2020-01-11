@@ -1,0 +1,56 @@
+FROM osrf/ros:melodic-desktop-full
+
+# Upgrade Gazebo to resolve access error to api.ignition.org
+# See http://answers.gazebosim.org/question/22263/error-in-rest-request-for-accessing-apiignitionorg/
+RUN apt-get update && \
+    apt-get install -y wget
+RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list && \
+    wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
+RUN apt-get update && \
+    apt-get install -y gazebo9 \
+                       libignition-cmake-dev \
+                       libignition-common \
+                       libignition-common-dev \
+                       libignition-fuel-tools1-1 \
+                       libignition-fuel-tools1-dev \
+                       libsdformat6 \
+                       libsdformat6-dev \
+                       sdformat-sdf
+
+# Create workspace
+RUN mkdir -p /root/catkin_ws/src
+WORKDIR /root/catkin_ws/src
+
+# Get sources
+RUN git clone https://github.com/fujimo-t/moving_object_simulator.git
+RUN git clone https://github.com/fujimo-t/gazebo_factory_world.git
+RUN git clone https://github.com/fujimo-t/mars_rover_description.git
+RUN git clone https://github.com/fujimo-t/turtlebot3_stereo_description.git
+
+# Install dependencies
+RUN bash -c "apt-get update && \
+             source /opt/ros/melodic/setup.bash && \
+             rosdep install --from-paths . --ignore-src -y"
+
+# Do catkin_make to just generate setup.bash
+# There aren't code in packages which need compile
+WORKDIR /root/catkin_ws
+RUN bash -c "source /opt/ros/melodic/setup.bash && \
+             catkin_make"
+
+# For support OpenGL on NVIDIA GPU
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility
+
+# Load ROS environment at docker exec bash
+RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
+RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
+
+# Install tools for development
+RUN apt-get update && \
+    apt-get install -y vim byobu
+
+# Overwrite entrypoint to load catkin workspace
+RUN rm /ros_entrypoint.sh
+COPY ros_entrypoint.sh /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh

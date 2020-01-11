@@ -7,7 +7,7 @@ services:
   
   launch:
     container_name: move_detect_launch
-    build: .
+    build: launch
     depends_on:
       - master
     command: >
@@ -23,7 +23,7 @@ services:
   
   pwc:
     container_name: move_detect_pwc
-    build: pwc_net_ros/docker
+    build: pwc
     depends_on:
       - master
     command: rosrun pwc_net pwc_net_node image:=/synchronized/left/image_rect_color
@@ -36,7 +36,7 @@ services:
   
   sgm:
     container_name: move_detect_sgm
-    build: sgm_gpu_ros/docker
+    build: sgm
     depends_on:
       - master
     command: rosrun sgm_gpu sgm_gpu_server left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color

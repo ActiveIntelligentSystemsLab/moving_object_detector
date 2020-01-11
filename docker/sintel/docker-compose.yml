@@ -1,0 +1,32 @@
+version: "2.3"
+services:
+  master:
+    container_name: sintel_master
+    image: ros:melodic-ros-core
+    command: roscore
+  
+  publisher:
+    container_name: sintel_publisher
+    build: .
+    command: >
+      rosrun sintel_stereo_publisher sintel_stereo_publisher 
+      _dataset_directory:=/root/MPI-Sintel-stereo-training
+      _camera_param_file:=/root/MPI-Sintel-depth-training/training/camdata_left/alley_1/frame_0001.cam
+      _loop:=true
+    environment: 
+      - ROS_HOSTNAME=sintel_publisher
+      - ROS_MASTER_URI=http://sintel_master:11311
+  
+  viewer:
+    container_name: sintel_viewer
+    image: osrf/ros:melodic-desktop-full
+    command: >
+      rosrun rqt_image_view rqt_image_view 
+      /sintel_stereo_publisher/left/image_rect_color
+    environment: 
+      - ROS_HOSTNAME=sintel_viewer
+      - ROS_MASTER_URI=http://sintel_master:11311
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    volumes: 
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
