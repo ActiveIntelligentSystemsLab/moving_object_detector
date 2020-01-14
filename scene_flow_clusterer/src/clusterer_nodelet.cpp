@@ -71,6 +71,9 @@ void ClustererNodelet::calculateInitialClusterMap()
       {
         for (int du = -neighbor_distance_th_; du <= 0; du++)
         {
+          if (dv == 0 && du == 0)
+            continue;
+          
           Point2d compared_point(interest_point.u + du, interest_point.v + dv);
           comparePoints(interest_point, compared_point);
         }
