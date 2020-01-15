@@ -18,7 +18,7 @@ boost::optional<double> distance(const std::shared_ptr<KalmanTracker>& tracker, 
   Eigen::Vector4d x;
   x[0] = observation->center.position.x;
   x[1] = observation->center.position.y;
-  x[2] = observation->velocity.y;
+  x[2] = observation->velocity.x;
   x[3] = observation->velocity.y;
 
   double sq_mahalanobis = tracker->squaredMahalanobisDistance(x);  
