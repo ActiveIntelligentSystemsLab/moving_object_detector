@@ -40,7 +40,9 @@ private:
    */
   ros::Publisher disparity_pub_;
   ros::Publisher colored_pc_pub_;
+  ros::Publisher colored_pc_relative_pub_;
   ros::Publisher pc_with_velocity_pub_;
+  ros::Publisher pc_with_relative_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
   /**
@@ -157,6 +159,13 @@ private:
    * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
+
+  /**
+   * \brief Calculate relative velocity from camera of each point and construct pointcloud.
+   *
+   * \param velocity_pc Pointcloud whose points have 3D position and velocity
+   */
+  void constructVelocityPCRelative(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
 
   /**
    * \brief Estimate left camera motion by calling external service
