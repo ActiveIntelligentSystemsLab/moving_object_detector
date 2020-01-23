@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf2
   tf2_geometry_msgs
+  tf2_ros
 )
 
 find_package(OpenCV REQUIRED)

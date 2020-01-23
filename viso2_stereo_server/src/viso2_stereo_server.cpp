@@ -17,8 +17,12 @@ namespace viso2_stereo_server
     // Read local parameters
     ros::NodeHandle local_nh("~");
     odometry_params::loadParams(local_nh, visual_odometer_params_);
+    local_nh.param("base_link_frame_id", base_link_frame_id_, std::string("base_link"));
+    local_nh.param("odom_frame_id", odom_frame_id_, std::string("odom"));
 
     motion_service_server_ = local_nh.advertiseService("estimate_motion_from_stereo", &Viso2StereoServer::motionServiceCallback, this);
+
+    tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
   }
 
   void Viso2StereoServer::initOdometer(const sensor_msgs::CameraInfo& l_info_msg, const sensor_msgs::CameraInfo& r_info_msg)
@@ -76,6 +80,9 @@ namespace viso2_stereo_server
       tf2::Vector3 camera_translation(camera_motion.val[0][3], camera_motion.val[1][3], camera_motion.val[2][3]);
       tf2::Transform tf2_camera_motion(camera_rotation, camera_translation);
 
+      sensor_frame_id_ = request.left_image.header.frame_id;
+      integrateAndBroadcastTF(tf2_camera_motion, request.left_image.header.stamp);
+
       response.left_previous_to_current = tf2::toMsg(tf2_camera_motion);
     }
 
@@ -94,6 +101,35 @@ namespace viso2_stereo_server
     ROS_INFO("EstimateMotionFromStereo service is finished");
 
     return true;
+  }
+
+  void Viso2StereoServer::integrateAndBroadcastTF(const tf2::Transform& delta_transform, const ros::Time& timestamp)
+  {
+    integrated_pose_ *= delta_transform;
+
+    // transform integrated pose to base frame
+    std::string error_msg;
+    tf2::Stamped<tf2::Transform> base_to_sensor;
+    if (tf_buffer_.canTransform(base_link_frame_id_, sensor_frame_id_, timestamp, &error_msg))
+    {
+      geometry_msgs::TransformStamped base_to_sensor_msg;
+      base_to_sensor_msg = tf_buffer_.lookupTransform(base_link_frame_id_, sensor_frame_id_, timestamp);
+      tf2::fromMsg(base_to_sensor_msg, base_to_sensor);
+    }
+    else
+    {
+      ROS_WARN_THROTTLE(10.0, "The tf from '%s' to '%s' does not seem to be available, "
+                              "will assume it as identity!",
+                              base_link_frame_id_.c_str(),
+                              sensor_frame_id_.c_str());
+      ROS_DEBUG("Transform error: %s", error_msg.c_str());
+      base_to_sensor.setIdentity();
+    }
+
+    tf2::Transform base_transform = base_to_sensor * integrated_pose_ * base_to_sensor.inverse();
+
+    geometry_msgs::TransformStamped base_transform_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(base_transform, timestamp, odom_frame_id_));
+    tf_broadcaster_.sendTransform(base_transform_msg);
   }
 
 }
