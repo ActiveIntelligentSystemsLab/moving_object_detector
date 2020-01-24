@@ -18,7 +18,7 @@
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
 
   <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server">
-    <param name="base_link_frame_id" value="stereo_robot/camera_link"/>
+    <param name="base_link_frame_id" value="stereo_robot/base_link"/>
   </node>
 
   <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor_node">
@@ -56,6 +56,8 @@
   </node>
   <node name="tracked_objects_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="/moving_object_tracker/tracked_moving_objects"/>
+    <param name="red" value="0.0"/>
+    <param name="green" value="1.0"/>
   </node>
 
   <!--
