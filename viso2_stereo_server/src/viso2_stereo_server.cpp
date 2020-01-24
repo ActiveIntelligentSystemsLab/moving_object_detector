@@ -20,9 +20,10 @@ namespace viso2_stereo_server
     local_nh.param("base_link_frame_id", base_link_frame_id_, std::string("base_link"));
     local_nh.param("odom_frame_id", odom_frame_id_, std::string("odom"));
 
-    motion_service_server_ = local_nh.advertiseService("estimate_motion_from_stereo", &Viso2StereoServer::motionServiceCallback, this);
-
+    integrated_pose_.setIdentity();
     tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
+
+    motion_service_server_ = local_nh.advertiseService("estimate_motion_from_stereo", &Viso2StereoServer::motionServiceCallback, this);
   }
 
   void Viso2StereoServer::initOdometer(const sensor_msgs::CameraInfo& l_info_msg, const sensor_msgs::CameraInfo& r_info_msg)
