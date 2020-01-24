@@ -4,6 +4,9 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #include <viso_stereo.h>
 #include <viso2_stereo_server/EstimateMotionFromStereo.h>
 
@@ -43,15 +46,30 @@ private:
    */
   ros::ServiceServer motion_service_server_;
 
+  std::string base_link_frame_id_;
+  std::string odom_frame_id_;
+  std::string sensor_frame_id_;
+
   /**
    * \brief Callback function of motion_service_server_
    */
   bool motionServiceCallback(EstimateMotionFromStereo::Request& request, EstimateMotionFromStereo::Response& response);
 
+  tf2_ros::TransformBroadcaster tf_broadcaster_;
+  tf2_ros::Buffer tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+  tf2::Transform integrated_pose_;
+
   /**
    * \brief Initialize visual_odometer_
    */
   void initOdometer(const sensor_msgs::CameraInfo& l_info_msg, const sensor_msgs::CameraInfo& r_info_msg);
+
+  /**
+   * \brief Publish TF between odom and base_link
+   */
+  void integrateAndBroadcastTF(const tf2::Transform& delta_transform, const ros::Time& timestamp);
 
 public:
   Viso2StereoServer();

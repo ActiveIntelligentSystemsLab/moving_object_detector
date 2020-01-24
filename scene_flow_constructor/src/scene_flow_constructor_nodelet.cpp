@@ -48,7 +48,10 @@ void SceneFlowConstructorNodelet::onInit() {
   // Publishers
   disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
-  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 10);
+  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
+  pc_with_relative_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow_relative", 1);
+  colored_pc_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow", 1);
+  colored_pc_relative_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow_relative", 1);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
   flow_residual_pub_ = image_transport_->advertise("optical_flow_residual", 1);
@@ -58,13 +61,13 @@ void SceneFlowConstructorNodelet::onInit() {
   std::string right_image_topic = node_handle.resolveName("right_image");
   std::string left_caminfo_topic = image_transport::getCameraInfoTopic(left_image_topic);
   std::string right_caminfo_topic = image_transport::getCameraInfoTopic(right_image_topic);
-  left_image_sub_.subscribe(*image_transport_, left_image_topic, 10);
-  right_image_sub_.subscribe(*image_transport_, right_image_topic, 10);
-  left_caminfo_sub_.subscribe(node_handle, left_caminfo_topic, 10);
-  right_caminfo_sub_.subscribe(node_handle, right_caminfo_topic, 10);
+  left_image_sub_.subscribe(*image_transport_, left_image_topic, 1);
+  right_image_sub_.subscribe(*image_transport_, right_image_topic, 1);
+  left_caminfo_sub_.subscribe(node_handle, left_caminfo_topic, 1);
+  right_caminfo_sub_.subscribe(node_handle, right_caminfo_topic, 1);
 
   // Stereo synchronizer
-  stereo_synchronizer_.reset(new StereoSynchronizer(left_image_sub_, right_image_sub_, left_caminfo_sub_, right_caminfo_sub_, 10));
+  stereo_synchronizer_.reset(new StereoSynchronizer(left_image_sub_, right_image_sub_, left_caminfo_sub_, right_caminfo_sub_, 1));
   stereo_synchronizer_->registerCallback(&SceneFlowConstructorNodelet::stereoCallback, this);
 }
 
@@ -165,6 +168,83 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
         point_with_velocity.vz = 0.0;
       }
     }
+  }
+}
+
+void SceneFlowConstructorNodelet::constructVelocityPCRelative(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
+{
+  ros::Duration time_between_frames = time_stamp_now_ - time_stamp_previous_;
+
+  initializeVelocityPC(velocity_pc);
+
+  cv::Point2i left_now;
+  for (left_now.y = 0; left_now.y < image_height_; left_now.y++)
+  {
+    for (left_now.x = 0; left_now.x < image_width_; left_now.x++)
+    {
+      pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
+      pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
+
+      if (!isValid(point3d_now))
+        continue;
+
+      point_with_velocity.x = point3d_now.x;
+      point_with_velocity.y = point3d_now.y;
+      point_with_velocity.z = point3d_now.z;
+
+      cv::Point2i left_previous, right_now, right_previous;
+
+      if (!getMatchPoints(left_now, left_previous, right_now, right_previous))
+        continue;
+
+      pcl::PointXYZ point3d_previous;
+      point3d_previous = pc_previous_->at(left_previous.x, left_previous.y);
+      if (!isValid(point3d_previous))
+        continue;
+
+      point_with_velocity.vx = (point3d_now.x - point3d_previous.x) / time_between_frames.toSec();
+      point_with_velocity.vy = (point3d_now.y - point3d_previous.y) / time_between_frames.toSec();
+      point_with_velocity.vz = (point3d_now.z - point3d_previous.z) / time_between_frames.toSec();
+    }
+  }
+}
+
+void SceneFlowConstructorNodelet::constructVelocityColoredPC(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, pcl::PointCloud<pcl::PointXYZRGB> &colored_pc)
+{
+  colored_pc.resize(velocity_pc.size());
+
+  for (size_t i = 0; i < velocity_pc.size(); i++)
+  {
+    const pcl::PointXYZVelocity &velocity_point = velocity_pc.at(i);
+    pcl::PointXYZRGB &colored_point = colored_pc.at(i);
+
+    colored_point.x = velocity_point.x;
+    colored_point.y = velocity_point.y;
+    colored_point.z = velocity_point.z;
+
+    if (std::isnan(velocity_point.vx) || std::isinf(velocity_point.vx))
+    {
+       colored_point.r = 0;
+       colored_point.g = 0;
+       colored_point.b = 0;
+       continue;
+    }
+
+    double red, green, blue;
+
+    // Regularize to [0.0, 1.0]
+    red = std::abs(velocity_point.vx) / max_color_velocity_;
+    red = std::min(red, 1.0);
+
+    green = std::abs(velocity_point.vy) / max_color_velocity_;
+    green = std::min(green, 1.0);
+
+    blue = std::abs(velocity_point.vz) / max_color_velocity_;
+    blue = std::min(blue, 1.0);
+
+    colored_point.r = red * 255;
+    colored_point.g = green * 255;
+    colored_point.b = blue * 255;
   }
 }
 
@@ -364,13 +444,13 @@ void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_i
   velocity_image_pub_.publish(cv_image.toImageMsg());
 }
 
-template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
+template <typename PointT> void SceneFlowConstructorNodelet::publishPointcloud(const ros::Publisher &publisher, const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp)
 {
   sensor_msgs::PointCloud2 pointcloud_msg;
   pcl::toROSMsg(pointcloud, pointcloud_msg);
   pointcloud_msg.header.frame_id = frame_id;
   pointcloud_msg.header.stamp = stamp;
-  pc_with_velocity_pub_.publish(pointcloud_msg);
+  publisher.publish(pointcloud_msg);
 }
 
 void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
@@ -413,6 +493,23 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
   else
     pc_now_.reset();
 
+  if (pc_previous_ && pc_now_)
+  {
+    if (colored_pc_relative_pub_.getNumSubscribers() > 0 || colored_pc_relative_pub_.getNumSubscribers() > 0)
+    {
+      pcl::PointCloud<pcl::PointXYZVelocity> pc_with_relative_velocity;
+      constructVelocityPCRelative(pc_with_relative_velocity);
+      publishPointcloud(pc_with_relative_velocity_pub_, pc_with_relative_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+
+			if (colored_pc_relative_pub_.getNumSubscribers() > 0)
+   	  {
+   	    pcl::PointCloud<pcl::PointXYZRGB> colored_pc_relative;
+        constructVelocityColoredPC(pc_with_relative_velocity, colored_pc_relative);
+        publishPointcloud(colored_pc_relative_pub_, colored_pc_relative, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+      }
+    }
+  }
+
   // Transform previous pointcloud by estimated camera motion
   if (pc_previous_ && transform_prev2now_)
   {
@@ -430,7 +527,14 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     constructVelocityPC(pc_with_velocity);
 
     if (pc_with_velocity_pub_.getNumSubscribers() > 0)
-      publishPointcloud(pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+      publishPointcloud(pc_with_velocity_pub_, pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+
+    if (colored_pc_pub_.getNumSubscribers() > 0)
+    {
+      pcl::PointCloud<pcl::PointXYZRGB> colored_pc;
+      constructVelocityColoredPC(pc_with_velocity, colored_pc);
+      publishPointcloud(colored_pc_pub_, colored_pc, left_camera_info->header.frame_id, left_camera_info->header.stamp);
+    }
 
     if (velocity_image_pub_.getNumSubscribers() > 0)
     {

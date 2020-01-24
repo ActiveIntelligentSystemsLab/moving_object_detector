@@ -39,7 +39,10 @@ private:
    * \brief Publisher for disparity at now frame
    */
   ros::Publisher disparity_pub_;
+  ros::Publisher colored_pc_pub_;
+  ros::Publisher colored_pc_relative_pub_;
   ros::Publisher pc_with_velocity_pub_;
+  ros::Publisher pc_with_relative_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
   /**
@@ -135,10 +138,18 @@ private:
   void calculateStaticOpticalFlow();
 
   /**
-   * \brief Construct velocity image which visualize velocity_pc as RGB color image
+   * \brief construct RGB colored pointcloud which visualize velocity
    *
-   * \param velocity_pc Input pointcloud whose points have 3D position and velocity
-   * \param velocity_image Output image visualizes velocity by RGB color
+   * \param velocity_pc input pointcloud whose points have 3d position and velocity
+   * \param velocity_image output pointcloud visualizes velocity by rgb color
+   */
+  void constructVelocityColoredPC(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, pcl::PointCloud<pcl::PointXYZRGB> &colored_pc);
+
+  /**
+   * \brief construct velocity image which visualize velocity_pc as rgb color image
+   *
+   * \param velocity_pc input pointcloud whose points have 3d position and velocity
+   * \param velocity_image output image visualizes velocity by rgb color
    */
   void constructVelocityImage(const pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc, cv::Mat &velocity_image);
 
@@ -148,6 +159,13 @@ private:
    * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
   void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
+
+  /**
+   * \brief Calculate relative velocity from camera of each point and construct pointcloud.
+   *
+   * \param velocity_pc Pointcloud whose points have 3D position and velocity
+   */
+  void constructVelocityPCRelative(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
 
   /**
    * \brief Estimate left camera motion by calling external service
@@ -203,7 +221,7 @@ private:
    */
   void publishVelocityImage(const cv::Mat &velocity_image);
 
-  template <typename PointT> void publishPointcloud(const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
+  template <typename PointT> void publishPointcloud(const ros::Publisher &publisher, const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level);
 
   /**
