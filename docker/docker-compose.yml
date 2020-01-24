@@ -63,6 +63,22 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - rqt_root:/root
 
+  rviz:
+    container_name: move_detect_rviz
+    build: rqt
+    depends_on:
+      - master
+    command: rviz
+    runtime: nvidia
+    environment: 
+      - ROS_HOSTNAME=move_detect_rviz
+      - ROS_MASTER_URI=http://move_detect_master:11311
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    volumes: 
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - rqt_root:/root
+
 volumes: 
   rqt_root:
   launch_root:
