@@ -18,7 +18,7 @@ class MovingObjectToMarker:
         self._color.g = rospy.get_param('~green', 0.0)
         self._color.b = rospy.get_param('~blue',  0.0)
 
-        self._marker_pub = rospy.Publisher('marker_array', MarkerArray, queue_size=1)
+        self._marker_pub = rospy.Publisher('~marker_array', MarkerArray, queue_size=1)
         self._moving_object_sub = rospy.Subscriber('moving_object_array', MovingObjectArray, self.movingObjectCallback)
 
     def movingObjectCallback(self, moving_object_array):

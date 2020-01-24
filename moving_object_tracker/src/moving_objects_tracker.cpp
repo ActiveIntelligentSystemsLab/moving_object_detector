@@ -42,9 +42,11 @@ MovingObjectsTracker::MovingObjectsTracker()
   covariance_trace_limit_ = 0.5;
   id_gen_ = 0;
 
+  private_node_handle_.reset(new ros::NodeHandle("~"));
+
   moving_objects_sub_ = node_handle_.subscribe("moving_objects", 1, &MovingObjectsTracker::movingObjectsCallback, this);
-  tracked_moving_objects_pub_ = node_handle_.advertise<moving_object_msgs::MovingObjectArray>("tracked_moving_objects", 1);
-  trackers_covariance_pub_ = node_handle_.advertise<moving_object_tracker::TrackerCovarianceArray>("trackers_sovariance", 1);
+  tracked_moving_objects_pub_ = private_node_handle_->advertise<moving_object_msgs::MovingObjectArray>("tracked_moving_objects", 1);
+  trackers_covariance_pub_ = private_node_handle_->advertise<moving_object_tracker::TrackerCovarianceArray>("trackers_sovariance", 1);
 }
 
 void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_objects)

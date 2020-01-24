@@ -17,6 +17,7 @@ public:
   MovingObjectsTracker();
 private:
   ros::NodeHandle node_handle_;
+  std::shared_ptr<ros::NodeHandle> private_node_handle_;
   ros::Subscriber moving_objects_sub_;
   ros::Publisher tracked_moving_objects_pub_;
   ros::Publisher trackers_covariance_pub_;

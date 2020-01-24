@@ -29,12 +29,12 @@ void ClustererNodelet::onInit()
   reconfigure_func_ = boost::bind(&ClustererNodelet::reconfigureCB, this, _1, _2);
   reconfigure_server_->setCallback(reconfigure_func_);
 
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_handle);
+  image_transport_ = std::make_shared<image_transport::ImageTransport>(private_node_handle);
   clusters_image_pub_ = image_transport_->advertise("clusters_image", 1);
   
   velocity_pc_sub_ = node_handle.subscribe<sensor_msgs::PointCloud2>("scene_flow", 10, &ClustererNodelet::dataCB, this);
-  dynamic_objects_pub_ = node_handle.advertise<moving_object_msgs::MovingObjectArray>("moving_objects", 1);
-  clusters_pub_ = node_handle.advertise<visualization_msgs::MarkerArray>("clusters", 1);
+  dynamic_objects_pub_ = private_node_handle.advertise<moving_object_msgs::MovingObjectArray>("moving_objects", 1);
+  clusters_pub_ = private_node_handle.advertise<visualization_msgs::MarkerArray>("clusters", 1);
 }
 
 void ClustererNodelet::calculateDynamicMap()
