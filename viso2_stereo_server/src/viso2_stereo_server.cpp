@@ -129,6 +129,8 @@ namespace viso2_stereo_server
     tf2::Transform base_transform = base_to_sensor * integrated_pose_ * base_to_sensor.inverse();
 
     geometry_msgs::TransformStamped base_transform_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(base_transform, timestamp, odom_frame_id_));
+    //geometry_msgs::TransformStamped base_transform_msg;
+    base_transform_msg.child_frame_id = base_link_frame_id_;
     tf_broadcaster_.sendTransform(base_transform_msg);
   }
 
