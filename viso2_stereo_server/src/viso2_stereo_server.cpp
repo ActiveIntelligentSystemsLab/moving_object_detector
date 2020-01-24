@@ -90,6 +90,8 @@ namespace viso2_stereo_server
     if(!first_service_call_ && !response.success)
     {
       ROS_ERROR("VisualOdometryStereo::process() is failed");
+      ROS_ERROR("Reset odometry TF");
+      integrated_pose_.setIdentity();
     }
 
     ros::WallDuration runtime = ros::WallTime::now() - start_time;
