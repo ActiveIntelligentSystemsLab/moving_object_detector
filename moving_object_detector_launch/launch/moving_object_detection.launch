@@ -32,7 +32,9 @@
     <param name="image_transport" value="$(arg image_transport)"/>
   </node>
 
-  <!--<node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">-->
+  <!--
+  <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
+  -->
   <node name="clusterer" pkg="nodelet" type="nodelet" args="standalone scene_flow_clusterer/scene_flow_clusterer">
     <remap from="scene_flow" to="/scene_flow_constructor/scene_flow"/>
   </node>

@@ -38,22 +38,24 @@ MovingObjectsTracker::MovingObjectsTracker()
 
   data_association.reset(new kkl::alg::NearestNeighborAssociation<KalmanTracker::Ptr, moving_object_msgs::MovingObjectPtr>());
 
-  object_radius_ = 0.5; // 後で調整する
-  covariance_trace_limit_ = 0.5;
   id_gen_ = 0;
 
   private_node_handle_.reset(new ros::NodeHandle("~"));
+  private_node_handle_->param("odom_frame", odom_frame_id_, std::string("odom"));
 
+  reconfigure_function_ = boost::bind(&MovingObjectsTracker::reconfigureCallback, this, _1, _2);
+  reconfigure_server_.setCallback(reconfigure_function_);
+  
   moving_objects_sub_ = node_handle_.subscribe("moving_objects", 1, &MovingObjectsTracker::movingObjectsCallback, this);
   tracked_moving_objects_pub_ = private_node_handle_->advertise<moving_object_msgs::MovingObjectArray>("tracked_moving_objects", 1);
-  trackers_covariance_pub_ = private_node_handle_->advertise<moving_object_tracker::TrackerCovarianceArray>("trackers_sovariance", 1);
+  trackers_covariance_pub_ = private_node_handle_->advertise<moving_object_tracker::TrackerCovarianceArray>("trackers_covariance", 1);
 }
 
 void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::MovingObjectArrayConstPtr& moving_objects)
 {
   geometry_msgs::TransformStamped to_odom;
   try {
-    to_odom = tf_buffer_.lookupTransform("odom", moving_objects->header.frame_id, moving_objects->header.stamp);
+    to_odom = tf_buffer_.lookupTransform(odom_frame_id_, moving_objects->header.frame_id, moving_objects->header.stamp);
   } 
   catch (tf2::TransformException &e)
   {
@@ -78,12 +80,12 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
   // publish tracked objects
   if(tracked_moving_objects_pub_.getNumSubscribers()) {
     moving_object_msgs::MovingObjectArray msg;
-    msg.header.frame_id = "odom";
+    msg.header.frame_id = odom_frame_id_;
     msg.header.stamp = moving_objects->header.stamp;
     msg.moving_object_array.reserve(trackers.size());
     for (auto &tracker : trackers)
     {
-      if (tracker->correction_count() < 10)
+      if (tracker->correction_count() < correction_count_limit_)
         continue;
 
       moving_object_msgs::MovingObject obj_msg = *(boost::any_cast<moving_object_msgs::MovingObjectPtr>(tracker->lastAssociated()));
@@ -100,14 +102,14 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
   if (trackers_covariance_pub_.getNumSubscribers())
   {
     moving_object_tracker::TrackerCovarianceArray msg;
-    msg.header.frame_id = "odom";
+    msg.header.frame_id = odom_frame_id_;
     msg.header.stamp = moving_objects->header.stamp;
     msg.tracker_covariance_array.reserve(trackers.size());
 
     for (auto &tracker : trackers)
     {
       // Remove intermittent objects
-      if (tracker->correction_count() < 5)
+      if (tracker->correction_count() < correction_count_limit_)
         continue;
 
       if (tracker->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
@@ -155,7 +157,7 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
         Eigen::Vector2d pos;
         pos.x() = moving_objects[i]->center.position.x;
         pos.y() = moving_objects[i]->center.position.y;
-        if((tracker->position() - pos).norm() < object_radius_ * 2.0) {
+        if((tracker->position() - pos).norm() < object_radius_ * 2.0) { // TODO: Use object's bounding box
           close_to_tracker = true;
           break;
         }
@@ -186,4 +188,10 @@ void MovingObjectsTracker::correct(const ros::Time& time, const std::vector<movi
     return tracker->velocityCov().trace() < covariance_trace_limit_;
   });
   trackers.erase(remove_loc, trackers.end());
+}
+
+void MovingObjectsTracker::reconfigureCallback(moving_object_tracker::MovingObjectsTrackerConfig &config, uint32_t level) {
+  covariance_trace_limit_ = config.covariance_trace_limit;
+  correction_count_limit_ = config.correction_count_limit;
+  object_radius_ = config.object_radius;
 }

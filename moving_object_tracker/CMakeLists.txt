@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(moving_object_tracker)
 
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure
   geometry_msgs
   kkl
   message_generation
@@ -25,6 +26,8 @@ generate_messages(
     std_msgs
 )
 
+generate_dynamic_reconfigure_options(cfg/MovingObjectTracker.cfg)
+
 catkin_package(
   CATKIN_DEPENDS
     geometry_msgs
@@ -42,7 +45,10 @@ add_executable(moving_objects_tracker_node
   src/moving_objects_tracker.cpp
   src/moving_objects_tracker_node.cpp
 )
-add_dependencies(moving_objects_tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(moving_objects_tracker_node 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg}
+)
 target_link_libraries(moving_objects_tracker_node
   ${catkin_LIBRARIES}
 )
