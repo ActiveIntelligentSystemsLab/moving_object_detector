@@ -82,7 +82,7 @@ namespace viso2_stereo_server
       tf2::Transform tf2_camera_motion(camera_rotation, camera_translation);
 
       sensor_frame_id_ = request.left_image.header.frame_id;
-      integrateAndBroadcastTF(tf2_camera_motion, request.left_image.header.stamp);
+      integrateAndBroadcastTF(tf2_camera_motion.inverse(), request.left_image.header.stamp);
 
       response.left_previous_to_current = tf2::toMsg(tf2_camera_motion);
     }
