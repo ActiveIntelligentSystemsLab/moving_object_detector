@@ -55,8 +55,9 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
   try {
     to_odom = tf_buffer_.lookupTransform("odom", moving_objects->header.frame_id, moving_objects->header.stamp);
   } 
-  catch(tf2::LookupException &e)
+  catch (tf2::TransformException &e)
   {
+    ROS_ERROR_STREAM("TF Exception: " << e.what());
     return;
   }
 
