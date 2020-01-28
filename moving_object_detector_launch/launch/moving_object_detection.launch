@@ -4,9 +4,7 @@
   <!-- Image topics are should be set -->
   <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
-  <!-- Should be set if you use not default node -->
-  <arg name="optical_flow_service" default="/pwc_net/calculate_dense_optical_flow"/>
-  <arg name="disparity_service" default="/sgm_gpu_server/estimate_disparity"/>
+
   <!-- Set true if you use simulator -->
   <arg name="use_sim_time" default="false"/>
   <!-- Set it if you use other transport for image -->
@@ -25,12 +23,15 @@
     <remap from="left_image" to="$(arg left_image_topic)"/>
     <remap from="right_image" to="$(arg right_image_topic)"/>
 
-    <remap from="calculate_dense_optical_flow" to="$(arg optical_flow_service)"/>
+    <remap from="calculate_dense_optical_flow" to="pwc_net/calculate_dense_optical_flow"/>
     <remap from="estimate_motion_from_stereo" to="viso2_stereo_server/estimate_motion_from_stereo"/>
-    <remap from="estimate_disparity" to="$(arg disparity_service)"/>
+    <remap from="estimate_disparity" to="sgm/estimate_disparity"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
   </node>
+
+  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
+  <node name="sgm" pkg="sgm_node" type="sgm_gpu_server"/>
 
   <!--
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">

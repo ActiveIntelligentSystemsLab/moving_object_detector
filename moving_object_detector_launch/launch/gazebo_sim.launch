@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+  <include file="$(find gazebo_factory_world)/launch/factory_world.launch"/>
+  <include file="$(find moving_object_simulator)/launch/gazebo_simulation_spawn_robots.launch"/>
+  <include file="$(find moving_object_detector)/launch/moving_object_detector.launch"/>
+</launch>
