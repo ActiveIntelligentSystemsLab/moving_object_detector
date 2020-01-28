@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
+  <param name="use_sim_time" type="bool" value="true"/>
+
   <include file="$(find gazebo_factory_world)/launch/factory_world.launch"/>
   <include file="$(find moving_object_simulator)/launch/gazebo_simulation_spawn_robots.launch"/>
-  <include file="$(find moving_object_detector)/launch/moving_object_detector.launch"/>
 </launch>

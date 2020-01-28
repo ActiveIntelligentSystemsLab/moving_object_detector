@@ -30,8 +30,8 @@
     <param name="image_transport" value="$(arg image_transport)"/>
   </node>
 
-  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
-  <node name="sgm" pkg="sgm_node" type="sgm_gpu_server"/>
+  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node" launch-prefix="konsole -e gdb --args"/>
+  <node name="sgm" pkg="sgm_gpu" type="sgm_gpu_server"/>
 
   <!--
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
