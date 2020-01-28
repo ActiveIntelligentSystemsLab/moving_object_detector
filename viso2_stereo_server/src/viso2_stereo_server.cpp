@@ -40,7 +40,7 @@ namespace viso2_stereo_server
     visual_odometer_.reset(new VisualOdometryStereo(visual_odometer_params_));
     ROS_INFO_STREAM("Initialized libviso2 stereo odometry with the following parameters:\n" << visual_odometer_params_);
 
-    bool first_service_call_ = true;
+    first_service_call_ = true;
   }
 
   bool Viso2StereoServer::motionServiceCallback(EstimateMotionFromStereo::Request& request, EstimateMotionFromStereo::Response& response)
