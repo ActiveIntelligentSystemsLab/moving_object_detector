@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find moving_object_detector_launch)/rqt/moving_object_detector.perspective"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find moving_object_detector_launch)/rviz/gazebo_simulation.rviz"/>
+</launch>
