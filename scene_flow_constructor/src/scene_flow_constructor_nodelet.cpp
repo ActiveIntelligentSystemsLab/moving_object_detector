@@ -457,6 +457,14 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
 {
   ros::WallTime start_process = ros::WallTime::now();
 
+  // Set params
+  left_cam_model_.fromCameraInfo(left_camera_info);
+  time_stamp_previous_ = time_stamp_now_;
+  time_stamp_now_ = left_image->header.stamp;
+  camera_frame_id_ = left_image->header.frame_id;
+  image_width_ = left_image->width;
+  image_height_ = left_image->height;
+
   NODELET_DEBUG("Get disparity, optical flow and camera motion by calling external services on separate threads");
   std::thread disparity_thread(&SceneFlowConstructorNodelet::estimateDisparity, this, left_image, right_image, left_camera_info, right_camera_info);
   std::thread cammotion_thread(&SceneFlowConstructorNodelet::estimateCameraMotion, this, left_image, right_image, left_camera_info, right_camera_info);
@@ -474,14 +482,6 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     disparity_pub_.publish(disparity_now_->_disparity_msg);
   if (left_flow_ && optflow_pub_.getNumSubscribers() > 0)
     optflow_pub_.publish(left_flow_);
-
-  // Set params
-  left_cam_model_.fromCameraInfo(left_camera_info);
-  time_stamp_previous_ = time_stamp_now_;
-  time_stamp_now_ = left_image->header.stamp;
-  camera_frame_id_ = left_image->header.frame_id;
-  image_width_ = left_image->width;
-  image_height_ = left_image->height;
 
   // Construct pointcloud from disparity for now frame
   pc_previous_ = pc_now_;
