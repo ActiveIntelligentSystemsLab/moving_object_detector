@@ -190,9 +190,52 @@ private:
    *
    * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
    */
-  bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous);
-  bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow);
-  bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor);
+  inline bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
+  {
+    if (!getPreviousPoint(left_now, left_previous, *left_flow_))
+      return false;
+
+    if (!getRightPoint(left_now, right_now, *disparity_now_))
+      return false;
+
+    if (!getRightPoint(left_previous, right_previous, *disparity_previous_))
+      return false;
+
+    return true;
+  }
+  inline bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow)
+  {
+    if (now.x < 0 || now.x >= image_width_ || now.y < 0 || now.y >= image_height_) {
+      return false;
+    }
+
+    int flow_index_now = now.y * image_width_ + now.x;
+    if (flow.invalid_map[flow_index_now])
+      return false;
+
+    optical_flow_msgs::PixelDisplacement flow_at_point = flow.flow_field[flow_index_now];
+
+    if (std::isnan(flow_at_point.x) || std::isnan(flow_at_point.y))
+      return false;
+
+    previous.x = std::round(now.x - flow_at_point.x);
+    previous.y = std::round(now.y - flow_at_point.y);
+
+    return true;
+  }
+  inline bool getRightPoint(const cv::Point2i &left, cv::Point2i &right, DisparityImageProcessor &disparity_processor)
+  {
+    float disparity;
+    if (!disparity_processor.getDisparity(left.x, left.y, disparity))
+      return false;
+    if (std::isnan(disparity) || std::isinf(disparity) || disparity < 0)
+      return false;
+
+    right.x = std::round(left.x - disparity);
+    right.y = left.y;
+
+    return true;
+  }
 
   /**
    * \brief Resize velocity pointcloud and fill each point by default value
@@ -200,7 +243,16 @@ private:
    * \param velocity_pc Target velocity pointcloud
    */
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
-  bool isValid(const pcl::PointXYZ &point);
+  inline bool isValid(const pcl::PointXYZ &point)
+  {
+    if (std::isnan(point.x))
+      return false;
+
+    if (std::isinf(point.x))
+      return false;
+
+    return true;
+  }
 
   /**
    * \brief Publish residual image between estimated optical flow and static optical flow
