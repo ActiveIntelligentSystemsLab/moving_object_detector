@@ -54,7 +54,6 @@ void SceneFlowConstructorNodelet::onInit() {
   colored_pc_relative_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow_relative", 1);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
-  flow_residual_pub_ = image_transport_->advertise("optical_flow_residual", 1);
 
   // Subscribers
   std::string left_image_topic = node_handle.resolveName("left_image");
@@ -71,23 +70,106 @@ void SceneFlowConstructorNodelet::onInit() {
   stereo_synchronizer_->registerCallback(&SceneFlowConstructorNodelet::stereoCallback, this);
 }
 
-void SceneFlowConstructorNodelet::calculateStaticOpticalFlow()
+void SceneFlowConstructorNodelet::calculateStaticOpticalFlow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, cv::Mat &left_static_flow)
 {
-  left_static_flow_ = cv::Mat(image_height_, image_width_, CV_32FC2);
+  left_static_flow = cv::Mat(image_height_, image_width_, CV_32FC2);
 
   for (int y = 0; y < image_height_; y++)
   {
     for (int x = 0; x < image_width_; x++)
     {
-      pcl::PointXYZ pcl_point = pc_previous_transformed_->at(x, y);
+      pcl::PointXYZ pcl_point = pc_previous_transformed.at(x, y);
       cv::Point3d point_3d;
       point_3d.x = pcl_point.x;
       point_3d.y = pcl_point.y;
       point_3d.z = pcl_point.z;
-      cv::Point2d point_2d = left_cam_model_.project3dToPixel(point_3d);
+      cv::Point2d point_2d = left_cam_model_->project3dToPixel(point_3d);
       cv::Vec2f static_flow(point_2d.x, point_2d.y);
-      left_static_flow_.at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
+      left_static_flow.at<cv::Vec2f>(y, x) = cv::Vec2f(point_2d.x - x, point_2d.y - y);
     }
+  }
+}
+
+void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProcessor> disparity_now, std::shared_ptr<DisparityImageProcessor> disparity_previous, optical_flow_msgs::DenseOpticalFlowPtr left_flow, geometry_msgs::TransformPtr transform_prev2now)
+{
+  // Publish the disparity, optical flow for debug
+  if (disparity_now && disparity_pub_.getNumSubscribers() > 0)
+    disparity_pub_.publish(disparity_now->_disparity_msg);
+  if (left_flow && optflow_pub_.getNumSubscribers() > 0)
+    optflow_pub_.publish(left_flow);
+
+  // Construct pointcloud from disparity for now frame
+  std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_now, pc_previous;
+  if (disparity_previous)
+  {
+    pc_previous.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    disparity_previous->toPointCloud(*pc_previous);
+  }
+
+  if (disparity_now)
+  {
+    pc_now.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    disparity_now->toPointCloud(*pc_now);
+  }
+
+  if (!left_flow)
+    return;
+
+  ros::Time time_now = left_flow->header.stamp;
+  ros::Time time_previous = left_flow->previous_stamp;
+  ros::Duration time_between_frames = time_now - time_previous;
+
+  if (pc_previous && pc_now)
+  {
+    if (colored_pc_relative_pub_.getNumSubscribers() > 0 || colored_pc_relative_pub_.getNumSubscribers() > 0)
+    {
+      pcl::PointCloud<pcl::PointXYZVelocity> pc_with_relative_velocity;
+      constructVelocityPCRelative(*pc_now, *pc_previous, time_between_frames, *left_flow, *disparity_now, *disparity_previous, pc_with_relative_velocity);
+      publishPointcloud(pc_with_relative_velocity_pub_, pc_with_relative_velocity, camera_frame_id_, time_now);
+
+			if (colored_pc_relative_pub_.getNumSubscribers() > 0)
+   	  {
+   	    pcl::PointCloud<pcl::PointXYZRGB> colored_pc_relative;
+        constructVelocityColoredPC(pc_with_relative_velocity, colored_pc_relative);
+        publishPointcloud(colored_pc_relative_pub_, colored_pc_relative, camera_frame_id_, time_now);
+      }
+    }
+  }
+
+  std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_previous_transformed;
+  // Transform previous pointcloud by estimated camera motion
+  if (pc_previous && transform_prev2now)
+  {
+    pc_previous_transformed.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    transformPCPreviousToNow(*pc_previous, *pc_previous_transformed, *transform_prev2now);
+  }
+
+  if (pc_now && pc_previous_transformed) 
+  {
+    cv::Mat left_static_flow;
+    calculateStaticOpticalFlow(*pc_previous_transformed, left_static_flow);
+    pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
+    constructVelocityPC(*pc_now, *pc_previous_transformed, *left_flow, left_static_flow, *disparity_now, *disparity_previous, time_between_frames, pc_with_velocity);
+
+    if (pc_with_velocity_pub_.getNumSubscribers() > 0)
+      publishPointcloud(pc_with_velocity_pub_, pc_with_velocity, camera_frame_id_, time_now);
+
+    if (colored_pc_pub_.getNumSubscribers() > 0)
+    {
+      pcl::PointCloud<pcl::PointXYZRGB> colored_pc;
+      constructVelocityColoredPC(pc_with_velocity, colored_pc);
+      publishPointcloud(colored_pc_pub_, colored_pc, camera_frame_id_, time_now);
+    }
+
+    if (velocity_image_pub_.getNumSubscribers() > 0)
+    {
+      cv::Mat velocity_image;
+      constructVelocityImage(pc_with_velocity, velocity_image);
+      publishVelocityImage(velocity_image, time_now);
+    }
+
+    if (static_flow_pub_.getNumSubscribers() > 0)
+      publishStaticOpticalFlow(left_static_flow, time_now, time_previous);
   }
 }
 
@@ -117,10 +199,8 @@ void SceneFlowConstructorNodelet::constructVelocityImage(const pcl::PointCloud<p
   }
 }
 
-void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
+void SceneFlowConstructorNodelet::constructVelocityPC(const pcl::PointCloud<pcl::PointXYZ> &pc_now, const pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, optical_flow_msgs::DenseOpticalFlow &left_flow, cv::Mat &left_static_flow, DisparityImageProcessor &disparity_now, DisparityImageProcessor &disparity_previous, const ros::Duration &time_between_frames, pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
-  ros::Duration time_between_frames = time_stamp_now_ - time_stamp_previous_;
-
   initializeVelocityPC(velocity_pc);
 
   cv::Point2i left_now;
@@ -129,7 +209,7 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
     for (left_now.x = 0; left_now.x < image_width_; left_now.x++)
     {
       pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
-      pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
+      pcl::PointXYZ point3d_now = pc_now.at(left_now.x, left_now.y);
 
       if (!isValid(point3d_now))
         continue;
@@ -140,18 +220,18 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
 
       cv::Point2i left_previous, right_now, right_previous;
 
-      if (!getMatchPoints(left_now, left_previous, right_now, right_previous))
+      if (!getMatchPoints(left_now, left_previous, right_now, right_previous, left_flow, disparity_now, disparity_previous))
         continue;
 
       pcl::PointXYZ point3d_previous;
-      point3d_previous = pc_previous_transformed_->at(left_previous.x, left_previous.y);
+      point3d_previous = pc_previous_transformed.at(left_previous.x, left_previous.y);
       if (!isValid(point3d_previous))
         continue;
 
       cv::Vec2f flow;
-      flow[0] = left_flow_->flow_field[left_now.y * image_width_ + left_now.x].x;
-      flow[1] = left_flow_->flow_field[left_now.y * image_width_ + left_now.x].y;
-      cv::Vec2f static_flow = left_static_flow_.at<cv::Vec2f>(left_now.y, left_now.x);
+      flow[0] = left_flow.flow_field[left_now.y * image_width_ + left_now.x].x;
+      flow[1] = left_flow.flow_field[left_now.y * image_width_ + left_now.x].y;
+      cv::Vec2f static_flow = left_static_flow.at<cv::Vec2f>(left_now.y, left_now.x);
 
       cv::Vec2f flow_diff = flow - static_flow;
 
@@ -171,10 +251,8 @@ void SceneFlowConstructorNodelet::constructVelocityPC(pcl::PointCloud<pcl::Point
   }
 }
 
-void SceneFlowConstructorNodelet::constructVelocityPCRelative(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
+void SceneFlowConstructorNodelet::constructVelocityPCRelative(const pcl::PointCloud<pcl::PointXYZ> &pc_now, const pcl::PointCloud<pcl::PointXYZ> &pc_previous, const ros::Duration &time_between_frames, optical_flow_msgs::DenseOpticalFlow &left_flow, DisparityImageProcessor &disparity_now, DisparityImageProcessor &disparity_previous, pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc)
 {
-  ros::Duration time_between_frames = time_stamp_now_ - time_stamp_previous_;
-
   initializeVelocityPC(velocity_pc);
 
   cv::Point2i left_now;
@@ -183,7 +261,7 @@ void SceneFlowConstructorNodelet::constructVelocityPCRelative(pcl::PointCloud<pc
     for (left_now.x = 0; left_now.x < image_width_; left_now.x++)
     {
       pcl::PointXYZVelocity &point_with_velocity = velocity_pc.at(left_now.x, left_now.y);
-      pcl::PointXYZ point3d_now = pc_now_->at(left_now.x, left_now.y);
+      pcl::PointXYZ point3d_now = pc_now.at(left_now.x, left_now.y);
 
       if (!isValid(point3d_now))
         continue;
@@ -194,11 +272,11 @@ void SceneFlowConstructorNodelet::constructVelocityPCRelative(pcl::PointCloud<pc
 
       cv::Point2i left_previous, right_now, right_previous;
 
-      if (!getMatchPoints(left_now, left_previous, right_now, right_previous))
+      if (!getMatchPoints(left_now, left_previous, right_now, right_previous, left_flow, disparity_now, disparity_previous))
         continue;
 
       pcl::PointXYZ point3d_previous;
-      point3d_previous = pc_previous_->at(left_previous.x, left_previous.y);
+      point3d_previous = pc_previous.at(left_previous.x, left_previous.y);
       if (!isValid(point3d_previous))
         continue;
 
@@ -266,8 +344,8 @@ void SceneFlowConstructorNodelet::estimateCameraMotion(const sensor_msgs::ImageC
   }
   else if(!response.first_call)
   {
-    NODELET_ERROR_STREAM("Visual odometry is failed\nInput timestamp: " << time_stamp_now_);
     transform_prev2now_.reset();
+    NODELET_ERROR_STREAM("Visual odometry is failed\nInput timestamp: " << left_image->header.stamp);
   }
 }
 
@@ -280,13 +358,13 @@ void SceneFlowConstructorNodelet::estimateDisparity(const sensor_msgs::ImageCons
   request.right_camera_info = *right_camera_info;
   disparity_srv::EstimateDisparity::Response response;
   bool success = disparity_service_client_.call(request, response);
-  disparity_previous_ = disparity_now_;
+
   if (success)
     disparity_now_.reset(new DisparityImageProcessor(response.disparity, *left_camera_info));
   else
   {
-    NODELET_ERROR_STREAM("Disparity estimation is failed\nInput timestamp: " << time_stamp_now_ << "\n and " << time_stamp_previous_);
     disparity_now_.reset();
+    NODELET_ERROR_STREAM("Disparity estimation is failed\nInput timestamp: " << left_image->header.stamp);
   }
 }
 
@@ -306,8 +384,8 @@ void SceneFlowConstructorNodelet::estimateOpticalFlow(const sensor_msgs::ImageCo
   }
   else
   {
-    NODELET_ERROR_STREAM("Optical flow estimation is failed\nInput timestamp: " << time_stamp_now_ << "\n and " << time_stamp_previous_);
     left_flow_.reset();
+    NODELET_ERROR_STREAM("Optical flow estimation is failed\nInput timestamp: " << previous_left_image_->header.stamp << " and " << left_image->header.stamp);
   }
 }
   
@@ -324,41 +402,17 @@ void SceneFlowConstructorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::Poin
   velocity_pc = pcl::PointCloud<pcl::PointXYZVelocity>(image_width_, image_height_, default_value);
 }
 
-void SceneFlowConstructorNodelet::publishFlowResidual()
+void SceneFlowConstructorNodelet::publishStaticOpticalFlow(cv::Mat& left_static_flow, const ros::Time &time_now, const ros::Time &time_previous)
 {
   std_msgs::Header header;
   header.frame_id = camera_frame_id_;
-  header.stamp = time_stamp_now_;
-
-  cv_bridge::CvImage flow_residual(header, "mono8");
-  flow_residual.image = cv::Mat(image_height_, image_width_, CV_8UC1);
-  
-  int total_pixel = image_height_ * image_width_;
-  for (int pixel_index = 0; pixel_index < total_pixel; pixel_index++) 
-  {
-    optical_flow_msgs::PixelDisplacement flow_pixel = left_flow_->flow_field[pixel_index];
-    cv::Vec2f& static_flow_pixel = left_static_flow_.at<cv::Vec2f>(pixel_index);
-
-    float residual_pixel = std::sqrt(std::pow(flow_pixel.x - static_flow_pixel[0], 2) + std::pow(flow_pixel.y - static_flow_pixel[1], 2));
-    residual_pixel = std::min(residual_pixel, 255.0f);
-    flow_residual.image.at<unsigned char>(pixel_index) = static_cast<unsigned char>(residual_pixel);
-  }
-
-  sensor_msgs::ImagePtr flow_residual_msg = flow_residual.toImageMsg();
-  flow_residual_pub_.publish(flow_residual_msg);
-}
-
-void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
-{
-  std_msgs::Header header;
-  header.frame_id = camera_frame_id_;
-  header.stamp = time_stamp_now_;
+  header.stamp = time_now;
 
   optical_flow_msgs::DenseOpticalFlow flow_msg;
   flow_msg.header = header;
-  flow_msg.previous_stamp = time_stamp_previous_;
-  flow_msg.width = left_static_flow_.cols;
-  flow_msg.height = left_static_flow_.rows;
+  flow_msg.previous_stamp = time_previous;
+  flow_msg.width = left_static_flow.cols;
+  flow_msg.height = left_static_flow.rows;
   flow_msg.flow_field.resize(image_width_ * image_height_);
   flow_msg.invalid_map.resize(image_width_ * image_height_, false);
 
@@ -366,7 +420,7 @@ void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
   {
     for (int x = 0; x < image_width_; x++)
     {
-      cv::Vec2f& flow_at_point = left_static_flow_.at<cv::Vec2f>(y, x);
+      cv::Vec2f& flow_at_point = left_static_flow.at<cv::Vec2f>(y, x);
       flow_msg.flow_field[y * flow_msg.width + x].x = flow_at_point[0];
       flow_msg.flow_field[y * flow_msg.width + x].y = flow_at_point[1];
     }
@@ -375,11 +429,11 @@ void SceneFlowConstructorNodelet::publishStaticOpticalFlow()
   static_flow_pub_.publish(flow_msg);
 }
 
-void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_image)
+void SceneFlowConstructorNodelet::publishVelocityImage(const cv::Mat &velocity_image, const ros::Time time_now)
 {
   std_msgs::Header header;
   header.frame_id = camera_frame_id_;
-  header.stamp = time_stamp_now_;
+  header.stamp = time_now;
 
   cv_bridge::CvImage cv_image(header, sensor_msgs::image_encodings::BGR8, velocity_image);
   velocity_image_pub_.publish(cv_image.toImageMsg());
@@ -398,13 +452,14 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
 {
   ros::WallTime start_process = ros::WallTime::now();
 
-  // Set params
-  left_cam_model_.fromCameraInfo(left_camera_info);
-  time_stamp_previous_ = time_stamp_now_;
-  time_stamp_now_ = left_image->header.stamp;
-  camera_frame_id_ = left_image->header.frame_id;
-  image_width_ = left_image->width;
-  image_height_ = left_image->height;
+  if (!left_cam_model_)
+  {
+    left_cam_model_.reset(new image_geometry::PinholeCameraModel());
+    left_cam_model_->fromCameraInfo(left_camera_info);
+    camera_frame_id_ = left_image->header.frame_id;
+    image_width_ = left_image->width;
+    image_height_ = left_image->height;
+  }
 
   NODELET_DEBUG("Get disparity, optical flow and camera motion by calling external services on separate threads");
   std::thread disparity_thread(&SceneFlowConstructorNodelet::estimateDisparity, this, left_image, right_image, left_camera_info, right_camera_info);
@@ -418,85 +473,17 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
   cammotion_thread.join();
   NODELET_DEBUG("Threads for disparity, optical flow and camera motion are finished");
 
-  // Publish the disparity, optical flow for debug
-  if (disparity_now_ && disparity_pub_.getNumSubscribers() > 0)
-    disparity_pub_.publish(disparity_now_->_disparity_msg);
-  if (left_flow_ && optflow_pub_.getNumSubscribers() > 0)
-    optflow_pub_.publish(left_flow_);
-
-  // Construct pointcloud from disparity for now frame
-  pc_previous_ = pc_now_;
-  if (disparity_now_)
-  {
-    pc_now_.reset(new pcl::PointCloud<pcl::PointXYZ>());
-    disparity_now_->toPointCloud(*pc_now_);
-  }
-  else
-    pc_now_.reset();
-
-  if (pc_previous_ && pc_now_)
-  {
-    if (colored_pc_relative_pub_.getNumSubscribers() > 0 || colored_pc_relative_pub_.getNumSubscribers() > 0)
-    {
-      pcl::PointCloud<pcl::PointXYZVelocity> pc_with_relative_velocity;
-      constructVelocityPCRelative(pc_with_relative_velocity);
-      publishPointcloud(pc_with_relative_velocity_pub_, pc_with_relative_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
-
-			if (colored_pc_relative_pub_.getNumSubscribers() > 0)
-   	  {
-   	    pcl::PointCloud<pcl::PointXYZRGB> colored_pc_relative;
-        constructVelocityColoredPC(pc_with_relative_velocity, colored_pc_relative);
-        publishPointcloud(colored_pc_relative_pub_, colored_pc_relative, left_camera_info->header.frame_id, left_camera_info->header.stamp);
-      }
-    }
-  }
-
-  // Transform previous pointcloud by estimated camera motion
-  if (pc_previous_ && transform_prev2now_)
-  {
-    pc_previous_transformed_.reset(new pcl::PointCloud<pcl::PointXYZ>());
-    transformPCPreviousToNow(*pc_previous_, *pc_previous_transformed_, *transform_prev2now_);
-  }
-  else
-    pc_previous_transformed_.reset();
-
-
-  if (pc_now_ && pc_previous_transformed_) 
-  {
-    calculateStaticOpticalFlow();
-    pcl::PointCloud<pcl::PointXYZVelocity> pc_with_velocity;
-    constructVelocityPC(pc_with_velocity);
-
-    if (pc_with_velocity_pub_.getNumSubscribers() > 0)
-      publishPointcloud(pc_with_velocity_pub_, pc_with_velocity, left_camera_info->header.frame_id, left_camera_info->header.stamp);
-
-    if (colored_pc_pub_.getNumSubscribers() > 0)
-    {
-      pcl::PointCloud<pcl::PointXYZRGB> colored_pc;
-      constructVelocityColoredPC(pc_with_velocity, colored_pc);
-      publishPointcloud(colored_pc_pub_, colored_pc, left_camera_info->header.frame_id, left_camera_info->header.stamp);
-    }
-
-    if (velocity_image_pub_.getNumSubscribers() > 0)
-    {
-      cv::Mat velocity_image;
-      constructVelocityImage(pc_with_velocity, velocity_image);
-      publishVelocityImage(velocity_image);
-    }
-
-    if (static_flow_pub_.getNumSubscribers() > 0)
-      publishStaticOpticalFlow();
-
-    if (flow_residual_pub_.getNumSubscribers() > 0)
-      publishFlowResidual();
-  }
+  if (construct_thread_.joinable())
+    construct_thread_.join();
+  construct_thread_ = std::thread(&SceneFlowConstructorNodelet::construct, this, disparity_now_, disparity_previous_, left_flow_, transform_prev2now_);
+//  std::thread test(&SceneFlowConstructorNodelet::construct, this, disparity_now, disparity_previous_, left_flow, transform_prev2now);
+  //construct(disparity_now, disparity_previous_, left_flow, transform_prev2now);
 
   ros::WallDuration process_time = ros::WallTime::now() - start_process;
   NODELET_INFO("process time: %f", process_time.toSec());
 
-  // Save images
   previous_left_image_ = left_image;
-  previous_right_image_ = right_image;
+  disparity_previous_ = disparity_now_;
 }
 
 void SceneFlowConstructorNodelet::reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level)

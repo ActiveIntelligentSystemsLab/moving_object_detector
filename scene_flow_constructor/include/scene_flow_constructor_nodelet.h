@@ -21,7 +21,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include <list>
+#include <thread>
 
 namespace scene_flow_constructor{
 
@@ -30,6 +30,11 @@ public:
   virtual void onInit();
 private:
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
+
+  /**
+    * \brief Thread to execute construct()
+    */
+  std::thread construct_thread_;
   
   /**
    * \brief Publisher for optical flow of left image
@@ -90,52 +95,28 @@ private:
    */
   double max_color_velocity_;
 
-  optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
-
-  // Stereo image of previous frame
   sensor_msgs::ImageConstPtr previous_left_image_;
-  sensor_msgs::ImageConstPtr previous_right_image_;
-
-  /**
-   * \brief Optical flow of left frame calculated by assuming static scene from camera motion and 3D reconstructed pointcloud
-   */
-  cv::Mat left_static_flow_;
-
-  std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_now_, pc_previous_;
-
-  /**
-   * \brief Pointcloud of previous frame transformed by camera motion matrix from previous to now
-   */
-  std::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_previous_transformed_;
-  std::shared_ptr<DisparityImageProcessor> disparity_now_, disparity_previous_;
-  /**
-   * \brief Left camera motion from previous frame to current frame
-   *
-   * Estimated by visual odometry
-   */
+  std::shared_ptr<DisparityImageProcessor> disparity_previous_;
+  std::shared_ptr<DisparityImageProcessor> disparity_now_;
+  optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
   geometry_msgs::TransformPtr transform_prev2now_;
-  //geometry_msgs::TransformStamped transform_now_to_previous_;
-
-  ros::Time time_stamp_now_;
-  ros::Time time_stamp_previous_;
 
   std::string camera_frame_id_;
 
-  /**
-   * \brief Width of optical flow, disparity image and also pointcloud
-   */
   int image_width_;
-  /**
-   * \brief Height of optical flow, disparity image and also pointcloud
-   */
   int image_height_;
 
-  image_geometry::PinholeCameraModel left_cam_model_;
+  std::shared_ptr<image_geometry::PinholeCameraModel> left_cam_model_;
 
   /**
    * \brief Calculate optical flow of left frame with static assumption
    */
-  void calculateStaticOpticalFlow();
+  void calculateStaticOpticalFlow(const pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, cv::Mat &left_static_flow);
+
+  /**
+   * \brief construct various data from disparity prev/now, left optical flow and camera movement
+   */
+  void construct(std::shared_ptr<DisparityImageProcessor> disparity_now, std::shared_ptr<DisparityImageProcessor> disparity_previous, optical_flow_msgs::DenseOpticalFlowPtr left_flow, geometry_msgs::TransformPtr transform_prev2now);
 
   /**
    * \brief construct RGB colored pointcloud which visualize velocity
@@ -155,17 +136,13 @@ private:
 
   /**
    * \brief Calculate velocity of each point and construct pointcloud.
-   *
-   * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
-  void constructVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
+  void constructVelocityPC(const pcl::PointCloud<pcl::PointXYZ> &pc_now, const pcl::PointCloud<pcl::PointXYZ> &pc_previous_transformed, optical_flow_msgs::DenseOpticalFlow &left_flow, cv::Mat &left_static_flow, DisparityImageProcessor &disparity_now, DisparityImageProcessor &disparity_previous, const ros::Duration &time_between_frames, pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
 
   /**
    * \brief Calculate relative velocity from camera of each point and construct pointcloud.
-   *
-   * \param velocity_pc Pointcloud whose points have 3D position and velocity
    */
-  void constructVelocityPCRelative(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
+  void constructVelocityPCRelative(const pcl::PointCloud<pcl::PointXYZ> &pc_now, const pcl::PointCloud<pcl::PointXYZ> &pc_previous, const ros::Duration &time_between_frames, optical_flow_msgs::DenseOpticalFlow &left_flow, DisparityImageProcessor &disparity_now, DisparityImageProcessor &disparity_previous, pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
 
   /**
    * \brief Estimate left camera motion by calling external service
@@ -190,20 +167,20 @@ private:
    *
    * \return Return false if there aren't three match points or matching error is bigger than matching_tolerance_.
    */
-  inline bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous)
+  inline bool getMatchPoints(const cv::Point2i &left_now, cv::Point2i &left_previous, cv::Point2i &right_now, cv::Point2i &right_previous, optical_flow_msgs::DenseOpticalFlow &left_flow, DisparityImageProcessor &disparity_now, DisparityImageProcessor &disparity_previous)
   {
-    if (!getPreviousPoint(left_now, left_previous, *left_flow_))
+    if (!getPreviousPoint(left_now, left_previous, left_flow))
       return false;
 
-    if (!getRightPoint(left_now, right_now, *disparity_now_))
+    if (!getRightPoint(left_now, right_now, disparity_now))
       return false;
 
-    if (!getRightPoint(left_previous, right_previous, *disparity_previous_))
+    if (!getRightPoint(left_previous, right_previous, disparity_previous))
       return false;
 
     return true;
   }
-  inline bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, const optical_flow_msgs::DenseOpticalFlow &flow)
+  inline bool getPreviousPoint(const cv::Point2i &now, cv::Point2i &previous, optical_flow_msgs::DenseOpticalFlow &flow)
   {
     if (now.x < 0 || now.x >= image_width_ || now.y < 0 || now.y >= image_height_) {
       return false;
@@ -265,13 +242,13 @@ private:
    * 
    * The flow is synthesis optical flow calculated by camera transform and depth image, static scene assumption
    */
-  void publishStaticOpticalFlow();
+  void publishStaticOpticalFlow(cv::Mat& left_static_flow, const ros::Time &time_now, const ros::Time &time_previous);
   /**
    * \brief Publish image which visualize velocity pc by RGB color
    *
    * \param velocity_image Already constructed velocity image
    */
-  void publishVelocityImage(const cv::Mat &velocity_image);
+  void publishVelocityImage(const cv::Mat &velocity_image, const ros::Time time_now);
 
   template <typename PointT> void publishPointcloud(const ros::Publisher &publisher, const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level);
