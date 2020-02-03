@@ -4,6 +4,7 @@
   <!-- Image topics are should be set -->
   <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
+  <arg name="base_link_frame_id" default="stereo_robot/base_link"/>
 
   <!-- Set true if you use simulator -->
   <arg name="use_sim_time" default="false"/>
@@ -16,7 +17,7 @@
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
 
   <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server">
-    <param name="base_link_frame_id" value="stereo_robot/base_link"/>
+    <param name="base_link_frame_id" value="$(arg base_link_frame_id)"/>
   </node>
 
   <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor_node">

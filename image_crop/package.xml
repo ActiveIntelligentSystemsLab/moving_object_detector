@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>image_crop</name>
+  <version>0.0.0</version>
+  <description>The image_crop package</description>
+  <maintainer email="fujimoto@todo.todo">fujimoto</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
