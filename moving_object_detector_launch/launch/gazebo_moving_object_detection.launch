@@ -2,6 +2,7 @@
 
 <launch>
   <include file="$(find moving_object_detector_launch)/launch/moving_object_detection.launch">
+    <arg name="image_transport" value="raw"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="left_image_topic" value="/stereo_robot/mobile_base/camera/left/image_raw"/>
     <arg name="right_image_topic" value="/stereo_robot/mobile_base/camera/right/image_raw"/>

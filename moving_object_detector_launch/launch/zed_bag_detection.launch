@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+  <include file="$(find moving_object_detector_launch)/launch/moving_object_detection.launch">
+    <arg name="use_sim_time" value="false"/>
+    <arg name="image_transport" value="compressed"/>
+    <arg name="left_image_topic" value="/zed/zed_node/left/image_rect_color"/>
+    <arg name="right_image_topic" value="/zed/zed_node/right/image_rect_color"/>
+  </include>
+</launch>
