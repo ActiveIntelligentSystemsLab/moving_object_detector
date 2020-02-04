@@ -102,6 +102,7 @@ namespace viso2_stereo_server
     previous_timestamp_ = request.left_image.header.stamp;
 
     ROS_INFO("EstimateMotionFromStereo service is finished");
+    ROS_INFO_STREAM("Process time: " << runtime << " [s]");
 
     return true;
   }
