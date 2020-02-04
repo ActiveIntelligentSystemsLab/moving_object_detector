@@ -55,6 +55,17 @@ void SceneFlowConstructorNodelet::onInit() {
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
 
+  // Publisher for input images
+  left_previous_pub_ = image_transport_->advertise("left_previous", 1);
+  left_now_pub_ = image_transport_->advertise("left_now", 1);
+  right_previous_pub_ = image_transport_->advertise("right_previous", 1);
+  right_now_pub_ = image_transport_->advertise("right_now", 1);
+
+  disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+  optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
+  pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
+  pc_with_relative_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow_relative", 1);
+
   // Subscribers
   std::string left_image_topic = node_handle.resolveName("left_image");
   std::string right_image_topic = node_handle.resolveName("right_image");
@@ -461,6 +472,18 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     image_height_ = left_image->height;
   }
 
+  if (left_now_pub_.getNumSubscribers() > 0)
+    left_now_pub_.publish(left_image);
+
+  if (right_now_pub_.getNumSubscribers() > 0)
+    right_now_pub_.publish(right_image);
+
+  if (left_previous_pub_.getNumSubscribers() > 0 && previous_left_image_)
+    left_previous_pub_.publish(previous_left_image_);
+
+  if (right_now_pub_.getNumSubscribers() > 0 && previous_right_image_)
+    right_previous_pub_.publish(previous_right_image_);
+
   NODELET_DEBUG("Get disparity, optical flow and camera motion by calling external services on separate threads");
   std::thread disparity_thread(&SceneFlowConstructorNodelet::estimateDisparity, this, left_image, right_image, left_camera_info, right_camera_info);
   std::thread cammotion_thread(&SceneFlowConstructorNodelet::estimateCameraMotion, this, left_image, right_image, left_camera_info, right_camera_info);
@@ -483,6 +506,7 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
   NODELET_INFO("process time: %f", process_time.toSec());
 
   previous_left_image_ = left_image;
+  previous_right_image_ = right_image;
   disparity_previous_ = disparity_now_;
 }
 

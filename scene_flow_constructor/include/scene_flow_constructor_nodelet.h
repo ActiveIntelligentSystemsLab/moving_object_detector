@@ -50,10 +50,11 @@ private:
   ros::Publisher pc_with_relative_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
-  /**
-   * \brief Publish residual between estimated optical flow and synthesis optical flow with static scene assumption
-   */
-  image_transport::Publisher flow_residual_pub_;
+
+  image_transport::Publisher left_previous_pub_;
+  image_transport::Publisher left_now_pub_;
+  image_transport::Publisher right_now_pub_;
+  image_transport::Publisher right_previous_pub_;
 
   /**
    * \brief Client for EstimateMotionFromStereo service
@@ -96,6 +97,7 @@ private:
   double max_color_velocity_;
 
   sensor_msgs::ImageConstPtr previous_left_image_;
+  sensor_msgs::ImageConstPtr previous_right_image_;
   std::shared_ptr<DisparityImageProcessor> disparity_previous_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_;
   optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
