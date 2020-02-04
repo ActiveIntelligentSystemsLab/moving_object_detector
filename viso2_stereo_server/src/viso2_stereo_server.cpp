@@ -66,13 +66,15 @@ namespace viso2_stereo_server
     response.timestamp_current = request.left_image.header.stamp;
     response.timestamp_previous = previous_timestamp_;
     response.first_call = first_service_call_;
+
+    ROS_DEBUG("Found %i matches with %i inliers.", visual_odometer_->getNumberOfMatches(), visual_odometer_->getNumberOfInliers());
+
     // Store camera motion to response
     if (response.success)
     {
       // Left camera motion from previous frame to current frame
       Matrix camera_motion = visual_odometer_->getMotion();
 
-      ROS_DEBUG("Found %i matches with %i inliers.", visual_odometer_->getNumberOfMatches(), visual_odometer_->getNumberOfInliers());
       ROS_DEBUG_STREAM("libviso2 returned the following motion:\n" << camera_motion);
 
       tf2::Matrix3x3 camera_rotation(camera_motion.val[0][0], camera_motion.val[0][1], camera_motion.val[0][2],
