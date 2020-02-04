@@ -88,10 +88,10 @@ int main(int argc, char **argv)
   message_filters::Subscriber<sensor_msgs::CameraInfo> camerainfo_sub;
   message_filters::Subscriber<moving_object_msgs::MovingObjectArray> moving_objects_sub;
 
-  image_sub.subscribe(img_trans, input_image_topic, 10);
-  moving_objects_sub.subscribe(nh, "moving_objects", 10);
-  camerainfo_sub.subscribe(nh, input_camerainfo_topic, 10);
-  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, moving_object_msgs::MovingObjectArray> sync(image_sub, camerainfo_sub, moving_objects_sub, 10);
+  image_sub.subscribe(img_trans, input_image_topic, 1);
+  moving_objects_sub.subscribe(nh, "moving_objects", 1);
+  camerainfo_sub.subscribe(nh, input_camerainfo_topic, 1);
+  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, moving_object_msgs::MovingObjectArray> sync(image_sub, camerainfo_sub, moving_objects_sub, 30);
   sync.registerCallback(boost::bind(&dataCB, _1, _2, _3));
 
   ros::spin();
