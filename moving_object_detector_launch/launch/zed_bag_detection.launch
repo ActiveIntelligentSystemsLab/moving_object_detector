@@ -26,4 +26,9 @@
     <arg name="right_image_topic" value="/right_crop/cropped_image"/>
     <arg name="base_link_frame_id" value="base_link"/>
   </include>
+
+  <param name="zed_description" textfile="$(find zed_wrapper)/urdf/zed.urdf" />
+  <node name="zed_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="true">
+    <remap from="robot_description" to="zed_description" />
+  </node>
 </launch>
