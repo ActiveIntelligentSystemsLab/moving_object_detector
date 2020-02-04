@@ -88,6 +88,9 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
       if (tracker->correction_count() < correction_count_limit_)
         continue;
 
+      if (tracker->lastCorrectionTime() != moving_objects->header.stamp)
+        continue;
+
       moving_object_msgs::MovingObject obj_msg = *(boost::any_cast<moving_object_msgs::MovingObjectPtr>(tracker->lastAssociated()));
       obj_msg.id = tracker->id();
       obj_msg.center.position.x = tracker->position().x();
@@ -110,6 +113,9 @@ void MovingObjectsTracker::movingObjectsCallback(const moving_object_msgs::Movin
     {
       // Remove intermittent objects
       if (tracker->correction_count() < correction_count_limit_)
+        continue;
+
+      if (tracker->lastCorrectionTime() != moving_objects->header.stamp)
         continue;
 
       if (tracker->lastAssociated().type() != typeid(moving_object_msgs::MovingObjectPtr))
