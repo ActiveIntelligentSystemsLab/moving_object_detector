@@ -198,6 +198,7 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
     std_srvs::SetBool bag_pause;
     bag_pause.request.data = true;
     pause_service_client_.call(bag_pause);
+    ROS_INFO("Stop bag play");
   }
 }
 
