@@ -4,6 +4,8 @@
   <arg name="cropped_width" value="1242"/>
   <arg name="cropped_height" value="376"/>
 
+  <node name="zed_bag_player" pkg="rosbag" type="play" args="--clock --pause --bags $(find moving_object_detector_launch)/bag/stereo_walking_with_person_cat.bag"/>
+
   <node name="left_crop" pkg="image_crop" type="image_crop">
     <param name="target_width" value="$(arg cropped_width)"/>
     <param name="target_height" value="$(arg cropped_height)"/>
@@ -20,7 +22,7 @@
   </node>
 
   <include file="$(find moving_object_detector_launch)/launch/moving_object_detection.launch">
-    <arg name="use_sim_time" value="false"/>
+    <arg name="use_sim_time" value="true"/>
     <arg name="image_transport" value="compressed"/>
     <arg name="left_image_topic" value="/left_crop/cropped_image"/>
     <arg name="right_image_topic" value="/right_crop/cropped_image"/>

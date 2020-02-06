@@ -6,12 +6,13 @@ PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, node
 
 // ROS headers
 #include <cv_bridge/cv_bridge.h>
+#include <disparity_srv/EstimateDisparity.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/camera_common.h>
 #include <optical_flow_srvs/CalculateDenseOpticalFlow.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <disparity_srv/EstimateDisparity.h>
+#include <std_srvs/SetBool.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <viso2_stereo_server/EstimateMotionFromStereo.h>
 
@@ -39,6 +40,14 @@ void SceneFlowConstructorNodelet::onInit() {
 
   optflow_service_client_ = node_handle.serviceClient<optical_flow_srvs::CalculateDenseOpticalFlow>("calculate_dense_optical_flow");
   optflow_service_client_.waitForExistence();
+
+  // Auto pause bag after StereoCallback()
+  private_node_handle.param("bag_auto_pause", bag_auto_pause_, false);
+  if (bag_auto_pause_)
+  {
+    pause_service_client_ = node_handle.serviceClient<std_srvs::SetBool>("pause_bag");
+    pause_service_client_.waitForExistence();
+  }
 
   // Dynamic reconfigure
   reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
@@ -181,6 +190,14 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
 
     if (static_flow_pub_.getNumSubscribers() > 0)
       publishStaticOpticalFlow(left_static_flow, time_now, time_previous);
+  }
+
+  if (bag_auto_pause_)
+  {
+    // service call
+    std_srvs::SetBool bag_pause;
+    bag_pause.request.data = true;
+    pause_service_client_.call(bag_pause);
   }
 }
 
@@ -472,18 +489,6 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
     image_height_ = left_image->height;
   }
 
-  if (left_now_pub_.getNumSubscribers() > 0)
-    left_now_pub_.publish(left_image);
-
-  if (right_now_pub_.getNumSubscribers() > 0)
-    right_now_pub_.publish(right_image);
-
-  if (left_previous_pub_.getNumSubscribers() > 0 && previous_left_image_)
-    left_previous_pub_.publish(previous_left_image_);
-
-  if (right_now_pub_.getNumSubscribers() > 0 && previous_right_image_)
-    right_previous_pub_.publish(previous_right_image_);
-
   NODELET_DEBUG("Get disparity, optical flow and camera motion by calling external services on separate threads");
   std::thread disparity_thread(&SceneFlowConstructorNodelet::estimateDisparity, this, left_image, right_image, left_camera_info, right_camera_info);
   std::thread cammotion_thread(&SceneFlowConstructorNodelet::estimateCameraMotion, this, left_image, right_image, left_camera_info, right_camera_info);
@@ -498,9 +503,17 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
 
   if (construct_thread_.joinable())
     construct_thread_.join();
+
+  if (left_now_pub_.getNumSubscribers() > 0)
+    left_now_pub_.publish(left_image);
+  if (right_now_pub_.getNumSubscribers() > 0)
+    right_now_pub_.publish(right_image);
+  if (left_previous_pub_.getNumSubscribers() > 0 && previous_left_image_)
+    left_previous_pub_.publish(previous_left_image_);
+  if (right_now_pub_.getNumSubscribers() > 0 && previous_right_image_)
+    right_previous_pub_.publish(previous_right_image_);
+
   construct_thread_ = std::thread(&SceneFlowConstructorNodelet::construct, this, disparity_now_, disparity_previous_, left_flow_, transform_prev2now_);
-//  std::thread test(&SceneFlowConstructorNodelet::construct, this, disparity_now, disparity_previous_, left_flow, transform_prev2now);
-  //construct(disparity_now, disparity_previous_, left_flow, transform_prev2now);
 
   ros::WallDuration process_time = ros::WallTime::now() - start_process;
   NODELET_INFO("process time: %f", process_time.toSec());

@@ -69,6 +69,8 @@ private:
    */
   ros::ServiceClient optflow_service_client_;
 
+  ros::ServiceClient pause_service_client_;
+
   // Stereo image and camera info subscribers
   image_transport::SubscriberFilter left_image_sub_;
   image_transport::SubscriberFilter right_image_sub_;
@@ -84,6 +86,8 @@ private:
   using ReconfigureServer = dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
   ReconfigureServer::CallbackType reconfigure_func_;
+
+  bool bag_auto_pause_;
   
   /**
    * \brief Difference[pixel] between optical flow and calculated static optical flow treated as dynamic pixel
