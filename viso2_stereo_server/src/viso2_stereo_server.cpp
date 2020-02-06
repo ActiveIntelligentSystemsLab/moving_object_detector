@@ -163,7 +163,7 @@ namespace viso2_stereo_server
     std::vector<Matcher::p_match>  match_points = visual_odometer_->getMatches();
     std::vector<int32_t> inlier_indices = visual_odometer_->getInlierIndices();
 
-    cv_bridge::CvImagePtr draw_image = cv_bridge::toCvCopy(left_image);
+    cv_bridge::CvImagePtr draw_image = cv_bridge::toCvCopy(left_image, "bgr8");
 
     for (int i = 0; i < match_points.size(); i++)
     {
@@ -174,6 +174,8 @@ namespace viso2_stereo_server
     }
     for (int i = 0; i < inlier_indices.size(); i++)
     {
+      if (i >= match_points.size())
+        continue;
       cv::Point draw_point;
       draw_point.x = match_points[i].u1c;
       draw_point.y = match_points[i].v1c;
