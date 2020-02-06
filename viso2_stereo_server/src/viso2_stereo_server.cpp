@@ -5,6 +5,7 @@
 #include <image_geometry/stereo_camera_model.h>
 #include <ros/ros.h>
 #include <sensor_msgs/image_encodings.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
@@ -19,6 +20,9 @@ namespace viso2_stereo_server
     odometry_params::loadParams(local_nh, visual_odometer_params_);
     local_nh.param("base_link_frame_id", base_link_frame_id_, std::string("base_link"));
     local_nh.param("odom_frame_id", odom_frame_id_, std::string("odom"));
+
+    pose_pub_ = local_nh.advertise<geometry_msgs::PoseStamped>("pose", 1);
+    matchpoints_image_pub_ = local_nh.advertise<sensor_msgs::Image>("matchpoints_image", 1);
 
     integrated_pose_.setIdentity();
     tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
@@ -92,9 +96,13 @@ namespace viso2_stereo_server
     if(!first_service_call_ && !response.success)
     {
       ROS_ERROR("VisualOdometryStereo::process() is failed");
+      /*
       ROS_ERROR("Reset odometry TF");
       integrated_pose_.setIdentity();
+      */
     }
+
+    publishMatchPointsImage(request.left_image);
 
     ros::WallDuration runtime = ros::WallTime::now() - start_time;
     response.runtime.sec = runtime.sec;
@@ -138,7 +146,41 @@ namespace viso2_stereo_server
     //geometry_msgs::TransformStamped base_transform_msg;
     base_transform_msg.child_frame_id = base_link_frame_id_;
     tf_broadcaster_.sendTransform(base_transform_msg);
+
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = timestamp;
+    pose.header.frame_id = base_link_frame_id_;
+    pose.pose.position.x = base_transform_msg.transform.translation.x;
+    pose.pose.position.y = base_transform_msg.transform.translation.y;
+    pose.pose.position.z = base_transform_msg.transform.translation.z;
+    pose.pose.orientation = base_transform_msg.transform.rotation;
+
+    pose_pub_.publish(pose);
   }
 
+  void Viso2StereoServer::publishMatchPointsImage(const sensor_msgs::Image& left_image)
+  {
+    std::vector<Matcher::p_match>  match_points = visual_odometer_->getMatches();
+    std::vector<int32_t> inlier_indices = visual_odometer_->getInlierIndices();
+
+    cv_bridge::CvImagePtr draw_image = cv_bridge::toCvCopy(left_image);
+
+    for (int i = 0; i < match_points.size(); i++)
+    {
+      cv::Point draw_point;
+      draw_point.x = match_points[i].u1c;
+      draw_point.y = match_points[i].v1c;
+      cv::circle(draw_image->image, draw_point, 5, cv::Scalar(0, 0, 255), 2);
+    }
+    for (int i = 0; i < inlier_indices.size(); i++)
+    {
+      cv::Point draw_point;
+      draw_point.x = match_points[i].u1c;
+      draw_point.y = match_points[i].v1c;
+      cv::circle(draw_image->image, draw_point, 5, cv::Scalar(0, 255, 0), 2);
+    }
+
+    matchpoints_image_pub_.publish(draw_image->toImageMsg());
+  }
 }
 

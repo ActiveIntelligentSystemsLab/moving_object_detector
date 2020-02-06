@@ -59,6 +59,9 @@ private:
   tf2_ros::Buffer tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
+  ros::Publisher matchpoints_image_pub_;
+  ros::Publisher pose_pub_;
+
   tf2::Transform integrated_pose_;
 
   /**
@@ -70,6 +73,7 @@ private:
    * \brief Publish TF between odom and base_link
    */
   void integrateAndBroadcastTF(const tf2::Transform& delta_transform, const ros::Time& timestamp);
+  void publishMatchPointsImage(const sensor_msgs::Image& left_image);
 
 public:
   Viso2StereoServer();
