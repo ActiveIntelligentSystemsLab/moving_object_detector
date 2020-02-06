@@ -4,29 +4,39 @@
   <arg name="cropped_width" value="1242"/>
   <arg name="cropped_height" value="376"/>
 
-  <node name="zed_bag_player" pkg="rosbag" type="play" args="--clock --pause --bags $(find moving_object_detector_launch)/bag/stereo_walking_with_person_cat.bag"/>
+  <!--
+  <arg name="bag_file" value="stereo_with_walking_kiridasi.bag"/>
+  <arg name="bag_file" value="stereo_with_walking_kiridasi.bag"/>
+  -->
+  <arg name="bag_file" value="tracking_cat.bag"/>
+  <arg name="image_transport" value="raw"/>
+
+  <node name="zed_bag_player" pkg="rosbag" type="play" args="--pause --bags $(find moving_object_detector_launch)/bag/$(arg bag_file)"/>
 
   <node name="left_crop" pkg="image_crop" type="image_crop">
     <param name="target_width" value="$(arg cropped_width)"/>
     <param name="target_height" value="$(arg cropped_height)"/>
-    <param name="image_transport" value="compressed"/>
+    <param name="image_transport" value="$(arg image_transport)"/>
 
     <remap from="image" to="/zed/zed_node/left/image_rect_color"/>
   </node>
   <node name="right_crop" pkg="image_crop" type="image_crop">
     <param name="target_width" value="$(arg cropped_width)"/>
     <param name="target_height" value="$(arg cropped_height)"/>
-    <param name="image_transport" value="compressed"/>
+    <param name="image_transport" value="$(arg image_transport)"/>
 
     <remap from="image" to="/zed/zed_node/right/image_rect_color"/>
   </node>
 
   <include file="$(find moving_object_detector_launch)/launch/moving_object_detection.launch">
-    <arg name="use_sim_time" value="true"/>
-    <arg name="image_transport" value="compressed"/>
+    <arg name="use_sim_time" value="false"/>
+    <arg name="image_transport" value="$(arg image_transport)"/>
     <arg name="left_image_topic" value="/left_crop/cropped_image"/>
     <arg name="right_image_topic" value="/right_crop/cropped_image"/>
     <arg name="base_link_frame_id" value="base_link"/>
+    <arg name="image_width" value="$(arg cropped_width)"/>
+    <arg name="image_height" value="$(arg cropped_height)"/>
+    <arg name="bag_auto_pause" value="false"/>
   </include>
 
   <param name="zed_description" textfile="$(find zed_wrapper)/urdf/zed.urdf" />
