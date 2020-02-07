@@ -50,6 +50,7 @@ private:
   ros::Publisher pc_with_relative_velocity_pub_;
   ros::Publisher static_flow_pub_;
   image_transport::Publisher velocity_image_pub_;
+  image_transport::Publisher flow_residual_pub_;
 
   image_transport::Publisher left_previous_pub_;
   image_transport::Publisher left_now_pub_;
@@ -242,7 +243,7 @@ private:
    * 
    * Pixel value of the image is Euclidean norm between two flows.
    */
-  void publishFlowResidual();
+  void publishFlowResidual(cv::Mat& left_static_flow, const ros::Time &time_now);
   /**
    * \brief Publish static optical flow of left frame
    * 

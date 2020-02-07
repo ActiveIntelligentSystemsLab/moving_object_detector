@@ -63,6 +63,7 @@ void SceneFlowConstructorNodelet::onInit() {
   colored_pc_relative_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("colored_scene_flow_relative", 1);
   static_flow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("synthetic_optical_flow", 1);
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
+  flow_residual_pub_ = image_transport_->advertise("flow_residual", 1);
 
   // Publisher for input images
   left_previous_pub_ = image_transport_->advertise("left_previous", 1);
@@ -99,6 +100,12 @@ void SceneFlowConstructorNodelet::calculateStaticOpticalFlow(const pcl::PointClo
     for (int x = 0; x < image_width_; x++)
     {
       pcl::PointXYZ pcl_point = pc_previous_transformed.at(x, y);
+      if (std::isnan(pcl_point.x))
+      {
+        left_static_flow.at<cv::Vec2f>(y, x) = cv::Vec2f(std::nanf(""), std::nanf(""));
+        continue;
+      }
+
       cv::Point3d point_3d;
       point_3d.x = pcl_point.x;
       point_3d.y = pcl_point.y;
@@ -190,6 +197,9 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
 
     if (static_flow_pub_.getNumSubscribers() > 0)
       publishStaticOpticalFlow(left_static_flow, time_now, time_previous);
+    
+    if (flow_residual_pub_.getNumSubscribers() > 0)
+      publishFlowResidual(left_static_flow, time_now);
   }
 
   if (bag_auto_pause_)
@@ -261,6 +271,8 @@ void SceneFlowConstructorNodelet::constructVelocityPC(const pcl::PointCloud<pcl:
       flow[0] = left_flow.flow_field[left_now.y * image_width_ + left_now.x].x;
       flow[1] = left_flow.flow_field[left_now.y * image_width_ + left_now.x].y;
       cv::Vec2f static_flow = left_static_flow.at<cv::Vec2f>(left_now.y, left_now.x);
+      if (std::isnan(static_flow[0]))
+        continue;
 
       cv::Vec2f flow_diff = flow - static_flow;
 
@@ -450,6 +462,11 @@ void SceneFlowConstructorNodelet::publishStaticOpticalFlow(cv::Mat& left_static_
     for (int x = 0; x < image_width_; x++)
     {
       cv::Vec2f& flow_at_point = left_static_flow.at<cv::Vec2f>(y, x);
+      if (std::isnan(flow_at_point[0]))
+      {
+        flow_msg.invalid_map[y * flow_msg.width + x] = true;
+        continue;
+      }
       flow_msg.flow_field[y * flow_msg.width + x].x = flow_at_point[0];
       flow_msg.flow_field[y * flow_msg.width + x].y = flow_at_point[1];
     }
@@ -542,10 +559,39 @@ void SceneFlowConstructorNodelet::transformPCPreviousToNow(const pcl::PointCloud
     for (int v = 0; v < image_height_; v++)
     {
       const pcl::PointXYZ &point = pc_previous.at(u, v);
+      if (std::isnan(point.x))
+      {
+        pc_previous_transformed.at(u, v) = pc_previous.at(u, v);
+        continue;
+      }
+
       Eigen::Vector3d eigen_transformed = eigen_prev2now * Eigen::Vector3d(point.x, point.y, point.z);
       pc_previous_transformed.at(u, v) = pcl::PointXYZ(eigen_transformed.x(), eigen_transformed.y(), eigen_transformed.z());
     }
   }
+}
+
+void SceneFlowConstructorNodelet::publishFlowResidual(cv::Mat& left_static_flow, const ros::Time &timestamp)
+{
+  std_msgs::Header header;
+  header.frame_id = camera_frame_id_;
+  header.stamp = timestamp;
+
+  cv_bridge::CvImage flow_residual(header, "32FC1");
+  flow_residual.image = cv::Mat(image_height_, image_width_, CV_32FC1);
+  
+  int total_pixel = image_height_ * image_width_;
+  for (int pixel_index = 0; pixel_index < total_pixel; pixel_index++) 
+  {
+    optical_flow_msgs::PixelDisplacement flow_pixel = left_flow_->flow_field[pixel_index];
+    cv::Vec2f& static_flow_pixel = left_static_flow.at<cv::Vec2f>(pixel_index);
+
+    float residual = std::sqrt(std::pow(flow_pixel.x - static_flow_pixel[0], 2) + std::pow(flow_pixel.y - static_flow_pixel[1], 2));
+    flow_residual.image.at<float>(pixel_index) = residual;
+  }
+
+  sensor_msgs::ImagePtr flow_residual_msg = flow_residual.toImageMsg();
+  flow_residual_pub_.publish(flow_residual_msg);
 }
 
 } // namespace scene_flow_constructor
