@@ -55,7 +55,8 @@ void SceneFlowConstructorNodelet::onInit() {
   reconfigure_server_->setCallback(reconfigure_func_);
   
   // Publishers
-  disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+  depth_previous_pub_ = private_node_handle.advertise<sensor_msgs::Image>("depth_previous", 1);
+  depth_now_pub_ = private_node_handle.advertise<sensor_msgs::Image>("depth_now", 1);
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
   pc_with_relative_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow_relative", 1);
@@ -71,7 +72,6 @@ void SceneFlowConstructorNodelet::onInit() {
   right_previous_pub_ = image_transport_->advertise("right_previous", 1);
   right_now_pub_ = image_transport_->advertise("right_now", 1);
 
-  disparity_pub_ = private_node_handle.advertise<stereo_msgs::DisparityImage>("disparity", 1);
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
   pc_with_relative_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow_relative", 1);
@@ -120,8 +120,6 @@ void SceneFlowConstructorNodelet::calculateStaticOpticalFlow(const pcl::PointClo
 void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProcessor> disparity_now, std::shared_ptr<DisparityImageProcessor> disparity_previous, optical_flow_msgs::DenseOpticalFlowPtr left_flow, geometry_msgs::TransformPtr transform_prev2now)
 {
   // Publish the disparity, optical flow for debug
-  if (disparity_now && disparity_pub_.getNumSubscribers() > 0)
-    disparity_pub_.publish(disparity_now->_disparity_msg);
   if (left_flow && optflow_pub_.getNumSubscribers() > 0)
     optflow_pub_.publish(left_flow);
 
@@ -131,12 +129,24 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
   {
     pc_previous.reset(new pcl::PointCloud<pcl::PointXYZ>());
     disparity_previous->toPointCloud(*pc_previous);
+    if (depth_previous_pub_.getNumSubscribers() > 0)
+    {
+      cv::Mat depth_previous;
+      disparity_previous->toDepthImage(depth_previous);
+      publishDepthImage(depth_previous_pub_, depth_previous, disparity_previous->_disparity_msg.header.stamp);
+    }
   }
 
   if (disparity_now)
   {
     pc_now.reset(new pcl::PointCloud<pcl::PointXYZ>());
     disparity_now->toPointCloud(*pc_now);
+    if (depth_now_pub_.getNumSubscribers() > 0)
+    {
+      cv::Mat depth_now;
+      disparity_now->toDepthImage(depth_now);
+      publishDepthImage(depth_now_pub_, depth_now, disparity_now->_disparity_msg.header.stamp);
+    }
   }
 
   if (!left_flow)
@@ -199,7 +209,7 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
       publishStaticOpticalFlow(left_static_flow, time_now, time_previous);
     
     if (flow_residual_pub_.getNumSubscribers() > 0)
-      publishFlowResidual(left_static_flow, time_now);
+      publishFlowResidual(left_static_flow, left_flow, time_now);
   }
 
   if (bag_auto_pause_)
@@ -571,7 +581,7 @@ void SceneFlowConstructorNodelet::transformPCPreviousToNow(const pcl::PointCloud
   }
 }
 
-void SceneFlowConstructorNodelet::publishFlowResidual(cv::Mat& left_static_flow, const ros::Time &timestamp)
+void SceneFlowConstructorNodelet::publishFlowResidual(cv::Mat& left_static_flow, optical_flow_msgs::DenseOpticalFlowPtr& left_flow, const ros::Time &timestamp)
 {
   std_msgs::Header header;
   header.frame_id = camera_frame_id_;
@@ -583,8 +593,14 @@ void SceneFlowConstructorNodelet::publishFlowResidual(cv::Mat& left_static_flow,
   int total_pixel = image_height_ * image_width_;
   for (int pixel_index = 0; pixel_index < total_pixel; pixel_index++) 
   {
-    optical_flow_msgs::PixelDisplacement flow_pixel = left_flow_->flow_field[pixel_index];
+    optical_flow_msgs::PixelDisplacement flow_pixel = left_flow->flow_field[pixel_index];
     cv::Vec2f& static_flow_pixel = left_static_flow.at<cv::Vec2f>(pixel_index);
+
+    if (std::isnan(static_flow_pixel[0]))
+    {
+      flow_residual.image.at<float>(pixel_index) = 0;
+      continue;
+    }
 
     float residual = std::sqrt(std::pow(flow_pixel.x - static_flow_pixel[0], 2) + std::pow(flow_pixel.y - static_flow_pixel[1], 2));
     flow_residual.image.at<float>(pixel_index) = residual;
@@ -593,5 +609,15 @@ void SceneFlowConstructorNodelet::publishFlowResidual(cv::Mat& left_static_flow,
   sensor_msgs::ImagePtr flow_residual_msg = flow_residual.toImageMsg();
   flow_residual_pub_.publish(flow_residual_msg);
 }
+
+void SceneFlowConstructorNodelet::publishDepthImage(ros::Publisher& depth_pub, cv::Mat& depth_image, ros::Time timestamp)
+{
+  std_msgs::Header header;
+  header.frame_id = camera_frame_id_;
+  header.stamp = timestamp;
+  cv_bridge::CvImage depth_bridge(header, "32FC1", depth_image);
+  depth_pub.publish(depth_bridge.toImageMsg());
+}
+
 
 } // namespace scene_flow_constructor

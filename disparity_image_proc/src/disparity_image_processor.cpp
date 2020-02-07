@@ -101,3 +101,21 @@ void DisparityImageProcessor::toPointCloud(pcl::PointCloud<pcl::PointXYZ> &point
     }
   }
 }
+
+void DisparityImageProcessor::toDepthImage(cv::Mat& depth_image)
+{
+  float nan = std::nan("");
+  // 画像座標との対応関係を残すため，organizedなpointcloudを構築する
+  depth_image.create(getHeight(), getWidth(), CV_32FC1);
+  for (int u = 0; u < getWidth(); u++)
+  {
+    for (int v = 0; v < getHeight(); v++)
+    {
+      pcl::PointXYZ point;
+      if (getPoint3D(u, v, point))
+        depth_image.at<float>(v, u) = point.z;
+      else
+        depth_image.at<float>(v, u) = nan;
+    }
+  }
+}

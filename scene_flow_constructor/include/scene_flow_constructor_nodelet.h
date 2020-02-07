@@ -43,7 +43,8 @@ private:
   /**
    * \brief Publisher for disparity at now frame
    */
-  ros::Publisher disparity_pub_;
+  ros::Publisher depth_previous_pub_;
+  ros::Publisher depth_now_pub_;
   ros::Publisher colored_pc_pub_;
   ros::Publisher colored_pc_relative_pub_;
   ros::Publisher pc_with_velocity_pub_;
@@ -243,7 +244,7 @@ private:
    * 
    * Pixel value of the image is Euclidean norm between two flows.
    */
-  void publishFlowResidual(cv::Mat& left_static_flow, const ros::Time &time_now);
+  void publishFlowResidual(cv::Mat& left_static_flow, optical_flow_msgs::DenseOpticalFlowPtr& left_flow, const ros::Time &time_now);
   /**
    * \brief Publish static optical flow of left frame
    * 
@@ -256,6 +257,8 @@ private:
    * \param velocity_image Already constructed velocity image
    */
   void publishVelocityImage(const cv::Mat &velocity_image, const ros::Time time_now);
+
+  void publishDepthImage(ros::Publisher& depth_pub, cv::Mat& depth_image, ros::Time timestamp);
 
   template <typename PointT> void publishPointcloud(const ros::Publisher &publisher, const pcl::PointCloud<PointT> &pointcloud, const std::string &frame_id, const ros::Time &stamp);
   void reconfigureCB(scene_flow_constructor::SceneFlowConstructorConfig& config, uint32_t level);

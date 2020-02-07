@@ -28,6 +28,7 @@ public:
   int getWidth();
   int getHeight();
   void toPointCloud(pcl::PointCloud<pcl::PointXYZ> &pointcloud);
+  void toDepthImage(cv::Mat& depth_image);
 };
 
 
