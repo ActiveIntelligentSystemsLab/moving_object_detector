@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(viso2_stereo_server)
 
+add_definitions(-msse3)
+
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   geometry_msgs
