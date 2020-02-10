@@ -234,15 +234,14 @@ void SceneFlowConstructorNodelet::constructVelocityImage(const pcl::PointCloud<p
 
     double red, green, blue;
 
-    // Regularize to [0.0, 1.0]
-    red = std::abs(velocity_point.vx) / max_color_velocity_;
-    red = std::min(red, 1.0);
+    double velocity_norm = std::sqrt(std::pow(velocity_point.vx, 2) + std::pow(velocity_point.vy, 2) + std::pow(velocity_point.vz, 2));
 
-    green = std::abs(velocity_point.vy) / max_color_velocity_;
-    green = std::min(green, 1.0);
+    double ratio = velocity_norm / max_color_velocity_;
+    ratio = std::min(ratio, 1.0);
 
-    blue = std::abs(velocity_point.vz) / max_color_velocity_;
-    blue = std::min(blue, 1.0);
+    red = std::abs(velocity_point.vx) / velocity_norm * ratio;
+    green = std::abs(velocity_point.vy) / velocity_norm * ratio;
+    blue = std::abs(velocity_point.vz) / velocity_norm * ratio;
 
     velocity_image.at<cv::Vec3b>(i) = cv::Vec3b(blue * 255, green * 255, red * 255);
   }
@@ -361,15 +360,14 @@ void SceneFlowConstructorNodelet::constructVelocityColoredPC(const pcl::PointClo
 
     double red, green, blue;
 
-    // Regularize to [0.0, 1.0]
-    red = std::abs(velocity_point.vx) / max_color_velocity_;
-    red = std::min(red, 1.0);
+    double velocity_norm = std::sqrt(std::pow(velocity_point.vx, 2) + std::pow(velocity_point.vy, 2) + std::pow(velocity_point.vz, 2));
 
-    green = std::abs(velocity_point.vy) / max_color_velocity_;
-    green = std::min(green, 1.0);
+    double ratio = velocity_norm / max_color_velocity_;
+    ratio = std::min(ratio, 1.0);
 
-    blue = std::abs(velocity_point.vz) / max_color_velocity_;
-    blue = std::min(blue, 1.0);
+    red = std::abs(velocity_point.vx) / velocity_norm * ratio;
+    green = std::abs(velocity_point.vy) / velocity_norm * ratio;
+    blue = std::abs(velocity_point.vz) / velocity_norm * ratio;
 
     colored_point.r = red * 255;
     colored_point.g = green * 255;
