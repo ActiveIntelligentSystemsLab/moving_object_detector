@@ -158,7 +158,7 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
 
   if (pc_previous && pc_now)
   {
-    if (colored_pc_relative_pub_.getNumSubscribers() > 0 || colored_pc_relative_pub_.getNumSubscribers() > 0)
+    if (pc_with_relative_velocity_pub_.getNumSubscribers() > 0 || colored_pc_relative_pub_.getNumSubscribers() > 0)
     {
       pcl::PointCloud<pcl::PointXYZVelocity> pc_with_relative_velocity;
       constructVelocityPCRelative(*pc_now, *pc_previous, time_between_frames, *left_flow, *disparity_now, *disparity_previous, pc_with_relative_velocity);
