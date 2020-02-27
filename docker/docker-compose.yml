@@ -2,12 +2,12 @@ version: "2.3"
 services: 
   master:
     container_name: move_detect_master
-    image: ros:melodic-ros-core
+    build: .
     command: roscore
   
   launch:
     container_name: move_detect_launch
-    build: launch
+    build: .
     depends_on:
       - master
     command: >
@@ -19,37 +19,11 @@ services:
       - ROS_HOSTNAME=move_detect_launch
       - ROS_MASTER_URI=http://move_detect_master:11311
     volumes:
-      - launch_root:/root
-  
-  pwc:
-    container_name: move_detect_pwc
-    build: pwc
-    depends_on:
-      - master
-    command: rosrun pwc_net pwc_net_node image:=/synchronized/left/image_rect_color
-    runtime: nvidia
-    environment: 
-      - ROS_HOSTNAME=move_detect_pwc
-      - ROS_MASTER_URI=http://move_detect_master:11311
-    volumes:
-      - pwc_root:/root
-  
-  sgm:
-    container_name: move_detect_sgm
-    build: sgm
-    depends_on:
-      - master
-    command: rosrun sgm_gpu sgm_gpu_server left_image:=/synchronized/left/image_rect_color right_image:=/synchronized/right/image_rect_color
-    runtime: nvidia
-    environment: 
-      - ROS_HOSTNAME=move_detect_sgm
-      - ROS_MASTER_URI=http://move_detect_master:11311
-    volumes: 
-      - sgm_root:/root
+      - root:/root
 
   rqt:
     container_name: move_detect_rqt
-    build: rqt
+    build: .
     depends_on:
       - master
     command: rqt --perspective-file /root/moving_object_detector/moving_object_detector_launch/rqt/moving_object_detector.perspective
@@ -61,11 +35,11 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes: 
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - rqt_root:/root
+      - root:/root
 
   rviz:
     container_name: move_detect_rviz
-    build: rqt
+    build: .
     depends_on:
       - master
     command: rviz
@@ -77,10 +51,7 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes: 
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - rqt_root:/root
+      - root:/root
 
 volumes: 
-  rqt_root:
-  launch_root:
-  sgm_root:
-  pwc_root:
+  root:
