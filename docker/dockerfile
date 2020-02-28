@@ -124,3 +124,10 @@ RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
 # Build
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
                   catkin_make"
+
+# From https://github.com/NVIDIA/nvidia-container-runtime/blob/master/README.md
+# compute: required for CUDA and OpenCL applications.
+# display: required for leveraging X11 display.
+# graphics: required for running OpenGL and Vulkan applications.
+# utility: required for using nvidia-smi and NVML.
+ENV NVIDIA_DRIVER_CAPABILITIES compute,display,graphics,utility
