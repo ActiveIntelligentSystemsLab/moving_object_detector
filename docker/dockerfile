@@ -118,8 +118,9 @@ RUN git clone https://github.com/fujimo-t/mars_rover_description.git src/mars_ro
 RUN git clone https://github.com/fujimo-t/turtlebot3_stereo_description.git src/turtlebot3_stereo_description
 
 # Install dependencies
+# Newer CUDA was installed in base image, so rosdep keys of CUDA are skipped
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
-                  rosdep install --from-paths src -r -y"
+                  rosdep install --from-paths src -r -y --skip-keys=\"nvidia-cuda-dev nvidia-cuda\""
 # Build
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
                   catkin_make"
