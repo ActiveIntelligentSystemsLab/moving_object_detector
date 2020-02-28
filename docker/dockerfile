@@ -79,7 +79,7 @@ RUN cd /root/flownet2 && make -j4 all
 
 ### Install tools for development
 RUN apt-get update && \
-    apt-get install -y vim byobu gdb htop
+    apt-get install -y vim byobu gdb htop lxterminal
 
 ### Create catkin workspace ###
 
