@@ -24,37 +24,20 @@ This contains ROS packages to detect moving objects from stereo images.
 
   nvidia-docker2 is deprecated now but it is needed to use Docker Compose with NVIDIA GPU.
 
-## Already tested environment
+## Tested environment
 
-### Environment 1
-
-#### Hardware
-
-* NVIDIA RTX 2070
-* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
-
-#### Software
-
-* Ubuntu 19.04
-* Docker 19.03
-* Docker Compose 1.21
-* nvidia-docker2 2.2.1
-* nvidia-container-toolkit 1.0.3
-
-### Environment 2
-
-#### Hardware
+### Hardware
 
 * NVIDIA GTX 1060
 * [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
-#### Software
+### Software
 
 * Ubuntu 18.04
 * Docker 19.03
-* Docker Compose 1.24
-* nvidia-docker2 2.2.1
-* nvidia-container-toolkit 1.0.3
+* Docker Compose
+* nvidia-docker2
+* nvidia-container-toolkit
 
 ## Build
 
