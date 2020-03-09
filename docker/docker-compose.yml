@@ -43,6 +43,7 @@ services:
       - master
     command: lxterminal
     runtime: nvidia
+    privileged: true
     environment: 
       - ROS_HOSTNAME=move_detect_terminal
       - ROS_MASTER_URI=http://move_detect_master:11311
