@@ -13,6 +13,8 @@ This contains ROS packages to detect moving objects from stereo images.
 * NVIDIA GPU
 * [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
+  To move camera in Gazebo simulator.
+  
   This can be replaced with other controller supported by [joy package](http://wiki.ros.org/joy).
   But maybe change of key assignment is needed.
 
