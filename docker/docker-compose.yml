@@ -10,8 +10,7 @@ services:
     build: .
     depends_on:
       - master
-    command: rqt --perspective-file /root/moving_object_detector/moving_object_detector_launch/rqt/moving_object_detector.perspective
-    runtime: nvidia
+    command: rqt 
     environment: 
       - ROS_HOSTNAME=move_detect_rqt
       - ROS_MASTER_URI=http://move_detect_master:11311
