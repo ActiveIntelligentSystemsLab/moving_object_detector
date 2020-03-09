@@ -31,20 +31,22 @@ $ sudo docker-compose build
 $ sudo docker-compose up --no-start
 ```
 
-## Test
+## Run
 
-1. Plug Xbox controller to PC
-2. Launch commands at `moving_object_detector/docker` directory:
+1. Launch commands at `moving_object_detector/docker` directory:
 
    ```shell
    $ xhost +local:root
    $ sudo docker-compose start
    ```
 
-   Then Gazebo and rqt windows will be opened. At first start, Gazebo takes some time to download some models.
+   Then four containers are launched:
+   * ROS master
+   * RViz
+   * rqt
+   * Terminal
 
-   Robots in Gazebo is controlled by A + left/right stick.
-3. Stop test by:
+2. Stop containers by:
 
    ```shell
    $ sudo docker-compose stop
