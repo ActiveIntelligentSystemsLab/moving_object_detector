@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 
 ### ROS installation ###
 
@@ -92,7 +92,16 @@ RUN bash -c "source /opt/ros/melodic/setup.bash && \
 RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
 RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
 
+### Install ZED SDK and the ROS wrapper
+
+WORKDIR /root
+RUN wget -O zed_installer.run https://download.stereolabs.com/zedsdk/3.0/cu102/ubuntu18
+RUN chmod +x zed_installer.run
+RUN ./zed_installer.run -- silent
+
 ### Build ROS packages in catkin workspace ###
+
+WORKDIR /root/catkin_ws
 
 # For PWC-Net ROS
 RUN git clone https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow.git src/ros_optical_flow
@@ -117,13 +126,17 @@ RUN git clone https://github.com/fujimo-t/gazebo_factory_world.git src/gazebo_fa
 RUN git clone https://github.com/fujimo-t/mars_rover_description.git src/mars_rover_description
 RUN git clone https://github.com/fujimo-t/turtlebot3_stereo_description.git src/turtlebot3_stereo_description
 
+# ROS wrapper for ZED Stereo Camera
+RUN git clone https://github.com/stereolabs/zed-ros-wrapper.git src/zed
+
+
 # Install dependencies
 # Newer CUDA was installed in base image, so rosdep keys of CUDA are skipped
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
                   rosdep install --from-paths src -r -y --skip-keys=\"nvidia-cuda-dev nvidia-cuda\""
 # Build
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
-                  catkin_make"
+                  catkin_make -DCMAKE_BUILD_TYPE=Release"
 
 # From https://github.com/NVIDIA/nvidia-container-runtime/blob/master/README.md
 # compute: required for CUDA and OpenCL applications.
