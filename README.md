@@ -9,7 +9,7 @@ This contains ROS packages to detect moving objects from stereo images.
 * NVIDIA GPU
 * [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
-  To move camera in Gazebo simulator.
+  To move a camera and a moving object in Gazebo simulator.
   
   This can be replaced with other controller supported by [joy package](http://wiki.ros.org/joy).
   But maybe change of key assignment is needed.
@@ -53,6 +53,20 @@ $ sudo docker-compose up --no-start
    ```shell
    $ sudo docker-compose stop
    ```
+
+### Detection in Gazebo simulator
+
+Plug Xbox controller and run below command in the terminal:
+
+```shell
+$ roslaunch moving_object_detector_launch gazebo_sim.launch
+```
+
+And open new terminal tab (or use byobu) and run below command:
+
+```shell
+$ roslaunch moving_object_detector_launch gazebo_moving_object_detection.launch
+```
 
 ## contained packages
 
