@@ -45,6 +45,8 @@ $ sudo docker-compose up --no-start
    * RViz
    * rqt
    * Terminal
+     * To run nodes and commands, edit files
+     * Installed tools: byobu(tmux), gdb, htop and vim
 
 2. Stop containers by:
 
