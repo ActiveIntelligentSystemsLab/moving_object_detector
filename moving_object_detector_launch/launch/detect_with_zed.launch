@@ -3,14 +3,7 @@
 <launch>
   <arg name="cropped_width" value="1242"/>
   <arg name="cropped_height" value="376"/>
-
-  <arg name="bag_file" value="stereo_with_walking_kiridasi.bag"/>
-  <!--
-  <arg name="bag_file" value="tracking_cat.bag"/>
-  -->
-  <arg name="image_transport" value="compressed"/>
-
-  <node name="zed_bag_player" pkg="rosbag" type="play" args="--pause --bags $(find moving_object_detector_launch)/bag/$(arg bag_file)"/>
+  <arg name="image_transport" value="raw"/>
 
   <node name="left_crop" pkg="image_crop" type="image_crop">
     <param name="target_width" value="$(arg cropped_width)"/>
