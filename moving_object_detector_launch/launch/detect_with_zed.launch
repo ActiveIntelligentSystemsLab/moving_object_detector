@@ -20,7 +20,7 @@
     <remap from="image" to="/zed/zed_node/right/image_rect_color"/>
   </node>
 
-  <include file="$(find moving_object_detector_launch)/launch/moving_object_detection.launch">
+  <include file="$(find moving_object_detector_launch)/launch/detect_moving_object.launch">
     <arg name="use_sim_time" value="false"/>
     <arg name="image_transport" value="raw"/>
     <arg name="left_image_topic" value="/left_crop/cropped_image"/>

@@ -66,7 +66,7 @@ $ roslaunch moving_object_detector_launch gazebo_sim.launch
 And open new terminal tab (or use byobu) and run below command:
 
 ```shell
-$ roslaunch moving_object_detector_launch gazebo_moving_object_detection.launch
+$ roslaunch moving_object_detector_launch detect_with_gazebo.launch
 ```
 
 Move stereo camera by A+Left stick and move an object by A+Right stick.
