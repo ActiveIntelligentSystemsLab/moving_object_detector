@@ -53,11 +53,6 @@ private:
   image_transport::Publisher velocity_image_pub_;
   image_transport::Publisher flow_residual_pub_;
 
-  image_transport::Publisher left_previous_pub_;
-  image_transport::Publisher left_now_pub_;
-  image_transport::Publisher right_now_pub_;
-  image_transport::Publisher right_previous_pub_;
-
   /**
    * \brief Client for EstimateMotionFromStereo service
    */
@@ -70,8 +65,6 @@ private:
    * \brief Client for CalculateDenseOpticalFlow service
    */
   ros::ServiceClient optflow_service_client_;
-
-  ros::ServiceClient pause_service_client_;
 
   // Stereo image and camera info subscribers
   image_transport::SubscriberFilter left_image_sub_;
@@ -88,8 +81,6 @@ private:
   using ReconfigureServer = dynamic_reconfigure::Server<scene_flow_constructor::SceneFlowConstructorConfig>;
   std::shared_ptr<ReconfigureServer> reconfigure_server_;
   ReconfigureServer::CallbackType reconfigure_func_;
-
-  bool bag_auto_pause_;
   
   /**
    * \brief Difference[pixel] between optical flow and calculated static optical flow treated as dynamic pixel
@@ -103,7 +94,6 @@ private:
   double max_color_velocity_;
 
   sensor_msgs::ImageConstPtr previous_left_image_;
-  sensor_msgs::ImageConstPtr previous_right_image_;
   std::shared_ptr<DisparityImageProcessor> disparity_previous_;
   std::shared_ptr<DisparityImageProcessor> disparity_now_;
   optical_flow_msgs::DenseOpticalFlowPtr left_flow_;
