@@ -77,17 +77,4 @@
     <param name="red" value="0.0"/>
     <param name="green" value="1.0"/>
   </node>
-
-  <node name="project_moving_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
-    <remap from="input_image" to="$(arg left_image_topic)"/>
-    <remap from="moving_objects" to="/clusterer/moving_objects"/>
-  </node>
-  <node name="project_tracked_object_on_image" pkg="project_moving_objects_on_image" type="project_moving_objects_on_image">
-    <remap from="input_image" to="$(arg left_image_topic)"/>
-    <remap from="moving_objects" to="/moving_object_tracker/tracked_moving_objects"/>
-    <remap from="moving_objects_image" to="tracked_objects_image"/>
-
-    <param name="red" value="0"/>
-    <param name="green" value="255"/>
-  </node>
 </launch>

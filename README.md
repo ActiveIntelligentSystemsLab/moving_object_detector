@@ -93,10 +93,6 @@ Move stereo camera by A+Left stick and move an object by A+Right stick.
 
   Track moving objects by Kalman filter
 
-* project_moving_objects_on_image
-
-  Visualize moving_object_msgs with input image
-
 * scene_flow_constructor
 
   Construct scene flow from camera transform, disparity image and optical flow
