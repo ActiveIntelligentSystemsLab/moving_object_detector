@@ -69,6 +69,8 @@ And open new terminal tab (or use byobu) and run below command:
 $ roslaunch moving_object_detector_launch gazebo_moving_object_detection.launch
 ```
 
+Move stereo camera by A+Left stick and move an object by A+Right stick.
+
 ## contained packages
 
 * disparity_image_proc
