@@ -1,0 +1,146 @@
+FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
+
+### ROS installation ###
+
+# Setup timezone
+RUN echo 'Etc/UTC' > /etc/timezone && \
+    ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    apt-get update && apt-get install -y tzdata
+
+# Install packages to add ROS repository
+RUN apt-get install -y dirmngr gnupg2
+# Add ROS repository
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu bionic main" > /etc/apt/sources.list.d/ros-latest.list'
+# Keys for ROS repository
+RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+# Install ROS bootstrap tools
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    python-rosdep \
+    python-rosinstall \
+    python-vcstools
+# Set up rosdep
+RUN rosdep init
+RUN rosdep update
+# Install ROS-Base packages
+RUN apt-get update && apt-get install -y ros-melodic-desktop-full
+
+# Load ROS environment at each run
+COPY ./ros_entrypoint.sh /
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
+
+### Upgrade Gazebo ###
+
+# Upgrade Gazebo to resolve access error to api.ignition.org
+# See http://answers.gazebosim.org/question/22263/error-in-rest-request-for-accessing-apiignitionorg/
+RUN apt-get update && \
+    apt-get install -y wget
+RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list && \
+    wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
+RUN apt-get update && \
+    apt-get install -y gazebo9 \
+                       libignition-cmake-dev \
+                       libignition-common \
+                       libignition-common-dev \
+                       libignition-fuel-tools1-1 \
+                       libignition-fuel-tools1-dev \
+                       libsdformat6 \
+                       libsdformat6-dev \
+                       sdformat-sdf
+
+### Build PWC-Net ###
+
+# Install packages to build caffe
+RUN apt-get update && apt-get install -y \
+    libprotobuf-dev \
+    libleveldb-dev \
+    libsnappy-dev \
+    libopencv-dev \
+    libhdf5-serial-dev \
+    protobuf-compiler \
+    libatlas-base-dev \
+    python-dev \
+    libgflags-dev \
+    libgoogle-glog-dev \
+    liblmdb-dev
+RUN apt-get update && apt-get install -y --no-install-recommends libboost-all-dev
+
+# Download Caffe for FlowNet2
+RUN cd /root && git clone https://github.com/xmfbit/flownet2
+# Download PWC-Net
+RUN cd /root && git clone https://github.com/NVlabs/PWC-Net.git
+# Patch to Caffe from PWC-Net
+RUN cp /root/PWC-Net/Caffe/warping_code/warp_layer.cu /root/PWC-Net/Caffe/warping_code/warp_layer.cpp /root/flownet2/src/caffe/layers/
+RUN cp /root/PWC-Net/Caffe/warping_code/warp_layer.hpp /root/flownet2/include/caffe/layers/
+# Set make config to Caffe
+COPY pwc/caffe/Makefile.config /root/flownet2/
+# Build Caffe for PWC-Net
+RUN cd /root/flownet2 && make -j4 all
+
+### Install tools for development
+RUN apt-get update && \
+    apt-get install -y vim byobu gdb htop lxterminal
+
+### Create catkin workspace ###
+
+RUN mkdir -p /root/catkin_ws/src
+WORKDIR /root/catkin_ws
+RUN bash -c "source /opt/ros/melodic/setup.bash && \
+             catkin_make -DCMAKE_BUILD_TYPE=Release"
+
+# Load ROS environment at docker exec bash
+RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
+RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
+
+### Install ZED SDK and the ROS wrapper
+
+WORKDIR /root
+RUN wget -O zed_installer.run https://download.stereolabs.com/zedsdk/3.0/cu102/ubuntu18
+RUN chmod +x zed_installer.run
+RUN ./zed_installer.run -- silent
+
+### Build ROS packages in catkin workspace ###
+
+WORKDIR /root/catkin_ws
+
+# For PWC-Net ROS
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow.git src/ros_optical_flow
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/pwc_net_ros.git src/pwc_net_ros
+# Create symbolic link to trained weight
+RUN ln -s /root/PWC-Net/Caffe/model/pwc_net.caffemodel /root/catkin_ws/src/pwc_net_ros/model/pwc_net.caffemodel
+# Patch to Caffe model
+RUN patch -o /root/catkin_ws/src/pwc_net_ros/model/pwc_net_test.prototxt /root/PWC-Net/Caffe/model/pwc_net_test.prototxt /root/catkin_ws/src/pwc_net_ros/model/pwc_net_test.diff
+
+# For sgm_gpu ROS
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros.git src/sgm_gpu_ros
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_srv.git src/disparity_srv
+
+# For moving_object_detector
+RUN git clone https://github.com/srv/viso2.git src/viso2
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/moving_object_detector.git src/moving_object_detector
+RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_visualize.git src/disparity_visualize
+
+# For simulation on Gazebo
+RUN git clone https://github.com/fujimo-t/moving_object_simulator.git src/moving_object_simulator
+RUN git clone https://github.com/fujimo-t/gazebo_factory_world.git src/gazebo_factory_world
+RUN git clone https://github.com/fujimo-t/mars_rover_description.git src/mars_rover_description
+RUN git clone https://github.com/fujimo-t/turtlebot3_stereo_description.git src/turtlebot3_stereo_description
+
+# ROS wrapper for ZED Stereo Camera
+RUN git clone https://github.com/stereolabs/zed-ros-wrapper.git src/zed
+
+
+# Install dependencies
+# Newer CUDA was installed in base image, so rosdep keys of CUDA are skipped
+RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
+                  rosdep install --from-paths src -r -y --skip-keys=\"nvidia-cuda-dev nvidia-cuda\""
+# Build
+RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
+                  catkin_make -DCMAKE_BUILD_TYPE=Release"
+
+# From https://github.com/NVIDIA/nvidia-container-runtime/blob/master/README.md
+# compute: required for CUDA and OpenCL applications.
+# display: required for leveraging X11 display.
+# graphics: required for running OpenGL and Vulkan applications.
+# utility: required for using nvidia-smi and NVML.
+ENV NVIDIA_DRIVER_CAPABILITIES compute,display,graphics,utility

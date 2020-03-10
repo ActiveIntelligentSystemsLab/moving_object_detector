@@ -2,10 +2,6 @@
 
 This contains ROS packages to detect moving objects from stereo images.
 
-## System overview
-
-![overview](system_overview.png)
-
 ## Prerequisite
 
 ### Hardware
@@ -13,48 +9,19 @@ This contains ROS packages to detect moving objects from stereo images.
 * NVIDIA GPU
 * [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
 
+  To move a camera and a moving object in Gazebo simulator.
+  
   This can be replaced with other controller supported by [joy package](http://wiki.ros.org/joy).
   But maybe change of key assignment is needed.
 
 ### Software
 
-* Docker
-* Docker Compose (version >= 1.19)
-* [NVIDIA Container Toolkit with nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#nvidia-container-toolkit)
-
+* [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+* [Docker Compose](https://docs.docker.com/compose/install/)
+* [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker#quickstart)
+* [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#quickstart)
+  
   nvidia-docker2 is deprecated now but it is needed to use Docker Compose with NVIDIA GPU.
-
-## Already tested environment
-
-### Environment 1
-
-#### Hardware
-
-* NVIDIA RTX 2070
-* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
-
-#### Software
-
-* Ubuntu 19.04
-* Docker 19.03
-* Docker Compose 1.21
-* nvidia-docker2 2.2.1
-* nvidia-container-toolkit 1.0.3
-
-### Environment 2
-
-#### Hardware
-
-* NVIDIA GTX 1060
-* [Xbox 360 Controller](https://www.microsoft.com/accessories/en-ww/products/gaming/xbox-360-controller-for-windows/52a-00004)
-
-#### Software
-
-* Ubuntu 18.04
-* Docker 19.03
-* Docker Compose 1.24
-* nvidia-docker2 2.2.1
-* nvidia-container-toolkit 1.0.3
 
 ## Build
 
@@ -65,36 +32,44 @@ $ sudo docker-compose build
 $ sudo docker-compose up --no-start
 ```
 
-## Test
+## Run
 
-1. Plug Xbox controller to PC
-2. Launch commands at `moving_object_detector/docker` directory:
+1. Launch commands at `moving_object_detector/docker` directory:
 
    ```shell
    $ xhost +local:root
    $ sudo docker-compose start
    ```
 
-   Then Gazebo and rqt windows will be opened. At first start, Gazebo takes some time to download some models.
+   Then four containers are launched:
+   * ROS master
+   * RViz
+   * rqt
+   * Terminal
+     * To run nodes and commands, edit files
+     * Installed tools: byobu(tmux), gdb, htop and vim
 
-   Robots in Gazebo is controlled by A + left/right stick.
-3. Stop test by:
+2. Stop containers by:
 
    ```shell
    $ sudo docker-compose stop
    ```
 
-## Test with Sintel Dataset
+### Detection in Gazebo simulator
 
-You can also use [MPI Sintel Stereo Training Data](http://sintel.is.tue.mpg.de/stereo) as input instead of Gazebo simulator.
-But be careful, building docker image for Sintel will take a lot of time to download the dataset.
-
-Launch commands at `moving_object_detector/docker` directory:
+Plug Xbox controller and run below command in the terminal:
 
 ```shell
-$ xhost +local:root
-$ sudo docker-compose -f docker-compose.yml -f docker-compose.sintel.yml
+$ roslaunch moving_object_detector_launch gazebo_sim.launch
 ```
+
+And open new terminal tab (or use byobu) and run below command:
+
+```shell
+$ roslaunch moving_object_detector_launch gazebo_moving_object_detection.launch
+```
+
+Move stereo camera by A+Left stick and move an object by A+Right stick.
 
 ## contained packages
 
