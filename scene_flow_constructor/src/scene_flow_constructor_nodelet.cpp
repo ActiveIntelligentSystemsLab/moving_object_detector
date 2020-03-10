@@ -58,12 +58,6 @@ void SceneFlowConstructorNodelet::onInit() {
   velocity_image_pub_ = image_transport_->advertise("scene_flow_image", 1);
   flow_residual_pub_ = image_transport_->advertise("flow_residual", 1);
 
-  // Publisher for input images
-  left_previous_pub_ = image_transport_->advertise("left_previous", 1);
-  left_now_pub_ = image_transport_->advertise("left_now", 1);
-  right_previous_pub_ = image_transport_->advertise("right_previous", 1);
-  right_now_pub_ = image_transport_->advertise("right_now", 1);
-
   optflow_pub_ = private_node_handle.advertise<optical_flow_msgs::DenseOpticalFlow>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
   pc_with_relative_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow_relative", 1);
@@ -513,22 +507,12 @@ void SceneFlowConstructorNodelet::stereoCallback(const sensor_msgs::ImageConstPt
   if (construct_thread_.joinable())
     construct_thread_.join();
 
-  if (left_now_pub_.getNumSubscribers() > 0)
-    left_now_pub_.publish(left_image);
-  if (right_now_pub_.getNumSubscribers() > 0)
-    right_now_pub_.publish(right_image);
-  if (left_previous_pub_.getNumSubscribers() > 0 && previous_left_image_)
-    left_previous_pub_.publish(previous_left_image_);
-  if (right_now_pub_.getNumSubscribers() > 0 && previous_right_image_)
-    right_previous_pub_.publish(previous_right_image_);
-
   construct_thread_ = std::thread(&SceneFlowConstructorNodelet::construct, this, disparity_now_, disparity_previous_, left_flow_, transform_prev2now_);
 
   ros::WallDuration process_time = ros::WallTime::now() - start_process;
   NODELET_INFO("process time: %f", process_time.toSec());
 
   previous_left_image_ = left_image;
-  previous_right_image_ = right_image;
   disparity_previous_ = disparity_now_;
 }
 
