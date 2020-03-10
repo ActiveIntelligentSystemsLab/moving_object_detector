@@ -16,10 +16,11 @@ This contains ROS packages to detect moving objects from stereo images.
 
 ### Software
 
-* Docker
-* Docker Compose (version >= 1.19)
-* [NVIDIA Container Toolkit with nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#nvidia-container-toolkit)
-
+* [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+* [Docker Compose](https://docs.docker.com/compose/install/)
+* [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker#quickstart)
+* [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#quickstart)
+  
   nvidia-docker2 is deprecated now but it is needed to use Docker Compose with NVIDIA GPU.
 
 ## Build
