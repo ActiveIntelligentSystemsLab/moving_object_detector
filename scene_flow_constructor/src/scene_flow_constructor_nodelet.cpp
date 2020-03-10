@@ -41,14 +41,6 @@ void SceneFlowConstructorNodelet::onInit() {
   optflow_service_client_ = node_handle.serviceClient<optical_flow_srvs::CalculateDenseOpticalFlow>("calculate_dense_optical_flow");
   optflow_service_client_.waitForExistence();
 
-  // Auto pause bag after StereoCallback()
-  private_node_handle.param("bag_auto_pause", bag_auto_pause_, false);
-  if (bag_auto_pause_)
-  {
-    pause_service_client_ = node_handle.serviceClient<std_srvs::SetBool>("pause_bag");
-    pause_service_client_.waitForExistence();
-  }
-
   // Dynamic reconfigure
   reconfigure_server_.reset(new ReconfigureServer(private_node_handle));
   reconfigure_func_ = boost::bind(&SceneFlowConstructorNodelet::reconfigureCB, this, _1, _2);
@@ -210,15 +202,6 @@ void SceneFlowConstructorNodelet::construct(std::shared_ptr<DisparityImageProces
     
     if (flow_residual_pub_.getNumSubscribers() > 0)
       publishFlowResidual(left_static_flow, left_flow, time_now);
-  }
-
-  if (bag_auto_pause_)
-  {
-    // service call
-    std_srvs::SetBool bag_pause;
-    bag_pause.request.data = true;
-    pause_service_client_.call(bag_pause);
-    ROS_INFO("Stop bag play");
   }
 }
 
