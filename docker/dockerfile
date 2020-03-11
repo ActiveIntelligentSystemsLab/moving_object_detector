@@ -143,4 +143,5 @@ RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
 # display: required for leveraging X11 display.
 # graphics: required for running OpenGL and Vulkan applications.
 # utility: required for using nvidia-smi and NVML.
-ENV NVIDIA_DRIVER_CAPABILITIES compute,display,graphics,utility
+# video: required for using the Video Codec SDK. Required by ZED SDK.
+ENV NVIDIA_DRIVER_CAPABILITIES compute,display,graphics,utility,video
