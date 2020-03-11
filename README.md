@@ -32,44 +32,54 @@ $ sudo docker-compose build
 $ sudo docker-compose up --no-start
 ```
 
-## Run
+## How to use
 
-1. Launch commands at `moving_object_detector/docker` directory:
+### Start containers
 
-   ```shell
-   $ xhost +local:root
-   $ sudo docker-compose start
-   ```
+Launch below commands at `moving_object_detector/docker` directory:
 
-   Then four containers are launched:
-   * ROS master
-   * RViz
-   * rqt
-   * Terminal
-     * To run nodes and commands, edit files
-     * Installed tools: byobu(tmux), gdb, htop and vim
+```shell
+$ xhost +local:root
+$ sudo docker-compose start
+```
 
-2. Stop containers by:
+Then four containers are launched:
+* ROS master
+* RViz
+* rqt
+* Terminal
+  * To run nodes and commands, edit files
+  * Installed tools: byobu(tmux), gdb, htop and vim
 
-   ```shell
-   $ sudo docker-compose stop
-   ```
+### Detection with Gazebo simulator
 
-### Detection in Gazebo simulator
-
-Plug Xbox controller and run below command in the terminal:
+Plug Xbox controller *before start containers* and run below command in the container terminal:
 
 ```shell
 $ roslaunch moving_object_detector_launch gazebo_sim.launch
 ```
 
-And open new terminal tab (or use byobu) and run below command:
+Then open new terminal tab (or use byobu) and run below command:
 
 ```shell
 $ roslaunch moving_object_detector_launch detect_with_gazebo.launch
 ```
 
 Move stereo camera by A+Left stick and move an object by A+Right stick.
+
+### Detection with ZED Stereo Camera
+
+Plug ZED *before start containers* and run below command in the container terminal:
+
+```shell
+$ roslaunch moving_object_detector_launch detect_with_gazebo.launch
+```
+
+### Stop containers
+
+```shell
+$ sudo docker-compose stop
+```
 
 ## contained packages
 
