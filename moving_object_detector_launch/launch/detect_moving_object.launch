@@ -5,8 +5,6 @@
   <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
   <arg name="base_link_frame_id" default="stereo_robot/base_link"/>
-  <arg name="image_width" default="1242"/>
-  <arg name="image_height" default="376"/>
   <arg name="bag_auto_pause" default="false"/>
   <arg name="pause_bag_service" default="empty"/>
 
@@ -40,10 +38,7 @@
     <remap from="pause_bag" to="$(arg pause_bag_service)"/>
   </node>
 
-  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node">
-    <param name="image_width" value="$(arg image_width)"/>
-    <param name="image_height" value="$(arg image_height)"/>
-  </node>
+  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
   <node name="sgm" pkg="sgm_gpu" type="sgm_gpu_server">
     <param name="check_consistency" value="true"/>
   </node>
