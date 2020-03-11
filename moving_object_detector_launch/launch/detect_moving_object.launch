@@ -5,8 +5,6 @@
   <arg name="left_image_topic" default="/stereo_camera/left/image_rect_color"/>
   <arg name="right_image_topic" default="/stereo_camera/right/image_rect_color"/>
   <arg name="base_link_frame_id" default="stereo_robot/base_link"/>
-  <arg name="bag_auto_pause" default="false"/>
-  <arg name="pause_bag_service" default="empty"/>
 
   <!-- Set true if you use simulator -->
   <arg name="use_sim_time" default="false"/>
@@ -34,8 +32,6 @@
     <remap from="estimate_disparity" to="sgm/estimate_disparity"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
-    <param name="bag_auto_pause" value="$(arg bag_auto_pause)"/>
-    <remap from="pause_bag" to="$(arg pause_bag_service)"/>
   </node>
 
   <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
