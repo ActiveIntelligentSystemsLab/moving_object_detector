@@ -16,7 +16,7 @@
   <arg name="nodelet_manager_name" value="nodelet_manager"/>
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
 
-  <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server" output="screen">
+  <node name="viso2_stereo_server" pkg="viso2_stereo_server" type="viso2_stereo_server">
     <param name="base_link_frame_id" value="$(arg base_link_frame_id)"/>
     <param name="match_radius" value="600"/>
     <param name="inlier_threshold" value="3.0"/>
