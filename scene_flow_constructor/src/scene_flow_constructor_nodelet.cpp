@@ -1,6 +1,7 @@
 #include <pluginlib/class_list_macros.h>
 
 #include "scene_flow_constructor_nodelet.h"
+#include "odometry_params.h"
 
 PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, nodelet::Nodelet)
 
@@ -8,13 +9,14 @@ PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, node
 #include <cv_bridge/cv_bridge.h>
 #include <disparity_srv/EstimateDisparity.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <image_geometry/stereo_camera_model.h>
 #include <image_transport/camera_common.h>
 #include <optical_flow_srvs/CalculateDenseOpticalFlow.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_srvs/SetBool.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <viso2_stereo_server/EstimateMotionFromStereo.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // Non-ROS headers
 #include <cmath>
@@ -29,12 +31,18 @@ void SceneFlowConstructorNodelet::onInit() {
   ros::NodeHandle &node_handle = getNodeHandle();
   ros::NodeHandle &private_node_handle = getPrivateNodeHandle();
 
+  // Load parameters for visual odometry
+  ros::NodeHandle visual_odometry_nh(private_node_handle, "visual_odometry");
+  odometry_params::loadParams(visual_odometry_nh, visual_odometer_params_);
+  visual_odometry_nh.param("base_link_frame_id", base_link_frame_id_, std::string("base_link"));
+  visual_odometry_nh.param("odom_frame_id", odom_frame_id_, std::string("odom"));
+
+  integrated_pose_.setIdentity();
+  tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
+
   image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
 
   // Prepare service clients
-  motion_service_client_ = node_handle.serviceClient<viso2_stereo_server::EstimateMotionFromStereo>("estimate_motion_from_stereo");
-  motion_service_client_.waitForExistence();
-
   disparity_service_client_ = node_handle.serviceClient<disparity_srv::EstimateDisparity>("estimate_disparity");
   disparity_service_client_.waitForExistence();
 
@@ -354,21 +362,42 @@ void SceneFlowConstructorNodelet::constructVelocityColoredPC(const pcl::PointClo
 
 void SceneFlowConstructorNodelet::estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
 {
-  viso2_stereo_server::EstimateMotionFromStereo::Request request;
-  request.left_image = *left_image;
-  request.right_image = *right_image;
-  request.right_camera_info = *right_camera_info;
-  request.left_camera_info = *left_camera_info;
+  if (!visual_odometer_)
+    initializeOdometer(*left_camera_info, *right_camera_info);
 
-  viso2_stereo_server::EstimateMotionFromStereo::Response response;
-  bool success = motion_service_client_.call(request, response);
+  // convert images
+  cv_bridge::CvImageConstPtr cv_left = cv_bridge::toCvCopy(left_image, sensor_msgs::image_encodings::MONO8);
+  cv_bridge::CvImageConstPtr cv_right = cv_bridge::toCvCopy(right_image, sensor_msgs::image_encodings::MONO8);
 
-  if (success && !response.first_call && response.success)
+  // assertion for input images
+  ROS_ASSERT(cv_left->image.step[0] == cv_right->image.step[0]);
+  ROS_ASSERT(cv_left->image.rows == cv_right->image.rows);
+  ROS_ASSERT(cv_left->image.cols == cv_left->image.cols);
+
+  // estimate camera motion
+  int32_t dims[] = {cv_left->image.cols, cv_left->image.rows, static_cast<int32_t>(cv_left->image.step[0])};
+  bool success = visual_odometer_->process(cv_left->image.data, cv_right->image.data, dims);
+
+  if (success)
   {
+    // Left camera motion from previous frame to current frame
+    Matrix camera_motion = visual_odometer_->getMotion();
+
+    tf2::Matrix3x3 camera_rotation
+    (
+      camera_motion.val[0][0], camera_motion.val[0][1], camera_motion.val[0][2],
+      camera_motion.val[1][0], camera_motion.val[1][1], camera_motion.val[1][2],
+      camera_motion.val[2][0], camera_motion.val[2][1], camera_motion.val[2][2]
+    );
+    tf2::Vector3 camera_translation(camera_motion.val[0][3], camera_motion.val[1][3], camera_motion.val[2][3]);
+    tf2::Transform tf2_camera_motion(camera_rotation, camera_translation);
+
+    integrateAndBroadcastTF(tf2_camera_motion.inverse(), left_image->header.stamp);
+
     transform_prev2now_.reset(new geometry_msgs::Transform());
-    *transform_prev2now_ = response.left_previous_to_current;
+    *transform_prev2now_ = tf2::toMsg(tf2_camera_motion);
   }
-  else if(!response.first_call)
+  else
   {
     transform_prev2now_.reset();
     NODELET_ERROR_STREAM("Visual odometry is failed\nInput timestamp: " << left_image->header.stamp);
@@ -426,6 +455,52 @@ void SceneFlowConstructorNodelet::initializeVelocityPC(pcl::PointCloud<pcl::Poin
   default_value.vy = std::nanf("");
   default_value.vz = std::nanf("");
   velocity_pc = pcl::PointCloud<pcl::PointXYZVelocity>(image_width_, image_height_, default_value);
+}
+
+void SceneFlowConstructorNodelet::initializeOdometer(const sensor_msgs::CameraInfo& l_info_msg, const sensor_msgs::CameraInfo& r_info_msg)
+{
+  // read calibration info from camera info message
+  // to fill remaining parameters
+  image_geometry::StereoCameraModel model;
+  model.fromCameraInfo(l_info_msg, r_info_msg);
+  visual_odometer_params_.base      = model.baseline();
+  visual_odometer_params_.calib.cu  = model.left().cx();
+  visual_odometer_params_.calib.cv  = model.left().cy();
+  visual_odometer_params_.calib.f   = model.left().fx();
+
+  visual_odometer_.reset(new VisualOdometryStereo(visual_odometer_params_));
+  NODELET_DEBUG_STREAM("Initialized libviso2 stereo odometry with the following parameters:\n" << visual_odometer_params_);
+}
+
+void SceneFlowConstructorNodelet::integrateAndBroadcastTF(const tf2::Transform& delta_transform, const ros::Time& timestamp)
+{
+  integrated_pose_ *= delta_transform;
+
+  // transform integrated pose to base frame
+  std::string error_msg;
+  tf2::Stamped<tf2::Transform> base_to_sensor;
+  if (tf_buffer_.canTransform(base_link_frame_id_, camera_frame_id_, timestamp, &error_msg))
+  {
+    geometry_msgs::TransformStamped base_to_sensor_msg;
+    base_to_sensor_msg = tf_buffer_.lookupTransform(base_link_frame_id_, camera_frame_id_, timestamp);
+    tf2::fromMsg(base_to_sensor_msg, base_to_sensor);
+  }
+  else
+  {
+    NODELET_ERROR_THROTTLE(10.0, 
+      "The tf from '%s' to '%s' does not seem to be available, will assume it as identity!",
+      base_link_frame_id_.c_str(),
+      camera_frame_id_.c_str()
+    );
+    NODELET_ERROR_THROTTLE(10.0, "Transform error: %s", error_msg.c_str());
+    base_to_sensor.setIdentity();
+  }
+
+  tf2::Transform base_transform = base_to_sensor * integrated_pose_ * base_to_sensor.inverse();
+
+  geometry_msgs::TransformStamped base_transform_msg = tf2::toMsg(tf2::Stamped<tf2::Transform>(base_transform, timestamp, odom_frame_id_));
+  base_transform_msg.child_frame_id = base_link_frame_id_;
+  tf_broadcaster_.sendTransform(base_transform_msg);
 }
 
 void SceneFlowConstructorNodelet::publishStaticOpticalFlow(cv::Mat& left_static_flow, const ros::Time &time_now, const ros::Time &time_previous)

@@ -70,11 +70,9 @@ Input stereo image and camera info.
 
 ### Called services
 
-This node obtain camera motion, disparity and optical flow from external service servers.
+This node obtain disparity and optical flow from external service servers.
 
 * `calculate_dense_optical_flow` ([optical_flow_srvs/CalculateDenseOpticalFlow](https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow/blob/master/optical_flow_srvs/srv/CalculateDenseOpticalFlow.srv))
-
-* `estimate_motion_from_stereo` ([viso2_stereo_server/EstimateMotionFromStereo](../viso2_stereo_server/srv/EstimateMotionFromStereo.srv))
 
 * `estimate_disparity` ([disparity_srv/EstimateDisparity](https://github.com/ActiveIntelligentSystemsLab/disparity_srv/blob/master/srv/EstimateDisparity.srv))
 

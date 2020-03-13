@@ -17,6 +17,10 @@
 #include <stereo_msgs/DisparityImage.h>
 #include <scene_flow_constructor/pcl_point_xyz_velocity.h>
 #include <scene_flow_constructor/SceneFlowConstructorConfig.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+#include <viso_stereo.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -53,10 +57,6 @@ private:
   image_transport::Publisher velocity_image_pub_;
   image_transport::Publisher flow_residual_pub_;
 
-  /**
-   * \brief Client for EstimateMotionFromStereo service
-   */
-  ros::ServiceClient motion_service_client_;
   /**
    * \brief Client for EstimateDisparity service
    */
@@ -105,6 +105,28 @@ private:
   int image_height_;
 
   std::shared_ptr<image_geometry::PinholeCameraModel> left_cam_model_;
+
+  /**
+   * \brief Stereo visual odometry class from libviso2
+   */
+  std::shared_ptr<VisualOdometryStereo> visual_odometer_;
+  /**
+   * \brief Parameters used to initialize visual_odometer_
+   */
+  VisualOdometryStereo::parameters visual_odometer_params_;
+
+  // Frame IDs for visual odometry
+  std::string base_link_frame_id_;
+  std::string odom_frame_id_;
+
+  tf2_ros::TransformBroadcaster tf_broadcaster_;
+  tf2_ros::Buffer tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+  /**
+   * \brief Camera pose which camera motions of each frame are cumulated
+   */
+  tf2::Transform integrated_pose_;
 
   /**
    * \brief Calculate optical flow of left frame with static assumption
@@ -212,12 +234,17 @@ private:
     return true;
   }
 
+  void initializeOdometer(const sensor_msgs::CameraInfo& l_info_msg, const sensor_msgs::CameraInfo& r_info_msg);
+
   /**
    * \brief Resize velocity pointcloud and fill each point by default value
    *
    * \param velocity_pc Target velocity pointcloud
    */
   void initializeVelocityPC(pcl::PointCloud<pcl::PointXYZVelocity> &velocity_pc);
+
+  void integrateAndBroadcastTF(const tf2::Transform& delta_transform, const ros::Time& timestamp);
+
   inline bool isValid(const pcl::PointXYZ &point)
   {
     if (std::isnan(point.x))
@@ -228,6 +255,7 @@ private:
 
     return true;
   }
+
 
   /**
    * \brief Publish residual image between estimated optical flow and static optical flow

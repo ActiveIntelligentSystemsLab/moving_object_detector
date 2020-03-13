@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   image_geometry
   image_transport
+  libviso2
   message_filters
   message_generation
   nodelet
@@ -20,8 +21,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   stereo_msgs
+  tf2
   tf2_eigen
-  viso2_stereo_server
+  tf2_geometry_msgs
+  tf2_ros
 )
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
@@ -51,9 +54,7 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}_nodelet.cpp
-)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}_nodelet.cpp)
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

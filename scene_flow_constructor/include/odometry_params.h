@@ -1,8 +1,11 @@
+#ifndef ODOMETRY_PARAMS_H
+#define ODOMETRY_PARAMS_H
+
 #include <ros/ros.h>
 
 #include <viso_stereo.h>
 
-namespace viso2_stereo_server
+namespace scene_flow_constructor
 {
 
 namespace odometry_params
@@ -99,5 +102,6 @@ std::ostream& operator<<(std::ostream& out, const VisualOdometryStereo::paramete
   return out;
 }
 
-} // end of namespace
+} // namespace scene_flow_constructor
 
+#endif
