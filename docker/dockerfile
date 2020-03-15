@@ -92,7 +92,7 @@ RUN bash -c "source /opt/ros/melodic/setup.bash && \
 RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
 RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
 
-### Install ZED SDK and the ROS wrapper
+### Install ZED SDK
 
 WORKDIR /root
 RUN wget -O zed_installer.run https://download.stereolabs.com/zedsdk/3.0/cu102/ubuntu18
@@ -113,12 +113,10 @@ RUN patch -o /root/catkin_ws/src/pwc_net_ros/model/pwc_net_test.prototxt /root/P
 
 # For sgm_gpu ROS
 RUN git clone https://github.com/ActiveIntelligentSystemsLab/sgm_gpu_ros.git src/sgm_gpu_ros
-RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_srv.git src/disparity_srv
 
 # For moving_object_detector
 RUN git clone https://github.com/srv/viso2.git src/viso2
 RUN git clone https://github.com/ActiveIntelligentSystemsLab/moving_object_detector.git src/moving_object_detector
-RUN git clone https://github.com/ActiveIntelligentSystemsLab/disparity_visualize.git src/disparity_visualize
 
 # For simulation on Gazebo
 RUN git clone https://github.com/fujimo-t/moving_object_simulator.git src/moving_object_simulator
@@ -128,7 +126,6 @@ RUN git clone https://github.com/fujimo-t/turtlebot3_stereo_description.git src/
 
 # ROS wrapper for ZED Stereo Camera
 RUN git clone https://github.com/stereolabs/zed-ros-wrapper.git src/zed
-
 
 # Install dependencies
 # Newer CUDA was installed in base image, so rosdep keys of CUDA are skipped
@@ -145,3 +142,4 @@ RUN /bin/bash -c "source /opt/ros/melodic/setup.bash && \
 # utility: required for using nvidia-smi and NVML.
 # video: required for using the Video Codec SDK. Required by ZED SDK.
 ENV NVIDIA_DRIVER_CAPABILITIES compute,display,graphics,utility,video
+

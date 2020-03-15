@@ -19,10 +19,7 @@
   <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor_node">
     <remap from="left_image" to="$(arg left_image_topic)"/>
     <remap from="right_image" to="$(arg right_image_topic)"/>
-
     <remap from="calculate_dense_optical_flow" to="pwc_net/calculate_dense_optical_flow"/>
-    <remap from="estimate_motion_from_stereo" to="viso2_stereo_server/estimate_motion_from_stereo"/>
-    <remap from="estimate_disparity" to="sgm/estimate_disparity"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
 
@@ -48,9 +45,6 @@
   </node>
   <node name="synthetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
     <remap from="flow" to="/scene_flow_constructor/synthetic_optical_flow"/>
-  </node>
-  <node name="disparity_view" pkg="nodelet" type="nodelet" args="load disparity_visualize/disparity_visualize $(arg nodelet_manager_name)">
-    <remap from="disparity" to="/scene_flow_constructor/disparity"/>
   </node>
   <node name="objects_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="/clusterer/moving_objects"/>
