@@ -7,14 +7,13 @@ PLUGINLIB_EXPORT_CLASS(scene_flow_constructor::SceneFlowConstructorNodelet, node
 
 // ROS headers
 #include <cv_bridge/cv_bridge.h>
-#include <disparity_srv/EstimateDisparity.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_geometry/stereo_camera_model.h>
 #include <image_transport/camera_common.h>
 #include <optical_flow_srvs/CalculateDenseOpticalFlow.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_srvs/SetBool.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -40,12 +39,11 @@ void SceneFlowConstructorNodelet::onInit() {
   integrated_pose_.setIdentity();
   tf_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
 
+  sgm_gpu_.reset(new sgm_gpu::SgmGpu(private_node_handle));
+
   image_transport_.reset(new image_transport::ImageTransport(private_node_handle));
 
   // Prepare service clients
-  disparity_service_client_ = node_handle.serviceClient<disparity_srv::EstimateDisparity>("estimate_disparity");
-  disparity_service_client_.waitForExistence();
-
   optflow_service_client_ = node_handle.serviceClient<optical_flow_srvs::CalculateDenseOpticalFlow>("calculate_dense_optical_flow");
   optflow_service_client_.waitForExistence();
 
@@ -404,18 +402,20 @@ void SceneFlowConstructorNodelet::estimateCameraMotion(const sensor_msgs::ImageC
   }
 }
 
-void SceneFlowConstructorNodelet::estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info)
+void SceneFlowConstructorNodelet::estimateDisparity
+(
+  const sensor_msgs::ImageConstPtr& left_image, 
+  const sensor_msgs::ImageConstPtr& right_image, 
+  const sensor_msgs::CameraInfoConstPtr& left_camera_info, 
+  const sensor_msgs::CameraInfoConstPtr& right_camera_info
+)
 {
-  disparity_srv::EstimateDisparity::Request request;
-  request.left_image = *left_image;
-  request.right_image = *right_image;
-  request.left_camera_info = *left_camera_info;
-  request.right_camera_info = *right_camera_info;
-  disparity_srv::EstimateDisparity::Response response;
-  bool success = disparity_service_client_.call(request, response);
+  stereo_msgs::DisparityImage disparity;
+  bool success = sgm_gpu_->computeDisparity(*left_image, *right_image, 
+    *left_camera_info, *right_camera_info, disparity);
 
   if (success)
-    disparity_now_.reset(new DisparityImageProcessor(response.disparity, *left_camera_info));
+    disparity_now_.reset(new DisparityImageProcessor(disparity, *left_camera_info));
   else
   {
     disparity_now_.reset();

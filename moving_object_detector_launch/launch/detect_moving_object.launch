@@ -30,9 +30,6 @@
   </node>
 
   <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
-  <node name="sgm" pkg="sgm_gpu" type="sgm_gpu_server">
-    <param name="check_consistency" value="true"/>
-  </node>
 
   <!--
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">

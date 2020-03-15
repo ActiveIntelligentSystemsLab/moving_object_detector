@@ -14,6 +14,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <sgm_gpu/sgm_gpu.h>
 #include <stereo_msgs/DisparityImage.h>
 #include <scene_flow_constructor/pcl_point_xyz_velocity.h>
 #include <scene_flow_constructor/SceneFlowConstructorConfig.h>
@@ -57,10 +58,6 @@ private:
   image_transport::Publisher velocity_image_pub_;
   image_transport::Publisher flow_residual_pub_;
 
-  /**
-   * \brief Client for EstimateDisparity service
-   */
-  ros::ServiceClient disparity_service_client_;
   /**
    * \brief Client for CalculateDenseOpticalFlow service
    */
@@ -122,11 +119,12 @@ private:
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   tf2_ros::Buffer tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
   /**
    * \brief Camera pose which camera motions of each frame are cumulated
    */
   tf2::Transform integrated_pose_;
+
+  std::shared_ptr<sgm_gpu::SgmGpu> sgm_gpu_;
 
   /**
    * \brief Calculate optical flow of left frame with static assumption

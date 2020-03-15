@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(scene_flow_constructor)
+# CMake>=3.8 supports CUDA C++ as intrinsically supported language
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+project(scene_flow_constructor CXX)
 
 add_definitions(-msse3)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
-  disparity_srv
   disparity_image_proc
   dynamic_reconfigure
   image_geometry
@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   roscpp
   sensor_msgs
+  sgm_gpu
   std_msgs
   stereo_msgs
   tf2
@@ -65,13 +66,13 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 install(TARGETS ${PROJECT_NAME}
-        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(
-  DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
+
