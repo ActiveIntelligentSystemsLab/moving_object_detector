@@ -16,17 +16,14 @@
   <arg name="nodelet_manager_name" value="nodelet_manager"/>
   <node name="$(arg nodelet_manager_name)" pkg="nodelet" type="nodelet" args="manager"/>
 
-  <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor_node">
+  <node name="scene_flow_constructor" pkg="scene_flow_constructor" type="scene_flow_constructor">
     <remap from="left_image" to="$(arg left_image_topic)"/>
     <remap from="right_image" to="$(arg right_image_topic)"/>
-    <remap from="calculate_dense_optical_flow" to="pwc_net/calculate_dense_optical_flow"/>
 
     <param name="image_transport" value="$(arg image_transport)"/>
 
     <param name="visual_odometry/base_link_frame_id" value="$(arg base_link_frame_id)"/>
   </node>
-
-  <node name="pwc_net" pkg="pwc_net" type="pwc_net_node"/>
 
   <!--
   <node name="clusterer" pkg="nodelet" type="nodelet" args="load scene_flow_clusterer/scene_flow_clusterer $(arg nodelet_manager_name)">
@@ -40,12 +37,6 @@
   </node>
   
   <!-- Nodes for visualization -->
-  <node name="optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="/scene_flow_constructor/optical_flow"/>
-  </node>
-  <node name="synthetic_optical_flow_view" pkg="nodelet" type="nodelet" args="load dense_flow_view/dense_flow_view $(arg nodelet_manager_name)">
-    <remap from="flow" to="/scene_flow_constructor/synthetic_optical_flow"/>
-  </node>
   <node name="objects_to_marker" pkg="moving_object_to_marker" type="moving_object_to_marker">
     <remap from="moving_object_array" to="/clusterer/moving_objects"/>
   </node>

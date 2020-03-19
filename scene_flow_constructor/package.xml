@@ -14,10 +14,8 @@
   <depend>image_transport</depend>
   <depend>libviso2</depend>
   <depend>message_filters</depend>
-  <depend>nodelet</depend>
-  <depend>optical_flow_msgs</depend>
-  <depend>optical_flow_srvs</depend>
   <depend>pcl_conversions</depend>
+  <depend>pwc_net</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>sgm_gpu</depend>
@@ -32,8 +30,4 @@
   <build_depend>message_generation</build_depend>
   <exec_depend>libpcl-all</exec_depend>
   <exec_depend>message_runtime</exec_depend>
-
-  <export>
-    <nodelet plugin="${prefix}/nodelet_plugins.xml"/>
-  </export>
 </package>

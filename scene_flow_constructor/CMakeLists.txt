@@ -1,4 +1,3 @@
-# CMake>=3.8 supports CUDA C++ as intrinsically supported language
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(scene_flow_constructor CXX)
 
@@ -13,10 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   libviso2
   message_filters
   message_generation
-  nodelet
-  optical_flow_msgs
-  optical_flow_srvs
   pcl_conversions
+  pwc_net
   roscpp
   sensor_msgs
   sgm_gpu
@@ -33,17 +30,7 @@ find_package(PCL REQUIRED)
 
 generate_dynamic_reconfigure_options(cfg/SceneFlowConstructor.cfg)
 
-catkin_package(
-  CATKIN_DEPENDS
-    message_runtime
-    std_msgs
-  DEPENDS
-    PCL
-  INCLUDE_DIRS
-    include
-  LIBRARIES
-    ${PROJECT_NAME}
-)
+catkin_package(INCLUDE_DIRS include)
 
 include_directories(
   include
@@ -55,24 +42,17 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}_nodelet.cpp)
+add_executable(${PROJECT_NAME}
+  src/${PROJECT_NAME}.cpp
+  src/${PROJECT_NAME}_node.cpp
+)
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
 )
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
 )
-
-install(TARGETS ${PROJECT_NAME}
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
 
