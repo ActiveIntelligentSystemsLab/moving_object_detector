@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-
-<library path="lib/libscene_flow_constructor">
-  <class name="scene_flow_constructor/scene_flow_constructor" type="scene_flow_constructor::SceneFlowConstructorNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-      Construct scene flow from stereo image.
-    </description>
-  </class>
-</library>

@@ -104,7 +104,6 @@ RUN ./zed_installer.run -- silent
 WORKDIR /root/catkin_ws
 
 # For PWC-Net ROS
-RUN git clone https://github.com/ActiveIntelligentSystemsLab/ros_optical_flow.git src/ros_optical_flow
 RUN git clone https://github.com/ActiveIntelligentSystemsLab/pwc_net_ros.git src/pwc_net_ros
 # Create symbolic link to trained weight
 RUN ln -s /root/PWC-Net/Caffe/model/pwc_net.caffemodel /root/catkin_ws/src/pwc_net_ros/model/pwc_net.caffemodel
