@@ -248,21 +248,6 @@ private:
     return true;
   }
 
-
-  /**
-   * \brief Publish residual image between estimated optical flow and static optical flow
-   * 
-   * Pixel value of the image is Euclidean norm between two flows.
-   */
-  void publishFlowResidual
-    (cv_bridge::CvImage& left_static_flow, cv_bridge::CvImage& left_flow);
-  /**
-   * \brief Publish image which visualize velocity pc by RGB color
-   *
-   * \param velocity_image Already constructed velocity image
-   */
-  void publishVelocityImage(const cv::Mat &velocity_image, const ros::Time time_now);
-
   void publishDepthImage(ros::Publisher& depth_pub, cv::Mat& depth_image, ros::Time timestamp);
 
   template <typename PointT> void publishPointcloud
