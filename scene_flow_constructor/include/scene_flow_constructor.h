@@ -48,7 +48,7 @@ private:
   /**
    * \brief Publisher for disparity at now frame
    */
-  ros::Publisher depth_now_pub_;
+  ros::Publisher depth_pub_;
   ros::Publisher pc_with_velocity_pub_;
   ros::Publisher static_flow_pub_;
 

@@ -42,7 +42,7 @@ SceneFlowConstructor::SceneFlowConstructor() {
   reconfigure_server_->setCallback(reconfigure_func_);
   
   // Publishers
-  depth_now_pub_ = private_node_handle.advertise<sensor_msgs::Image>("depth_now", 1);
+  depth_pub_ = private_node_handle.advertise<sensor_msgs::Image>("depth", 1);
   optflow_pub_ = private_node_handle.advertise<sensor_msgs::Image>("optical_flow", 1);
   pc_with_velocity_pub_ = private_node_handle.advertise<sensor_msgs::PointCloud2>("scene_flow", 1);
   static_flow_pub_ = private_node_handle.advertise<sensor_msgs::Image>("synthetic_optical_flow", 1);
@@ -111,11 +111,11 @@ void SceneFlowConstructor::construct
   {
     pc_now.reset(new pcl::PointCloud<pcl::PointXYZ>());
     disparity_now->toPointCloud(*pc_now);
-    if (depth_now_pub_.getNumSubscribers() > 0)
+    if (depth_pub_.getNumSubscribers() > 0)
     {
       cv::Mat depth_now;
       disparity_now->toDepthImage(depth_now);
-      publishDepthImage(depth_now_pub_, depth_now, disparity_now->_disparity_msg.header.stamp);
+      publishDepthImage(depth_pub_, depth_now, disparity_now->_disparity_msg.header.stamp);
     }
   }
 
