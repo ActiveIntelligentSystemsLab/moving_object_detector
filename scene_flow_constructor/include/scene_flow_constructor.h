@@ -148,15 +148,15 @@ private:
   );
 
   /**
-   * \brief Estimate left camera motion by calling external service
+   * \brief Estimate left camera motion by LIBVISO2
    */
   void estimateCameraMotion(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
   /**
-   * \brief Estimate disparity by calling external service
+   * \brief Estimate disparity by SGM
    */
   void estimateDisparity(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& right_image, const sensor_msgs::CameraInfoConstPtr& left_camera_info, const sensor_msgs::CameraInfoConstPtr& right_camera_info);
   /**
-   * \brief Estimate optical flow by calling external service
+   * \brief Estimate optical flow by PWC-Net
    */
   void estimateOpticalFlow(const sensor_msgs::ImageConstPtr& left_image);
 
